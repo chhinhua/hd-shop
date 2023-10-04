@@ -1,4 +1,4 @@
-package com.hdshop.entity;
+package com.hdshop.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
@@ -7,10 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.Date;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -20,18 +18,21 @@ import java.util.UUID;
 @Table(name = "reviews")
 public class Review {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private String content;
 
-    @DecimalMin(value = "0", inclusive = true, message = "The value must not be less than 0")
-    @DecimalMax(value = "5", inclusive = true)
+    @DecimalMin(value = "0", inclusive = true, message = "${value-must-not-be-less-than}, 0")
+    @DecimalMax(value = "5", inclusive = true, message = "${value-must-not-be-larger-than}, 5")
     private Float rating;
 
     private Date createAt;
 
     private Date updateAt;
 
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
 }

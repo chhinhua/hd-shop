@@ -1,4 +1,4 @@
-package com.hdshop.entity;
+package com.hdshop.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,11 +14,10 @@ import java.util.*;
 @AllArgsConstructor
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, unique = true)
     private String username;
