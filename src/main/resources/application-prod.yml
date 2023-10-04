@@ -1,0 +1,14 @@
+server:
+    port: 5000
+spring:
+    datasource:
+        password: your password
+        url: jdbc:mysql://<url your data is stored>/hdshop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+        username: your username
+    jpa:
+        hibernate:
+            ddl-auto: update
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.MySQLDialect
+        show-sql: true
