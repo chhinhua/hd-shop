@@ -34,8 +34,6 @@ public class Product {
     private List<String> listImages = new ArrayList<String>();
 
 
-
-
     /*@OneToMany
     @JoinColumn(name = "category_id")
     private Set<Category> categories;*/
