@@ -31,8 +31,7 @@ public class Product {
     private Date createAt;
     private Date updateAt;
     @ElementCollection
-    private List<String> listImages = new ArrayList<String>();
-
+    private List<String> Images = new ArrayList<String>();
 
     /*@OneToMany
     @JoinColumn(name = "category_id")

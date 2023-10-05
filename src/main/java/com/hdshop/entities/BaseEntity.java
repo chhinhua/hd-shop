@@ -18,7 +18,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class BaseEntity implements Serializable {
 
-    // TODO : config DateTimeProvider class for createdDate and lastModifiedDate
+    // TODO : config DateTimeProvider class for createdDate and lastModifiedDate, createdBy, lastModifiedBy
 
     @CreatedBy
     private String createdBy;

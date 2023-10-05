@@ -17,7 +17,7 @@ import java.util.Optional;
 public class AuditingConfig implements AuditorAware<String> {
     @Override
     public Optional<String> getCurrentAuditor() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        /*Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
             return Optional.of("system");
@@ -25,7 +25,9 @@ public class AuditingConfig implements AuditorAware<String> {
 
         if (authentication.getPrincipal() instanceof User)
             return Optional.ofNullable(((UserDetails) authentication.getPrincipal()).getUsername());
-        return Optional.ofNullable(authentication.getName());
+        return Optional.ofNullable(authentication.getName());*/
+
+        return Optional.of("system");
     }
 
     @Bean
