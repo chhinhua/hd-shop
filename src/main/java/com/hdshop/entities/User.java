@@ -43,10 +43,10 @@ public class User extends BaseEntity {
 
     private String gender;
 
-    @ElementCollection
-    private List<String> address = new ArrayList<String>();
-
     private String avatar;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Address> addresses = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),

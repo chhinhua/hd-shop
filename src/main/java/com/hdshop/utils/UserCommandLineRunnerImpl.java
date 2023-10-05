@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
-public class UserCommandLineRunnerImpl implements CommandLineRunner {
+public class UserCommandLineRunnerImpl {
     private final UserRepository userRepository;
 
     public UserCommandLineRunnerImpl(UserRepository userRepository) {
@@ -24,7 +24,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
      * @date 05-10-2023
      * @return
      */
-    @Override
+/*    @Override
     public void run(String... args) throws Exception {
         User user = new User();
         user.setUsername("user");
@@ -35,8 +35,8 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
         user.setId_card("123456789");
         user.setPhoneNumber("123456789");
         user.setGender("Male");
-        user.getAddress().add("Address 1");
-        user.getAddress().add("Address 2");
+        //user.getAddresses().add(new Address(""));
+        //user.getAddresses().add();
         user.setAvatar("avatar-url");
 
         // Tạo và thiết lập các đối tượng Role
@@ -55,5 +55,5 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
         user.setRoles(roles);
 
         userRepository.save(user);
-    }
+    }*/
 }

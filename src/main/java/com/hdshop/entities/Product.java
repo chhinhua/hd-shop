@@ -19,23 +19,36 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-    private String description;
-    private BigDecimal price;
-    private BigDecimal promotionalPrice;
-    private Integer quantity;
-    private Integer sold;
-    private Boolean isActive;
-    private Boolean isSelling;
-    private Float rating;
-    private Date createAt;
-    private Date updateAt;
-    @ElementCollection
-    private List<String> Images = new ArrayList<String>();
 
-    /*@OneToMany
+    private String name;
+
+    private String description;
+
+    private BigDecimal price;
+
+    private BigDecimal promotionalPrice;
+
+    private Integer quantity;
+
+    private Integer sold;
+
+    private Boolean isActive;
+
+    private Boolean isSelling;
+
+    private Float rating;
+
+    private Date createAt;
+
+    private Date updateAt;
+
+    @ElementCollection
+    @Column(name = "imageUrl")
+    private List<String> listImages = new ArrayList<String>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    private Set<Category> categories;*/
+    private Category category;
 
     @OneToMany(mappedBy = "product")
     private Set<Review> reviews;

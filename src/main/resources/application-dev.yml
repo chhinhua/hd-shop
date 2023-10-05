@@ -3,7 +3,7 @@ server:
 spring:
     datasource:
         password: 123hua@
-        url: jdbc:mysql://localhost:3306/hdshop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+        url: jdbc:mysql://localhost:3306/hd-shop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
         username: root
     jpa:
         hibernate:

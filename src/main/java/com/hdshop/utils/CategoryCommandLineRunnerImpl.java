@@ -15,6 +15,12 @@ public class CategoryCommandLineRunnerImpl implements CommandLineRunner {
         this.categoryRepository = categoryRepository;
     }
 
+    /**
+     * Create sample category (parent, child, grand child)
+     * @author Chhin Hua
+     * @date 05-10-2023
+     * @return
+     */
     @Override
     public void run(String... args) throws Exception {
         // Create parent category
