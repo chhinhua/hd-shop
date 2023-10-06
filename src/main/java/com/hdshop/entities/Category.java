@@ -9,7 +9,6 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -23,9 +22,13 @@ public class Category {
     private Long id;
 
     private String name;
+
+    private String slug;
+
     private String description;
 
     private Date createAt;
+
     private Date updateAt;
 
     @ManyToOne(fetch = FetchType.LAZY)

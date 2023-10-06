@@ -24,6 +24,8 @@ public class Product {
 
     private String description;
 
+    private String slug;
+
     private BigDecimal price;
 
     private BigDecimal promotionalPrice;
@@ -52,4 +54,7 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     private Set<Review> reviews;
+
+    @OneToMany(mappedBy = "product")
+    private List<OrderItem> orderItems = new ArrayList<>();
 }
