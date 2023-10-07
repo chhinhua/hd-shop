@@ -73,6 +73,6 @@ public class CategoryCommandLineRunnerImpl implements CommandLineRunner {
         grandchildren2.setParent(childCategory2);
 
         // Save parent category, child and grand child categories to database
-        categoryRepository.save(parentCategory);
+        //categoryRepository.save(parentCategory);
     }
 }
