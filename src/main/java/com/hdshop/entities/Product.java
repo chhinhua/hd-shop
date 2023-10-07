@@ -1,66 +1,66 @@
-package com.hdshop.entities;
+    package com.hdshop.entities;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+    import jakarta.persistence.*;
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.util.*;
+    import java.math.BigDecimal;
+    import java.util.*;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "products")
-public class Product {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Entity
+    @Table(name = "products")
+    public class Product {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    private String name;
+        private String name;
 
-    private String description;
+        private String description;
 
-    private String slug;
+        private String slug;
 
-    private BigDecimal price;
+        private BigDecimal price;
 
-    private BigDecimal promotionalPrice;
+        private BigDecimal promotionalPrice;
 
-    private Integer quantity;
+        private Integer quantity;
 
-    private Integer sold;
+        private Integer sold;
 
-    private Boolean isActive;
+        private Boolean isActive;
 
-    private Boolean isSelling;
+        private Boolean isSelling;
 
-    private Float rating;
+        private Float rating;
 
-    private Date createAt;
+        private Date createAt;
 
-    private Date updateAt;
+        private Date updateAt;
 
-    @ElementCollection
-    @Column(name = "imageUrl")
-    private List<String> listImages = new ArrayList<String>();
+        @ElementCollection
+        @Column(name = "imageUrl")
+        private List<String> listImages = new ArrayList<String>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category category;
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "category_id")
+        private Category category;
 
-    @OneToMany(mappedBy = "product")
-    private Set<Review> reviews;
+        @OneToMany(mappedBy = "product")
+        private Set<Review> reviews;
 
-    @OneToMany(mappedBy = "product")
-    private List<OrderItem> orderItems = new ArrayList<>();
+        @OneToMany(mappedBy = "product")
+        private List<OrderItem> orderItems = new ArrayList<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<CartItem> cartItems = new ArrayList<>();
+        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+        private List<CartItem> cartItems = new ArrayList<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
-}
+        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+        private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
+    }
