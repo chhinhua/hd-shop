@@ -15,4 +15,3 @@ spring:
     security:
         user:
             name: user
-            password: user

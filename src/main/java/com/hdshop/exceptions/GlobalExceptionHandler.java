@@ -5,6 +5,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -60,6 +61,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      * @param webRequest  WebRequest của yêu cầu
      * @return ResponseEntity chứa thông tin chi tiết về lỗi và mã trạng thái HTTP 400
      */
+    @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDetails> handleGlobalExceptionHandler(Exception exception, WebRequest webRequest) {
         ErrorDetails errorDetails = new ErrorDetails(
                 new Date(),
@@ -81,7 +83,29 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                                   HttpHeaders headers,
                                                                   HttpStatusCode status,
                                                                   WebRequest request) {
+        if (exception instanceof BindException) {
+            return handleBindException((BindException)exception);
+        }
+
         Map<String, String> errors = new HashMap<>();
+        exception.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+
+    /**
+     * Xử lý ngoại lệ BindException và trả về phản hồi HTTP phù hợp.
+     * @param exception
+     * @return ResponseEntity chứa danh sách các lỗi và mã trạng thái HTTP 400
+     */
+    public ResponseEntity<Object> handleBindException(BindException exception) {
+        Map<String, String> errors = new HashMap<>();
+
         exception.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
