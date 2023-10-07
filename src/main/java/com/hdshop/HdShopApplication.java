@@ -14,8 +14,11 @@ import java.util.Set;
 
 @SpringBootApplication
 public class HdShopApplication implements CommandLineRunner {
-	@Autowired
-	private UserRepository userRepository;
+	private final UserRepository userRepository;
+
+	public HdShopApplication(UserRepository userRepository) {
+		this.userRepository = userRepository;
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(HdShopApplication.class, args);

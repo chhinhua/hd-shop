@@ -2,6 +2,7 @@ package com.hdshop.services.category;
 
 import com.hdshop.dtos.CategoryDTO;
 import com.hdshop.entities.Category;
+import com.hdshop.exceptions.ResourceNotFoundException;
 import com.hdshop.repositories.CategoryRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,11 @@ public class CategoryServiceImpl implements CategoryService {
         this.modelMapper = modelMapper;
     }
 
+    /**
+     * Query all categories
+     * @param
+     * @return list CategoryDTO
+     */
     @Override
     public List<CategoryDTO> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
@@ -26,5 +32,17 @@ public class CategoryServiceImpl implements CategoryService {
                 .stream()
                 .map((category) -> modelMapper.map(category, CategoryDTO.class))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Query Category by id
+     * @param id
+     * @return a CategoryDTO
+     */
+    @Override
+    public CategoryDTO getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+        return modelMapper.map(category, CategoryDTO.class);
     }
 }
