@@ -3,12 +3,14 @@ package com.hdshop.dtos;
 import com.hdshop.entities.Address;
 import com.hdshop.entities.Review;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -26,6 +28,7 @@ public class UserDTO {
     private String lastName;
 
     @Column(nullable = false, unique = true)
+    @Email
     private String email;
 
     private String id_card;
@@ -37,5 +40,7 @@ public class UserDTO {
 
     private String avatar;
 
-    private List<Address> addresses = new ArrayList<>();
+    private Date createAt;
+
+    private Date updateAt;
 }

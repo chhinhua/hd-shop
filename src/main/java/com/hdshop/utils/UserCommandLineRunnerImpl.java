@@ -1,5 +1,6 @@
 package com.hdshop.utils;
 
+import com.hdshop.entities.Address;
 import com.hdshop.entities.Role;
 import com.hdshop.entities.User;
 import com.hdshop.repositories.UserRepository;
@@ -11,7 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
-public class UserCommandLineRunnerImpl {
+public class UserCommandLineRunnerImpl implements CommandLineRunner {
     private final UserRepository userRepository;
 
     public UserCommandLineRunnerImpl(UserRepository userRepository) {
@@ -19,41 +20,53 @@ public class UserCommandLineRunnerImpl {
     }
 
     /**
+     * Init a new User and save to database
      * Create sample user
-     * @author Chhin Hua
      * @date 05-10-2023
      * @return
      */
-/*    @Override
+    @Override
     public void run(String... args) throws Exception {
         User user = new User();
-        user.setUsername("user");
-        user.setPassword("user");
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setEmail("johndoe@example.com");
-        user.setId_card("123456789");
-        user.setPhoneNumber("123456789");
-        user.setGender("Male");
-        //user.getAddresses().add(new Address(""));
-        //user.getAddresses().add();
-        user.setAvatar("avatar-url");
+		user.setUsername("johndoe");
+		user.setPassword("johndoee");
+		user.setFirstName("John");
+		user.setLastName("Doe");
+		user.setEmail("johndoe@example.com");
+		user.setId_card("123456789");
+		user.setPhoneNumber("123456789");
+		user.setGender("Male");
+		user.setAvatar("avatar-url");
+		user.setCreateAt(new Date());
 
-        // Tạo và thiết lập các đối tượng Role
-        Role role_user = new Role();
-        role_user.setName("ROLE_USER");
-        role_user.setCreateAt(new Date());
+		// create new address
+		Address address = new Address();
+		address.setUser(user);
+		address.setFullName("John doe");
+		address.setCity("TP. Hồ Chí Minh");
+		address.setDistrict("TP. Thủ Đức");
+		address.setWard("P. Linh Xuân");
+		address.setPhoneNumber("0326474614");
+		address.setOrderDetails("162/9 Đường số 8");
+		address.setIsDefault(true);
 
-        Role role_admin = new Role();
-        role_admin.setName("ROLE_ADMIN");
-        role_admin.setCreateAt(new Date());
+		user.getAddresses().add(address);
 
-        Set<Role> roles = new HashSet<>();
-        roles.add(role_user);
-        roles.add(role_admin);
+		// Tạo và thiết lập các đối tượng Role
+		Role role_user = new Role();
+		role_user.setName("ROLE_USER");
+		role_user.setCreateAt(new Date());
 
-        user.setRoles(roles);
+		Role role_admin = new Role();
+		role_admin.setName("ROLE_ADMIN");
+		role_admin.setCreateAt(new Date());
 
-        userRepository.save(user);
-    }*/
+		Set<Role> roles = new HashSet<>();
+		roles.add(role_user);
+		roles.add(role_admin);
+
+		user.setRoles(roles);
+
+		//userRepository.save(user);
+    }
 }

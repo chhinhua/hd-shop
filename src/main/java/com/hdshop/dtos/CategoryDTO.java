@@ -1,16 +1,12 @@
 package com.hdshop.dtos;
 
-import com.hdshop.entities.Category;
-import com.hdshop.entities.Product;
-import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 @Getter
 @Setter
@@ -19,6 +15,7 @@ import java.util.List;
 public class CategoryDTO {
     private Long id;
 
+    @NotEmpty
     private String name;
 
     private String slug;

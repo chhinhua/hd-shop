@@ -2,11 +2,10 @@ package com.hdshop.controllers;
 
 import com.hdshop.dtos.CategoryDTO;
 import com.hdshop.services.category.CategoryService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,6 +25,12 @@ public class CategoryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDTO> getSingleCategory(@PathVariable Long id) {
-        return ResponseEntity.ok(categoryService.getCategoryById(id));
+        return ResponseEntity.ok(categoryService.getCategory(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<CategoryDTO> addNewCategory(@Valid @RequestBody CategoryDTO categoryDTO) {
+        CategoryDTO saveCategory = categoryService.addCategory(categoryDTO);
+        return new ResponseEntity<>(saveCategory, HttpStatus.CREATED);
     }
 }
