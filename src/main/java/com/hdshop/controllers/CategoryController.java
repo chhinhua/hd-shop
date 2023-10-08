@@ -33,4 +33,10 @@ public class CategoryController {
         CategoryDTO saveCategory = categoryService.addCategory(categoryDTO);
         return new ResponseEntity<>(saveCategory, HttpStatus.CREATED);
     }
+
+    @PostMapping("/{id}")
+    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id,
+                                                      @Valid @RequestBody CategoryDTO categoryDTO) {
+        return ResponseEntity.ok(categoryService.updateCategory(id, categoryDTO));
+    }
 }

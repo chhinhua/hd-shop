@@ -37,7 +37,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		user.setPhoneNumber("123456789");
 		user.setGender("Male");
 		user.setAvatar("avatar-url");
-		user.setCreateAt(new Date());
+		user.setCreateAt(DateTimeUtils.getCurrentDateTime(new Date()));
 
 		// create new address
 		Address address = new Address();
@@ -55,11 +55,11 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		// Tạo và thiết lập các đối tượng Role
 		Role role_user = new Role();
 		role_user.setName("ROLE_USER");
-		role_user.setCreateAt(new Date());
+		role_user.setCreateAt(DateTimeUtils.getCurrentDateTime(new Date()));
 
 		Role role_admin = new Role();
 		role_admin.setName("ROLE_ADMIN");
-		role_admin.setCreateAt(new Date());
+		role_admin.setCreateAt(DateTimeUtils.getCurrentDateTime(new Date()));
 
 		Set<Role> roles = new HashSet<>();
 		roles.add(role_user);
@@ -67,6 +67,6 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 
 		user.setRoles(roles);
 
-		//userRepository.save(user);
+		userRepository.save(user);
     }
 }

@@ -6,12 +6,15 @@ import com.hdshop.entities.Category;
 import com.hdshop.exceptions.APIException;
 import com.hdshop.exceptions.ResourceNotFoundException;
 import com.hdshop.repositories.CategoryRepository;
+import jakarta.validation.constraints.Null;
+import org.hibernate.ResourceClosedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +31,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Query all categories
+     *
      * @param
      * @return list CategoryDTO
      */
@@ -43,6 +47,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Query Category by id
+     *
      * @param id
      * @return a CategoryDTO
      */
@@ -55,6 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Create a new category
+     *
      * @param categoryDTO
      * @return categoryDTO instance
      */
@@ -77,14 +83,40 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Update a category
+     *
      * @param id
      * @param categoryDTO
      * @return categoryDTO instance have been updated
      */
     @Override
     public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
+        // check category exists in database with this id parameter
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
 
-        return null;
+        // check categoryDTO name exists in database
+        if (!category.getName().equals(categoryDTO.getName())) {
+            if (categoryRepository.existsCategoryByName(categoryDTO.getName())){
+                throw new APIException(HttpStatus.BAD_REQUEST, "Category name is already exists");
+            }
+        }
+
+        Category categoryMapper = mapToEntity(categoryDTO);
+
+        category.setName(categoryMapper.getName());
+        category.setDescription(categoryMapper.getDescription());
+        category.setSlug(slugify.slugify(categoryMapper.getName()));
+        category.setUpdateAt(new Date());
+
+        Optional<Category> parentCategory = categoryDTO.getParentId() != null
+                ? categoryRepository.findById(categoryDTO.getParentId())
+                : Optional.empty();
+
+        parentCategory.ifPresent(category::setParent);
+
+        Category saveCategory = categoryRepository.save(category);
+
+        return mapToDTO(saveCategory);
     }
 
     @Override
@@ -96,6 +128,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Convert Category DTO to  Category entity class
+     *
      * @param categoryDTO
      * @return Category entity
      */
