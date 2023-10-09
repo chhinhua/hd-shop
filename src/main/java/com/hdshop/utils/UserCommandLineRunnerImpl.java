@@ -37,7 +37,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		user.setPhoneNumber("123456789");
 		user.setGender("Male");
 		user.setAvatar("avatar-url");
-		user.setCreateAt(DateTimeUtils.getCurrentDateTime(new Date()));
+		//user.setCreateAt(DateTimeUtils.getCurrentDateTime(new Date()));
 
 		// create new address
 		Address address = new Address();

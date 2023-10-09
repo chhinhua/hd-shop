@@ -83,7 +83,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Update a category
-     *
+     * @date 9-10-2023
      * @param id
      * @param categoryDTO
      * @return categoryDTO instance have been updated
@@ -101,12 +101,10 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
 
-        Category categoryMapper = mapToEntity(categoryDTO);
-
-        category.setName(categoryMapper.getName());
-        category.setDescription(categoryMapper.getDescription());
-        category.setSlug(slugify.slugify(categoryMapper.getName()));
-        category.setUpdateAt(new Date());
+        category.setName(categoryDTO.getName());
+        category.setDescription(categoryDTO.getDescription());
+        category.setSlug(slugify.slugify(categoryDTO.getName()));
+        //category.setUpdateAt(new Date());
 
         Optional<Category> parentCategory = categoryDTO.getParentId() != null
                 ? categoryRepository.findById(categoryDTO.getParentId())
