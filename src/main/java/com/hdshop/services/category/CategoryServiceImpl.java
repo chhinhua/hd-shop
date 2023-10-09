@@ -72,8 +72,6 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         categoryDTO.setSlug(slugify.slugify(categoryDTO.getName()));
-        categoryDTO.setCreateAt(new Date());
-        categoryDTO.setUpdateAt(new Date());
 
         Category category = mapToEntity(categoryDTO);
         Category saveCategory = categoryRepository.save(category);
@@ -104,13 +102,12 @@ public class CategoryServiceImpl implements CategoryService {
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
         category.setSlug(slugify.slugify(categoryDTO.getName()));
-        //category.setUpdateAt(new Date());
 
         Optional<Category> parentCategory = categoryDTO.getParentId() != null
                 ? categoryRepository.findById(categoryDTO.getParentId())
                 : Optional.empty();
 
-        parentCategory.ifPresent(category::setParent);
+        category.setParent(parentCategory.orElse(null));
 
         Category saveCategory = categoryRepository.save(category);
 

@@ -8,6 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,7 +43,11 @@ public class UserDTO {
 
     private String avatar;
 
-    private Date createAt;
+    private String createdBy;
 
-    private Date updateAt;
+    private String lastModifiedBy;
+
+    private Date createdDate;
+
+    private Date lastModifiedDate;
 }

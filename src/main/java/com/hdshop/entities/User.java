@@ -44,10 +44,6 @@ public class User extends BaseEntity {
 
     private String avatar;
 
-    /*private Date createAt;
-
-    private Date updateAt;*/
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Address> addresses = new ArrayList<>();
 
