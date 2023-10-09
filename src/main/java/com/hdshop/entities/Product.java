@@ -5,6 +5,8 @@
     import lombok.Getter;
     import lombok.NoArgsConstructor;
     import lombok.Setter;
+    import org.springframework.data.annotation.CreatedBy;
+    import org.springframework.data.annotation.LastModifiedBy;
 
     import java.math.BigDecimal;
     import java.util.*;
@@ -15,7 +17,7 @@
     @AllArgsConstructor
     @Entity
     @Table(name = "products")
-    public class Product {
+    public class Product extends BaseEntity {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
@@ -39,10 +41,11 @@
         private Boolean isSelling;
 
         private Float rating;
+        @CreatedBy
+        private String createdBy;
 
-        private Date createAt;
-
-        private Date updateAt;
+        @LastModifiedBy
+        private String lastModifiedBy;
 
         @ElementCollection
         @Column(name = "imageUrl")

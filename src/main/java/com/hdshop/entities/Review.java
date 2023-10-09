@@ -16,7 +16,7 @@ import java.util.Date;
 @AllArgsConstructor
 @Entity
 @Table(name = "reviews")
-public class Review {
+public class Review extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,10 +27,6 @@ public class Review {
     @DecimalMin(value = "0", inclusive = true, message = "${value-must-not-be-less-than}, 0")
     @DecimalMax(value = "5", inclusive = true, message = "${value-must-not-be-larger-than}, 5")
     private Float rating;
-
-    private Date createAt;
-
-    private Date updateAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

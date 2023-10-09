@@ -16,16 +16,12 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "carts")
-public class Cart {
+public class Cart extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Boolean isDeleted = false;
-
-    private Date createAt;
-
-    private Date updateAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

@@ -14,16 +14,12 @@ import java.util.Date;
 @NoArgsConstructor
 @Entity
 @Table(name = "user_follow_products")
-public class UserFollowProduct {
+public class UserFollowProduct extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Boolean isDeleted;
-
-    private Date createAt;
-
-    private Date updateAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
