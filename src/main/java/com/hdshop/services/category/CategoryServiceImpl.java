@@ -6,13 +6,10 @@ import com.hdshop.entities.Category;
 import com.hdshop.exceptions.APIException;
 import com.hdshop.exceptions.ResourceNotFoundException;
 import com.hdshop.repositories.CategoryRepository;
-import jakarta.validation.constraints.Null;
-import org.hibernate.ResourceClosedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,7 +41,6 @@ public class CategoryServiceImpl implements CategoryService {
                 .collect(Collectors.toList());
     }
 
-
     /**
      * Query Category by id
      *
@@ -52,7 +48,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @return a CategoryDTO
      */
     @Override
-    public CategoryDTO getCategory(Long id) {
+    public CategoryDTO getCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
         return modelMapper.map(category, CategoryDTO.class);
@@ -75,9 +71,9 @@ public class CategoryServiceImpl implements CategoryService {
         category.setSlug(slugify.slugify(category.getName()));
         setParentById(categoryDTO.getParentId(), category);
 
-        Category saveCategory = categoryRepository.save(category);
+        Category newCategory = categoryRepository.save(category);
 
-        return mapToDTO(saveCategory);
+        return mapToDTO(newCategory);
     }
 
     /**
@@ -102,9 +98,9 @@ public class CategoryServiceImpl implements CategoryService {
         category.setSlug(slugify.slugify(categoryDTO.getName()));
         setParentById(categoryDTO.getParentId(), category);
 
-        Category saveCategory = categoryRepository.save(category);
+        Category updateCategory = categoryRepository.save(category);
 
-        return mapToDTO(saveCategory);
+        return mapToDTO(updateCategory);
     }
 
     /**

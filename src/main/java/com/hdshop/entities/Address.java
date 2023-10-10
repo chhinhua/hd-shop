@@ -28,7 +28,7 @@ public class Address {
 
     private String orderDetails;
 
-    private Boolean isDefault;
+    private boolean isDefault;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

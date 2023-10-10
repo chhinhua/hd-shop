@@ -1,4 +1,4 @@
-package com.hdshop.utils;
+package com.hdshop.init;
 
 import com.github.slugify.Slugify;
 import com.hdshop.entities.Category;

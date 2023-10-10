@@ -1,4 +1,4 @@
-package com.hdshop.utils;
+package com.hdshop.init;
 
 import com.hdshop.entities.Address;
 import com.hdshop.entities.Role;
@@ -27,7 +27,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
-		//createXampleUser();
+		createXampleUser();
 	}
 
 	private void createXampleUser() {
@@ -51,7 +51,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		address.setWard("P. Linh Xuân");
 		address.setPhoneNumber("0326474614");
 		address.setOrderDetails("162/9 Đường số 8");
-		address.setIsDefault(true);
+		address.setDefault(true);
 
 		user.getAddresses().add(address);
 

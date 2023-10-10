@@ -1,20 +1,13 @@
 package com.hdshop.dtos;
 
-import com.hdshop.entities.Address;
-import com.hdshop.entities.Review;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 @Getter
 @Setter
@@ -42,6 +35,8 @@ public class UserDTO {
     private String gender;
 
     private String avatar;
+
+    private boolean isEnable = true;
 
     private String createdBy;
 

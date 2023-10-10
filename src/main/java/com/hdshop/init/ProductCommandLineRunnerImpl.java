@@ -1,4 +1,4 @@
-package com.hdshop.utils;
+package com.hdshop.init;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;

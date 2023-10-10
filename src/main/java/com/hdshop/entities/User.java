@@ -46,6 +46,8 @@ public class User extends BaseEntity {
 
     private String avatar;
 
+    private boolean isEnable = false;
+
     @CreatedBy
     private String createdBy;
 

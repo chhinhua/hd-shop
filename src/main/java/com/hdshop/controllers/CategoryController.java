@@ -25,7 +25,7 @@ public class CategoryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDTO> getSingleCategory(@PathVariable Long id) {
-        return ResponseEntity.ok(categoryService.getCategory(id));
+        return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
     @PostMapping

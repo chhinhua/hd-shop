@@ -22,9 +22,12 @@
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
+        @Column(nullable = false)
         private String name;
 
         private String description;
+
+        private String brand;
 
         private String slug;
 
@@ -34,13 +37,20 @@
 
         private Integer quantity;
 
+        private Integer quantityAvailable;
+
         private Integer sold;
 
-        private Boolean isActive;
-
-        private Boolean isSelling;
-
         private Float rating;
+
+        private Integer numberOfRatings;
+
+        private Integer favoriteCount;
+
+        private boolean isActive = true;
+
+        private boolean isSelling;
+
         @CreatedBy
         private String createdBy;
 
