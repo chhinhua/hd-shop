@@ -71,6 +71,8 @@ public class CategoryServiceImpl implements CategoryService {
             throw new APIException(HttpStatus.BAD_REQUEST, "Category name is already exists");
         }
 
+        // TODO test api
+
         categoryDTO.setSlug(slugify.slugify(categoryDTO.getName()));
 
         Category category = mapToEntity(categoryDTO);
@@ -81,37 +83,52 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Update a category
-     * @date 9-10-2023
      * @param id
      * @param categoryDTO
      * @return categoryDTO instance have been updated
      */
     @Override
     public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
-        // check category exists in database with this id parameter
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
-
-        // check categoryDTO name exists in database
-        if (!category.getName().equals(categoryDTO.getName())) {
-            if (categoryRepository.existsCategoryByName(categoryDTO.getName())){
-                throw new APIException(HttpStatus.BAD_REQUEST, "Category name is already exists");
-            }
-        }
+        Category category = getCategoryById(id);
+        validateCategoryName(category, categoryDTO.getName());
 
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
         category.setSlug(slugify.slugify(categoryDTO.getName()));
+        setParentById(categoryDTO, category);
 
+        Category saveCategory = categoryRepository.save(category);
+
+        return mapToDTO(saveCategory);
+    }
+
+    private Category getCategoryById(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+    }
+
+    /**
+     * Validate category name for update feature
+     * @param category
+     * @param categoryName
+     */
+    private void validateCategoryName(Category category, String categoryName) {
+        if (!category.getName().equals(categoryName) && categoryRepository.existsCategoryByName(categoryName)) {
+            throw new APIException(HttpStatus.BAD_REQUEST, "Category name already exists");
+        }
+    }
+
+    /**
+     * Set the category parent for category instance from the categoryDTO_id
+     * @param categoryDTO
+     * @param category
+     */
+    private void setParentById(CategoryDTO categoryDTO, Category category) {
         Optional<Category> parentCategory = categoryDTO.getParentId() != null
                 ? categoryRepository.findById(categoryDTO.getParentId())
                 : Optional.empty();
 
         category.setParent(parentCategory.orElse(null));
-
-        Category saveCategory = categoryRepository.save(category);
-
-        return mapToDTO(saveCategory);
     }
 
     @Override
