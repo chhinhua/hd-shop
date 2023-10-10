@@ -59,7 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     /**
-     * Create a new category
+     * Create new category
      *
      * @param categoryDTO
      * @return categoryDTO instance
@@ -71,11 +71,10 @@ public class CategoryServiceImpl implements CategoryService {
             throw new APIException(HttpStatus.BAD_REQUEST, "Category name is already exists");
         }
 
-        // TODO test api
-
-        categoryDTO.setSlug(slugify.slugify(categoryDTO.getName()));
-
         Category category = mapToEntity(categoryDTO);
+        category.setSlug(slugify.slugify(category.getName()));
+        setParentById(categoryDTO.getParentId(), category);
+
         Category saveCategory = categoryRepository.save(category);
 
         return mapToDTO(saveCategory);
@@ -89,48 +88,42 @@ public class CategoryServiceImpl implements CategoryService {
      */
     @Override
     public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
-        Category category = getCategoryById(id);
-        validateCategoryName(category, categoryDTO.getName());
+        // check existing category by id
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+
+        // validate existing categoryDTO name
+        if (!category.getName().equals(categoryDTO.getName()) && categoryRepository.existsCategoryByName(categoryDTO.getName())) {
+            throw new APIException(HttpStatus.BAD_REQUEST, "Category name already exists");
+        }
 
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
         category.setSlug(slugify.slugify(categoryDTO.getName()));
-        setParentById(categoryDTO, category);
+        setParentById(categoryDTO.getParentId(), category);
 
         Category saveCategory = categoryRepository.save(category);
 
         return mapToDTO(saveCategory);
     }
 
-    private Category getCategoryById(Long id) {
-        return categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
-    }
-
     /**
-     * Validate category name for update feature
-     * @param category
-     * @param categoryName
-     */
-    private void validateCategoryName(Category category, String categoryName) {
-        if (!category.getName().equals(categoryName) && categoryRepository.existsCategoryByName(categoryName)) {
-            throw new APIException(HttpStatus.BAD_REQUEST, "Category name already exists");
-        }
-    }
-
-    /**
-     * Set the category parent for category instance from the categoryDTO_id
-     * @param categoryDTO
+     * Set the category parent data for category instance from the categoryDTO_id
+     * @param id
      * @param category
      */
-    private void setParentById(CategoryDTO categoryDTO, Category category) {
-        Optional<Category> parentCategory = categoryDTO.getParentId() != null
-                ? categoryRepository.findById(categoryDTO.getParentId())
+    private void setParentById(Long id, Category category) {
+        Optional<Category> parentCategory = id != null
+                ? categoryRepository.findById(id)
                 : Optional.empty();
 
         category.setParent(parentCategory.orElse(null));
     }
 
+    /**
+     * Delete category by id
+     * @param id
+     */
     @Override
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
@@ -142,12 +135,18 @@ public class CategoryServiceImpl implements CategoryService {
      * Convert Category DTO to  Category entity class
      *
      * @param categoryDTO
-     * @return Category entity
+     * @return Category entity object
      */
     private Category mapToEntity(CategoryDTO categoryDTO) {
         return modelMapper.map(categoryDTO, Category.class);
     }
 
+    /**
+     * Convert Category DTO to  Category entity class
+     *
+     * @param category
+     * @return CategoryDTO object
+     */
     private CategoryDTO mapToDTO(Category category) {
         return modelMapper.map(category, CategoryDTO.class);
     }
