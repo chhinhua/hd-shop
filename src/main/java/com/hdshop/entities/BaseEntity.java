@@ -18,7 +18,6 @@ import java.util.Date;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public class BaseEntity implements Serializable {
-    // TODO : config DateTimeProvider class for createdDate and lastModifiedDate, createdBy, lastModifiedBy
     @Temporal(TemporalType.TIMESTAMP)
     @CreatedDate
     private Date createdDate;

@@ -26,6 +26,10 @@ public class CategoryCommandLineRunnerImpl implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
+        //createXampleCategories();
+    }
+
+    private void createXampleCategories() {
         Date date = new Date();
         // Create parent category
         Category parentCategory = new Category();
