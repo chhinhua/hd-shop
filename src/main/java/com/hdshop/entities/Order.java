@@ -1,5 +1,6 @@
 package com.hdshop.entities;
 
+import com.hdshop.utils.EnumOrderStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 
 @Getter
@@ -24,16 +26,16 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String address;
-
-    private String phoneNumber;
-
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private EnumOrderStatus status;
 
     private BigDecimal total;
 
     private String note;
 
+    private Boolean isPaidBefore = false;
+
+    // TODO thiết kết kiểu thanh toán (enum or string)
     private String paymentType;
 
     @CreatedBy
@@ -45,6 +47,10 @@ public class Order extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id")
+    private Address address;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<Review> reviews = new ArrayList<>();

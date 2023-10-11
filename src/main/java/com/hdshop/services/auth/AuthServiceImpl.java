@@ -1,6 +1,6 @@
 package com.hdshop.services.auth;
 
-import com.hdshop.dtos.RegisterDTO;
+import com.hdshop.dtos.auth.RegisterDTO;
 import com.hdshop.entities.Role;
 import com.hdshop.entities.User;
 import com.hdshop.exceptions.APIException;

@@ -1,6 +1,6 @@
 package com.hdshop.controllers;
 
-import com.hdshop.dtos.UserDTO;
+import com.hdshop.dtos.user.UserDTO;
 import com.hdshop.services.user.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
