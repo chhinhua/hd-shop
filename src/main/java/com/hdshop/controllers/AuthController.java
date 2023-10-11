@@ -1,6 +1,6 @@
 package com.hdshop.controllers;
 
-import com.hdshop.dtos.RegisterDTO;
+import com.hdshop.dtos.auth.RegisterDTO;
 import com.hdshop.services.auth.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

@@ -1,8 +1,6 @@
-package com.hdshop.dtos;
+package com.hdshop.dtos.auth;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +11,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegisterDTO {
-    @NotEmpty(message = "Username is required")
+    @NotBlank(message = "Username is required")
+    @Pattern(regexp = "^[a-zA-Z0-9]{4,}$", message = "Tên người dùng không hợp lệ")
     private String username;
 
     @NotEmpty(message = "First name is required")

@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.validator.constraints.Range;
 
 import java.util.Date;
 
@@ -21,12 +22,12 @@ public class Review extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false,
+            columnDefinition = "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String content;
 
-    @DecimalMin(value = "0", inclusive = true, message = "${value-must-not-be-less-than}, 0")
-    @DecimalMax(value = "5", inclusive = true, message = "${value-must-not-be-larger-than}, 5")
-    private Float rating;
+    @Range(min = 0, max = 5, message = "Giá trị stars phải nằm trong khoảng từ 0 đến 5")
+    private Integer stars;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

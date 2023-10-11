@@ -22,12 +22,11 @@
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
-        @Column(nullable = false)
+        @Column(nullable = false, unique = true)
         private String name;
 
+        @Column(columnDefinition = "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
         private String description;
-
-        private String brand;
 
         private String slug;
 
@@ -35,21 +34,21 @@
 
         private BigDecimal promotionalPrice;
 
-        private Integer quantity;
+        private int quantity = 0;
 
-        private Integer quantityAvailable;
+        private int quantityAvailable = 0;
 
-        private Integer sold;
+        private int sold = 0;
 
-        private Float rating;
+        private float rating;
 
-        private Integer numberOfRatings;
+        private int numberOfRatings = 0;
 
-        private Integer favoriteCount;
+        private int favoriteCount = 0;
 
-        private boolean isActive = true;
+        private Boolean isActive = true;
 
-        private boolean isSelling;
+        private Boolean isSelling = true;
 
         @CreatedBy
         private String createdBy;
@@ -66,7 +65,7 @@
         private Category category;
 
         @OneToMany(mappedBy = "product")
-        private Set<Review> reviews;
+        private List<Review> reviews = new ArrayList<>();
 
         @OneToMany(mappedBy = "product")
         private List<OrderItem> orderItems = new ArrayList<>();

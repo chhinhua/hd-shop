@@ -30,6 +30,7 @@ public class Category extends BaseEntity {
 
     private String slug;
 
+    @Column(columnDefinition = "LONGTEXT")
     private String description;
 
     @CreatedBy

@@ -27,7 +27,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
-		createXampleUser();
+		//createXampleUser();
 	}
 
 	private void createXampleUser() {
@@ -40,7 +40,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		user.setId_card("123456789");
 		user.setPhoneNumber("123456789");
 		user.setGender("Male");
-		user.setAvatar("avatar-url");
+		user.setAvatarUrl("avatar-url");
 
 		// create new address
 		Address address = new Address();

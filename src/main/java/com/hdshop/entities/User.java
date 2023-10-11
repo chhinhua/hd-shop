@@ -1,5 +1,6 @@
 package com.hdshop.entities;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -27,7 +29,7 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String password;
 
     private String firstName;
@@ -37,16 +39,23 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(unique = true)
     private String id_card;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String phoneNumber;
 
     private String gender;
 
-    private String avatar;
+    private LocalDate dateOfBirth;
 
-    private boolean isEnable = false;
+    private String avatarUrl;
+
+    private Boolean isEnabled = false;
+
+    private Boolean isEmailActive = false;
+
+    private Boolean isPhoneActive = false;
 
     @CreatedBy
     private String createdBy;
