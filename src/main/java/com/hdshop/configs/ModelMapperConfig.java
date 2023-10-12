@@ -14,9 +14,9 @@ public class ModelMapperConfig {
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration()
                 .setMatchingStrategy(MatchingStrategies.STRICT);
-        /*
+
         modelMapper.typeMap(Category.class, CategoryDTO.class)
-                .addMappings(mapper -> mapper.map(src -> src.getParent().getId(), CategoryDTO::setParentId));*/
+                .addMappings(mapper -> mapper.map(src -> src.getParent().getId(), CategoryDTO::setParentId));
 
         return modelMapper;
     }
