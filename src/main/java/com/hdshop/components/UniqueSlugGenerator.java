@@ -1,24 +1,31 @@
-package com.hdshop.utils;
+package com.hdshop.components;
 import com.github.slugify.Slugify;
+import com.hdshop.entities.BaseEntity;
+import com.hdshop.entities.Category;
+import com.hdshop.entities.Product;
 import com.hdshop.repositories.CategoryRepository;
 import com.hdshop.repositories.ProductRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UniqueSlugGenerator {
-
     private final Slugify slugify;
-
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
 
-    public UniqueSlugGenerator(Slugify slugify, CategoryRepository categoryRepository,
+    private UniqueSlugGenerator(Slugify slugify, CategoryRepository categoryRepository,
                                ProductRepository productRepository) {
         this.slugify = slugify;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
     }
 
+    /**
+     * Generate the Unique Slug for category
+     * @param baseSlug
+     * @return unique slug have been generated
+     */
     public String generateUniqueCategorySlug(String baseSlug) {
         String generatedSlug = baseSlug;
         int counter = 1;
@@ -31,7 +38,12 @@ public class UniqueSlugGenerator {
         return generatedSlug;
     }
 
-    public String generateUniqueProductSlug(String baseSlug) {
+    /**
+     * Generate the Unique Slug for product
+     * @param baseSlug
+     * @return unique slug have been generated
+     */
+    private String generateUniqueProductSlug(String baseSlug) {
         String generatedSlug = baseSlug;
         int counter = 1;
 
@@ -41,5 +53,21 @@ public class UniqueSlugGenerator {
         }
 
         return generatedSlug;
+    }
+
+
+    public <T extends BaseEntity> String generateUniqueSlug(T entity, String name) {
+        String baseSlug = slugify.slugify(name);
+        String uniqueSlug;
+
+        if (entity instanceof Product) {
+            uniqueSlug = generateUniqueProductSlug(baseSlug);
+        } else if (entity instanceof Category) {
+            uniqueSlug = generateUniqueCategorySlug(baseSlug);
+        } else {
+            throw new IllegalArgumentException("Unsupported entity type");
+        }
+
+        return uniqueSlug;
     }
 }

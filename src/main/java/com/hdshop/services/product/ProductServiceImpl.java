@@ -1,6 +1,7 @@
 package com.hdshop.services.product;
 
 import com.github.slugify.Slugify;
+import com.hdshop.components.UniqueSlugGenerator;
 import com.hdshop.dtos.product.CreateProductDTO;
 import com.hdshop.dtos.product.ProductDTO;
 import com.hdshop.dtos.product.ProductResponse;
@@ -26,12 +27,14 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
     private final Slugify slugify;
+    private final UniqueSlugGenerator slugGenerator;
 
-    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, ModelMapper modelMapper, Slugify slugify) {
+    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, ModelMapper modelMapper, Slugify slugify, UniqueSlugGenerator slugGenerator) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.modelMapper = modelMapper;
         this.slugify = slugify;
+        this.slugGenerator = slugGenerator;
     }
 
     /**
@@ -49,7 +52,9 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product product = modelMapper.map(createProductDTO, Product.class);
-        product.setSlug(slugify.slugify(product.getName()));
+
+        String uniqueSlug = slugGenerator.generateUniqueSlug(product, product.getName());
+        product.setSlug(uniqueSlug);
         product.setCategory(category);
 
         Product newProduct = productRepository.save(product);

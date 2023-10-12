@@ -3,10 +3,11 @@ package com.hdshop.services.category;
 import com.github.slugify.Slugify;
 import com.hdshop.dtos.CategoryDTO;
 import com.hdshop.entities.Category;
+import com.hdshop.entities.Product;
 import com.hdshop.exceptions.APIException;
 import com.hdshop.exceptions.ResourceNotFoundException;
 import com.hdshop.repositories.CategoryRepository;
-import com.hdshop.utils.UniqueSlugGenerator;
+import com.hdshop.components.UniqueSlugGenerator;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,11 @@ public class CategoryServiceImpl implements CategoryService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Get a single category by id or slug
+     * @param identifier (id or slug)
+     * @return CategoryDTO instance
+     */
     @Override
     public CategoryDTO getCategoryByIdOrSlug(String identifier) {
         Category category;
@@ -59,25 +65,6 @@ public class CategoryServiceImpl implements CategoryService {
         return mapToDTO(category);
     }
 
-    /**
-     * Query Category by id
-     *
-     * @param id
-     * @return a CategoryDTO
-     */
-    @Override
-    public CategoryDTO getCategoryById(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
-        return mapToDTO(category);
-    }
-
-    @Override
-    public CategoryDTO getCategoryBySlug(String slug) {
-        Category category = categoryRepository.findBySlug(slug.trim())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "slug", slug));
-        return mapToDTO(category);
-    }
 
     /**
      * Create new category
@@ -86,7 +73,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @return categoryDTO instance
      */
     @Override
-    public CategoryDTO addCategory(CategoryDTO categoryDTO) {
+    public CategoryDTO createCategory(CategoryDTO categoryDTO) {
         // check category name exists in database
         if (categoryRepository.existsCategoryByName(categoryDTO.getName())) {
             throw new APIException(HttpStatus.BAD_REQUEST, "Category name is already exists");
@@ -94,7 +81,8 @@ public class CategoryServiceImpl implements CategoryService {
 
         Category category = mapToEntity(categoryDTO);
 
-        setUniqueSlug(category);
+        String uniqueSlug = slugGenerator.generateUniqueSlug(category, category.getName());
+        category.setSlug(uniqueSlug);
         setParentById(categoryDTO.getParentId(), category);
 
         Category newCategory = categoryRepository.save(category);
@@ -121,8 +109,11 @@ public class CategoryServiceImpl implements CategoryService {
 
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
-        setUniqueSlug(category);
         setParentById(categoryDTO.getParentId(), category);
+
+        String uniqueSlug = slugGenerator.generateUniqueSlug(category, category.getName());
+        category.setSlug(uniqueSlug);
+
 
         Category updateCategory = categoryRepository.save(category);
 

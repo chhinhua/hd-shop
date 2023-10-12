@@ -9,11 +9,7 @@ public interface CategoryService {
 
     CategoryDTO getCategoryByIdOrSlug(final String identifier);
 
-    CategoryDTO getCategoryById(final Long id);
-
-    CategoryDTO getCategoryBySlug(final String slug);
-
-    CategoryDTO addCategory(final CategoryDTO categoryDTO);
+    CategoryDTO createCategory(final CategoryDTO categoryDTO);
 
     CategoryDTO updateCategory(final Long id, final CategoryDTO categoryDTO);
 
