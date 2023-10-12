@@ -104,7 +104,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     /**
-     * Set the category parent data for category instance from the categoryDTO_id
+     * Set the category parent for category from the categoryDTO_id
      * @param id
      * @param category
      */
