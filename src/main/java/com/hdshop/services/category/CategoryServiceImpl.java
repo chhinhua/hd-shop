@@ -6,6 +6,7 @@ import com.hdshop.entities.Category;
 import com.hdshop.exceptions.APIException;
 import com.hdshop.exceptions.ResourceNotFoundException;
 import com.hdshop.repositories.CategoryRepository;
+import com.hdshop.utils.UniqueSlugGenerator;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,11 +20,13 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
     private final Slugify slugify;
+    private final UniqueSlugGenerator slugGenerator;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository, ModelMapper modelMapper, Slugify slugify) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, ModelMapper modelMapper, Slugify slugify, UniqueSlugGenerator slugGenerator) {
         this.categoryRepository = categoryRepository;
         this.modelMapper = modelMapper;
         this.slugify = slugify;
+        this.slugGenerator = slugGenerator;
     }
 
     /**
@@ -41,6 +44,21 @@ public class CategoryServiceImpl implements CategoryService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public CategoryDTO getCategoryByIdOrSlug(String identifier) {
+        Category category;
+        try {
+            Long id = Long.parseLong(identifier.trim());
+            category = categoryRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+        } catch (NumberFormatException e) {
+            category = categoryRepository.findBySlug(identifier.trim())
+                    .orElseThrow(() -> new ResourceNotFoundException("Category", "slug", identifier));
+        }
+
+        return mapToDTO(category);
+    }
+
     /**
      * Query Category by id
      *
@@ -51,7 +69,14 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDTO getCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
-        return modelMapper.map(category, CategoryDTO.class);
+        return mapToDTO(category);
+    }
+
+    @Override
+    public CategoryDTO getCategoryBySlug(String slug) {
+        Category category = categoryRepository.findBySlug(slug.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "slug", slug));
+        return mapToDTO(category);
     }
 
     /**
@@ -68,7 +93,8 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         Category category = mapToEntity(categoryDTO);
-        category.setSlug(slugify.slugify(category.getName()));
+
+        setUniqueSlug(category);
         setParentById(categoryDTO.getParentId(), category);
 
         Category newCategory = categoryRepository.save(category);
@@ -95,12 +121,21 @@ public class CategoryServiceImpl implements CategoryService {
 
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
-        category.setSlug(slugify.slugify(categoryDTO.getName()));
+        setUniqueSlug(category);
         setParentById(categoryDTO.getParentId(), category);
 
         Category updateCategory = categoryRepository.save(category);
 
         return mapToDTO(updateCategory);
+    }
+
+    /**
+     * Set the unique slug
+     * @param category
+     */
+    private void setUniqueSlug(Category category) {
+        String uniqueSlug = slugGenerator.generateUniqueCategorySlug(slugify.slugify(category.getName()));
+        category.setSlug(uniqueSlug);
     }
 
     /**
