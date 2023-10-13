@@ -1,8 +1,8 @@
 package com.hdshop.init;
 
 import com.github.slugify.Slugify;
-import com.hdshop.entities.Category;
-import com.hdshop.repositories.CategoryRepository;
+import com.hdshop.entity.Category;
+import com.hdshop.repository.CategoryRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 

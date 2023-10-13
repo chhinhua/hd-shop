@@ -1,13 +1,12 @@
 package com.hdshop.init;
 
-import com.hdshop.entities.Address;
-import com.hdshop.entities.Role;
-import com.hdshop.entities.User;
-import com.hdshop.repositories.UserRepository;
+import com.hdshop.entity.Address;
+import com.hdshop.entity.Role;
+import com.hdshop.entity.User;
+import com.hdshop.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
