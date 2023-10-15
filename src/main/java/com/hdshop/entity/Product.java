@@ -75,4 +75,7 @@
 
         @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
         private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
+
+        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+        private List<Variant> variants = new ArrayList<>();
     }
