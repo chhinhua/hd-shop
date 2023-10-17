@@ -6,11 +6,11 @@ import com.hdshop.dto.product.CreateProductDTO;
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Category;
-import com.hdshop.entity.Product;
+import com.hdshop.entity.product.Product;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
-import com.hdshop.repository.ProductRepository;
+import com.hdshop.repository.product.ProductRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,19 +39,19 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Create new product
-     * @param createProductDTO (CreateProductDTO object)
+     * @param dto (CreateProductDTO object)
      * @return ProductDTO object
      */
     @Override
-    public ProductDTO createProduct(CreateProductDTO createProductDTO) {
-        Category category = categoryRepository.findById(createProductDTO.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", createProductDTO.getCategoryId()));
+    public ProductDTO createProduct(CreateProductDTO dto) {
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", dto.getCategoryId()));
 
-        if (productRepository.existsProductByName(createProductDTO.getName())) {
+        if (productRepository.existsProductByName(dto.getName())) {
             throw  new APIException(HttpStatus.BAD_REQUEST, "Product by name already exists");
         }
 
-        Product product = modelMapper.map(createProductDTO, Product.class);
+        Product product = modelMapper.map(dto, Product.class);
 
         String uniqueSlug = slugGenerator.generateUniqueSlug(product, product.getName());
         product.setSlug(uniqueSlug);
@@ -67,7 +67,7 @@ public class ProductServiceImpl implements ProductService {
         // create Pageable instances
         Pageable pageable = PageRequest.of(pageNo-1, pageSize);
 
-        Page<Product> productPage = productRepository.findAll(pageable);
+        Page<Product> productPage = productRepository.findAllByIsActiveIsTrue(pageable);
 
         // get content for page object
         List<Product> productList = productPage.getContent();
