@@ -1,6 +1,5 @@
 package com.hdshop.exception;
 
-
 import org.springframework.http.HttpStatus;
 
 public class APIException extends RuntimeException {

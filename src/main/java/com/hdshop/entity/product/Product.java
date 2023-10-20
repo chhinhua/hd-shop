@@ -1,5 +1,6 @@
-    package com.hdshop.entity;
+    package com.hdshop.entity.product;
 
+    import com.hdshop.entity.*;
     import jakarta.persistence.*;
     import lombok.AllArgsConstructor;
     import lombok.Getter;
@@ -64,18 +65,21 @@
         @JoinColumn(name = "category_id")
         private Category category;
 
-        @OneToMany(mappedBy = "product")
+        @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
         private List<Review> reviews = new ArrayList<>();
 
-        @OneToMany(mappedBy = "product")
+        @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
         private List<OrderItem> orderItems = new ArrayList<>();
 
-        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+        @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
         private List<CartItem> cartItems = new ArrayList<>();
 
-        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+        @OneToMany(mappedBy = "product")
         private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
 
         @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-        private List<Variant> variants = new ArrayList<>();
+        private List<Option> options = new ArrayList<>();
+
+        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+        private List<ProductSku> skus = new ArrayList<>();
     }

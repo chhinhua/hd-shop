@@ -1,10 +1,8 @@
 package com.hdshop.dto.product;
 
-import com.hdshop.entity.CartItem;
-import com.hdshop.entity.OrderItem;
-import com.hdshop.entity.Review;
-import com.hdshop.entity.UserFollowProduct;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,19 +24,26 @@ public class ProductDTO {
     @Size(max = 1000, message = "Product description must not exceed 1000 characters")
     private String description;
 
-    private String slug;
-
     private BigDecimal price;
+
+    @Min(value = 1, message = "Quantity must be larger than 1")
+    @NotNull(message = "Quantity is required")
+    private Integer quantity;
+
+    @Min(value = 1, message = "Quantity must be larger than 1")
+    @NotNull(message = "Quantity is required")
+    private int quantityAvailable;
+
+    @NotNull(message = "CategoryId is required")
+    private Long categoryId;
+
+    private String slug;
 
     private BigDecimal promotionalPrice;
 
-    private int quantity = 0;
-
-    private int quantityAvailable = 0;
-
     private int sold = 0;
 
-    private float rating;
+    private float rating = 0;
 
     private int numberOfRatings = 0;
 
@@ -54,13 +59,7 @@ public class ProductDTO {
 
     private List<String> listImages = new ArrayList<String>();
 
-    private Long categoryId;
+    private List<OptionDTO> options = new ArrayList<>();
 
-    private List<Review> reviews = new ArrayList<>();
-
-    private List<OrderItem> orderItems = new ArrayList<>();
-
-    private List<CartItem> cartItems = new ArrayList<>();
-
-    private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
+    private List<ProductSkuDTO> skus = new ArrayList<>();
 }

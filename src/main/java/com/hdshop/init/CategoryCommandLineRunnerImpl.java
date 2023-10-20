@@ -26,7 +26,7 @@ public class CategoryCommandLineRunnerImpl implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
-        //createXampleCategories();
+        createXampleCategories();
     }
 
     private void createXampleCategories() {

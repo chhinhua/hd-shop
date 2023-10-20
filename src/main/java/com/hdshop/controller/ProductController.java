@@ -3,6 +3,7 @@ package com.hdshop.controller;
 import com.hdshop.dto.product.CreateProductDTO;
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
+import com.hdshop.entity.product.Product;
 import com.hdshop.service.product.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class ProductController {
      */
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody CreateProductDTO dto) {
-        ProductDTO saveProduct = productService.createProduct(dto);
+        ProductDTO saveProduct = productService.createProduct2(dto);
         return new ResponseEntity<>(saveProduct, HttpStatus.CREATED);
     }
 

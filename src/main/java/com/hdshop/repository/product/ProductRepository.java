@@ -1,4 +1,4 @@
-package com.hdshop.repository;
+package com.hdshop.repository.product;
 
 import com.hdshop.entity.product.Product;
 import org.springframework.data.domain.Page;

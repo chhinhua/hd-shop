@@ -1,5 +1,6 @@
 package com.hdshop.entity;
 
+import com.hdshop.entity.product.Product;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -40,9 +41,9 @@ public class Category extends BaseEntity {
     @JoinColumn(name = "parent_id")
     private Category parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.PERSIST)
     private List<Category> children = new ArrayList<>();
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "category", cascade = CascadeType.PERSIST)
     private List<Product> products = new ArrayList<>();
 }

@@ -23,10 +23,18 @@ public class CreateProductDTO {
 
     @Min(value = 1, message = "Quantity must be larger than 1")
     @NotNull(message = "Quantity is required")
-    private int quantity;
+    private Integer quantity;
+
+    @Min(value = 1, message = "Quantity must be larger than 1")
+    @NotNull(message = "Quantity is required")
+    private int quantityAvailable;
 
     private List<String> listImages = new ArrayList<String>();
 
     @NotNull(message = "CategoryId is required")
     private Long categoryId;
+
+    private List<OptionDTO> options = new ArrayList<>();
+
+    private List<ProductSkuDTO> skus = new ArrayList<>();
 }
