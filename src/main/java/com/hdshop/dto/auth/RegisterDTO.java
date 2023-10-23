@@ -1,5 +1,6 @@
 package com.hdshop.dto.auth;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Hidden
 public class RegisterDTO {
     @NotBlank(message = "Username is required")
     @Pattern(regexp = "^[a-zA-Z0-9]{4,}$", message = "Tên người dùng không hợp lệ")

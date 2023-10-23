@@ -1,5 +1,6 @@
 package com.hdshop.dto.product;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,6 +16,7 @@ import java.util.List;
 @Setter
 @Getter
 @NoArgsConstructor
+@Hidden
 public class ProductDTO {
     private Long id;
     @NotBlank(message = "Product name must not be empty")

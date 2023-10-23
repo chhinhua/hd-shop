@@ -5,20 +5,15 @@ import com.hdshop.entity.Category;
 import com.hdshop.entity.product.Product;
 import com.hdshop.repository.CategoryRepository;
 import com.hdshop.repository.product.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class UniqueSlugGenerator {
     private final Slugify slugify;
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
-
-    private UniqueSlugGenerator(Slugify slugify, CategoryRepository categoryRepository,
-                               ProductRepository productRepository) {
-        this.slugify = slugify;
-        this.categoryRepository = categoryRepository;
-        this.productRepository = productRepository;
-    }
 
     /**
      * Generate the Unique Slug for category

@@ -16,7 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "option_values")
 public class OptionValue {
-   @EmbeddedId
+    @EmbeddedId
     private OptionValueId optionValueId;
 
     @Column(name = "value_name")

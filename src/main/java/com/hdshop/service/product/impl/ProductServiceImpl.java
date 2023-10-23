@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -61,7 +62,7 @@ public class ProductServiceImpl implements ProductService {
         Product newProduct = productRepository.save(product);
 
         // Thêm Options
-        optionService.addOptions(product, product.getOptions());
+        //optionService.addOptions(product, product.getOptions());
 
         // Thêm Sku
 
@@ -69,15 +70,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductDTO createProduct1(CreateProductDTO dto) {
-        /*Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", dto.getCategoryId()));
+    public ProductDTO createProduct1(Product product) {
+        Category category = categoryRepository.findById(product.getCategory().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", product.getCategory().getId()));
 
-        if (productRepository.existsProductByName(dto.getName())) {
+        if (productRepository.existsProductByName(product.getName())) {
             throw  new APIException(HttpStatus.BAD_REQUEST, "Product by name already exists");
         }
-
-        Product product = modelMapper.map(dto, Product.class);
 
         String uniqueSlug = slugGenerator.generateUniqueSlug(product, product.getName());
         product.setSlug(uniqueSlug);
@@ -86,34 +85,7 @@ public class ProductServiceImpl implements ProductService {
         // Lưu thông tin sản phẩm
         Product newProduct = productRepository.save(product);
 
-        // Lấy danh sách optionDTO từ productDTO chuyển hết thành Option entity
-        List<Option> optionsFromDTO = dto.getOptions()
-                .stream()
-                .map((optionDTO) -> modelMapper.map(optionDTO, Option.class))
-                .collect(Collectors.toList());
-
-        // Lưu thông tin Options
-        List<Option> options = optionService.addOptions(product, optionsFromDTO);
-        product.setOptions(options);
-
-        // Lưu thôgn tin OptionValues
-        List<OptionValue> optionValues = optionValueService.addOptionValues(product, options, dto.getOptions());
-
-        // Lấy danh sách OptionValueDTO từ productDTO chuyển hết thành OptionValue entity
-
-        // Lấy danh sách SkuDTO từ productDTO chuyển hết thành ProductSku entity
-        List<ProductSku> productSkuFromDTO = dto.getSkus()
-                .stream()
-                .map((skuDTO) -> modelMapper.map(skuDTO, ProductSku.class))
-                .collect(Collectors.toList());
-
-        // Lưu thông tin ProductSkus
-        List<ProductSku> productSkus = productSkuService.addProductSkus(product, productSkuFromDTO);
-        product.setProductSkus(productSkus);
-
-        return mapToDTO(newProduct);*/
-
-        return null;
+        return mapToDTO(newProduct);
     }
 
     @Override
@@ -193,6 +165,14 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setLast(productPage.isLast());
 
         return productResponse;
+    }
+
+    @Override
+    public ProductDTO getOne(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+
+        return mapToDTO(product);
     }
 
     /**

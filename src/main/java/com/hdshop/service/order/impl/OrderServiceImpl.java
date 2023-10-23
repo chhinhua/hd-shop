@@ -1,7 +1,6 @@
 package com.hdshop.service.order.impl;
 
-import com.hdshop.dto.CategoryDTO;
-import com.hdshop.dto.OrderDTO;
+import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.entity.Address;
 import com.hdshop.entity.Category;
 import com.hdshop.entity.Order;
@@ -50,21 +49,20 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * Convert Order DTO to Order entity
-     *
-     * @param orderDTO
-     * @return Order entity object
+     * Delete Order by orderId
+     * @param orderId
      */
+    @Override
+    public void deleteOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+        orderRepository.delete(order);
+    }
+
     private Order mapToEntity(OrderDTO orderDTO) {
         return modelMapper.map(orderDTO, Order.class);
     }
 
-    /**
-     * Convert Order entity to Order DTO class
-     *
-     * @param order
-     * @return OrderDTO object
-     */
     private OrderDTO mapToDTO(Order order) {
         return modelMapper.map(order, OrderDTO.class);
     }

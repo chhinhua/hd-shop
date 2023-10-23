@@ -21,7 +21,7 @@ public class OptionValueId implements Serializable {
     @Column(name = "option_id")
     private Long optionId;
 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "value_id")
     private Long valueId;
 }

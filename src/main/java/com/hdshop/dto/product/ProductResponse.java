@@ -1,5 +1,6 @@
 package com.hdshop.dto.product;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +11,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Hidden
 @Schema(description = "Product Response Information")
 public class ProductResponse {
     @Schema(description = "Post Content")

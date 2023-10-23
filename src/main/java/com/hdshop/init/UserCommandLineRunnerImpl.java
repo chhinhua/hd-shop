@@ -26,7 +26,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
-		createXampleUser();
+		//createXampleUser();
 	}
 
 	private void createXampleUser() {

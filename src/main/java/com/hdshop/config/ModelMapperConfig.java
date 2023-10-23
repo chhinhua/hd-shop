@@ -1,17 +1,9 @@
 package com.hdshop.config;
 
-import com.hdshop.dto.CategoryDTO;
-import com.hdshop.dto.product.ProductDTO;
-import com.hdshop.entity.Category;
-import com.hdshop.entity.product.Product;
-import org.modelmapper.Converter;
+import com.hdshop.component.CreateProductDTOToProductConverter;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Configuration
 public class ModelMapperConfig {
@@ -26,18 +18,10 @@ public class ModelMapperConfig {
         modelMapper.typeMap(Product.class, ProductDTO.class)
                 .addMappings(mapper -> mapper.map(src -> src.getCategory().getId(), ProductDTO::setCategoryId));*/
 
-        /*Converter<List<?>, ArrayList<?>> listConverter = context -> {
-            List<?> source = context.getSource();
-            if (source == null) return null;
-            return new ArrayList<>(source);
-        };
+        // Định nghĩa Converter và tiêm ModelMapper vào để sử dụng trong Converter
+        CreateProductDTOToProductConverter converter = new CreateProductDTOToProductConverter(modelMapper);
+        modelMapper.addConverter(converter);
 
-        modelMapper.createTypeMap(Product.class, ProductDTO.class)
-                .addMappings(mapper -> {
-                    mapper.using(listConverter).map(Product::getOptions, ProductDTO::setOptions);
-                    mapper.using(listConverter).map(Product::getSkus, ProductDTO::setSkus);
-                });
-*/
         return modelMapper;
     }
 }

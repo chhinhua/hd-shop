@@ -1,9 +1,6 @@
-package com.hdshop.dto;
+package com.hdshop.dto.order;
 
-import com.hdshop.entity.Address;
-import com.hdshop.entity.OrderItem;
-import com.hdshop.entity.Review;
-import com.hdshop.entity.User;
+import com.hdshop.dto.AddressDTO;
 import com.hdshop.utils.EnumOrderStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -11,8 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.LastModifiedBy;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

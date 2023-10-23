@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import java.util.Optional;
 
 @Configuration
-//@EnableJpaAuditing(dateTimeProviderRef = "dateTimeProvider")
 @EnableJpaAuditing
 public class AuditingConfig implements AuditorAware<String> {
     @Override
@@ -25,9 +24,4 @@ public class AuditingConfig implements AuditorAware<String> {
 
         return Optional.of("system");
     }
-
-   /* @Bean
-    public DateTimeProvider dateTimeProvider() {
-        return new CustomDateTimeProvider();
-    }*/
 }
