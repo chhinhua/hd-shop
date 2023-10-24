@@ -2,7 +2,7 @@ package com.hdshop.dto.order;
 
 import com.hdshop.dto.AddressDTO;
 import com.hdshop.utils.EnumOrderStatus;
-import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,8 +20,8 @@ import java.util.List;
 public class OrderDTO {
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private EnumOrderStatus status = EnumOrderStatus.PENDING_PROCESSING;
+    @NotBlank
+    private String status = EnumOrderStatus.PENDING_PROCESSING.getKey();
 
     @NotNull(message = "Total price must be not null and larger or equal to zero")
     private BigDecimal total;

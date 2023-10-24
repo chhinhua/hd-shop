@@ -17,11 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
     private final OrderService orderService;
 
-    /**
-     * Create new order
-     * @param orderDTO
-     * @return
-     */
     @Operation(summary = "Create new order")
     @PostMapping
     public ResponseEntity<OrderDTO> createOrder(@Valid @RequestBody OrderDTO orderDTO) {
@@ -34,5 +29,19 @@ public class OrderController {
     public ResponseEntity<String> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrderById(id);
         return ResponseEntity.ok("Order deleted successfully");
+    }
+
+    @Operation(summary = "Get single order by id")
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
+        OrderDTO order = orderService.getOrderById(id);
+        return ResponseEntity.ok(order);
+    }
+
+    @Operation(summary = "Update order status by id")
+    @PutMapping("{id}/status")
+    public ResponseEntity<OrderDTO> updateStatus(@PathVariable Long id,
+                                                 @RequestParam String status) {
+        return ResponseEntity.ok(orderService.updateStatus(id, status));
     }
 }

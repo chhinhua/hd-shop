@@ -24,8 +24,8 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private EnumOrderStatus status;
+    @Column(nullable = false)
+    private String status;
 
     private BigDecimal total;
 

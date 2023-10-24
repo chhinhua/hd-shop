@@ -10,6 +10,7 @@ import com.hdshop.repository.AddressRepository;
 import com.hdshop.repository.OrderRepository;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.service.order.OrderService;
+import com.hdshop.utils.EnumOrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,61 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
         orderRepository.delete(order);
     }
+
+    /**
+     * Get the order by identifier
+     * @param orderId
+     * @return
+     */
+    @Override
+    public OrderDTO getOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+        String statusValue = convertKeyToValue(order.getStatus());
+
+        OrderDTO orderDTO = mapToDTO(order);
+        orderDTO.setStatus(statusValue);
+
+        return orderDTO;
+    }
+
+    /**
+     * Update status for the order
+     * @param orderId
+     * @param statusKey
+     * @return OrderDTO
+     */
+    @Override
+    public OrderDTO updateStatus(Long orderId, String statusKey) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+        // thay đổi nếu trạng thái khác trạng thái hiện tại
+        if (!order.getStatus().equals(statusKey)) {
+            for (EnumOrderStatus status : EnumOrderStatus.values()) {
+                if (status.getKey().toLowerCase().equals(statusKey.toLowerCase())) {
+                    order.setStatus(status.getKey());
+                    orderRepository.save(order);
+                }
+            }
+        }
+
+        OrderDTO orderDTO = mapToDTO(order);
+        orderDTO.setStatus(convertKeyToValue(order.getStatus()));
+
+        return orderDTO;
+    }
+
+    public String convertKeyToValue(String key) {
+        for (EnumOrderStatus status : EnumOrderStatus.values()) {
+            if (status.getKey().equals(key)) {
+                return status.getValue();
+            }
+        }
+        return null;
+    }
+
 
     private Order mapToEntity(OrderDTO orderDTO) {
         return modelMapper.map(orderDTO, Order.class);
