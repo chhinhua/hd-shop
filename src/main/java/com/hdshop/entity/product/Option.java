@@ -18,19 +18,15 @@ import java.util.List;
 public class Option {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "option_id")
     private Long optionId;
 
-    @Column(name = "option_name")
+    @Column(nullable = false)
     private String optionName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToMany(mappedBy = "option", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "option", cascade = CascadeType.PERSIST)
     private List<OptionValue> values = new ArrayList<>();
-
-    @OneToMany(mappedBy = "option", cascade = CascadeType.ALL)
-    private List<SkuValue> skuValues = new ArrayList<>();
 }

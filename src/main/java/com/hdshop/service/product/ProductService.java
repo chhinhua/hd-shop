@@ -6,11 +6,7 @@ import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.product.Product;
 
 public interface ProductService {
-    ProductDTO createProduct(final CreateProductDTO dto);
-
-    ProductDTO createProduct1(final Product product);
-
-    ProductDTO createProduct2(final CreateProductDTO dto);
+    ProductDTO createProduct(final Product product);
 
     ProductResponse getAllProducts(final int pageNo, final int pageSize);
 

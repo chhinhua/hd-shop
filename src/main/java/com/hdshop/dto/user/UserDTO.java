@@ -21,8 +21,11 @@ import java.util.Date;
 public class UserDTO {
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @NotBlank(message = "Username is required")
     private String username;
+
+    @NotBlank(message = "Password is required")
+    private String password;
 
     private String firstName;
 

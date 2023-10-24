@@ -1,4 +1,4 @@
-package com.hdshop.repository;
+package com.hdshop.repository.order;
 
 import com.hdshop.entity.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;

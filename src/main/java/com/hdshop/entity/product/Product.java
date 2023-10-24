@@ -21,9 +21,9 @@
     public class Product extends BaseEntity {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
+        private Long productId;
 
-        @Column(nullable = false, unique = true)
+        @Column(nullable = false)
         private String name;
 
         @Column(columnDefinition = "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
@@ -77,9 +77,9 @@
         @OneToMany(mappedBy = "product")
         private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
 
-        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+        @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
         private List<Option> options = new ArrayList<>();
 
-        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+        @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
         private List<ProductSku> skus = new ArrayList<>();
     }

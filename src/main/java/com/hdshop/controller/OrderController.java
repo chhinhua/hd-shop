@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Order")
 @RequiredArgsConstructor
 @RestController
@@ -38,10 +40,25 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
-    @Operation(summary = "Update order status by id")
+    @Operation(
+            summary = "Update order status by id",
+            description = "Update order status by one of values {CANCELED, DELIVERED, ,CANCELED, PROCESSING, PENDING_PROCESSING}"
+    )
     @PutMapping("{id}/status")
     public ResponseEntity<OrderDTO> updateStatus(@PathVariable Long id,
                                                  @RequestParam String status) {
         return ResponseEntity.ok(orderService.updateStatus(id, status));
+    }
+
+    @Operation(summary = "Get list order of user by username")
+    @GetMapping("/user")
+    public ResponseEntity<List<OrderDTO>> getOrdersByUsername(@RequestParam String username) {
+        return ResponseEntity.ok(orderService.getOrdersByUsername(username));
+    }
+
+    @Operation(summary = "Get list order of user by userId")
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
 }

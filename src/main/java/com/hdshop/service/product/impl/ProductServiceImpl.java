@@ -32,110 +32,21 @@ public class ProductServiceImpl implements ProductService {
     private final OptionService optionService;
     private final ProductSkuService productSkuService;
     private final OptionValueService optionValueService;
-    private final SkuValueService skuValueService;
     private final ModelMapper modelMapper;
     private final Slugify slugify;
     private final UniqueSlugGenerator slugGenerator;
     private final OptionRepository optionRepository;
 
-    /**
-     * Create new product
-     * @param dto (CreateProductDTO object)
-     * @return ProductDTO object
-     */
     @Override
-    public ProductDTO createProduct(CreateProductDTO dto) {
-        Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", dto.getCategoryId()));
-
-        if (productRepository.existsProductByName(dto.getName())) {
-            throw  new APIException(HttpStatus.BAD_REQUEST, "Product by name already exists");
-        }
-
-        Product product = modelMapper.map(dto, Product.class);
-
-        String uniqueSlug = slugGenerator.generateUniqueSlug(product, product.getName());
-        product.setSlug(uniqueSlug);
-        product.setCategory(category);
-
-        // Lưu thông tin sản phẩm
-        Product newProduct = productRepository.save(product);
-
-        // Thêm Options
-        //optionService.addOptions(product, product.getOptions());
-
-        // Thêm Sku
-
-        return mapToDTO(newProduct);
-    }
-
-    @Override
-    public ProductDTO createProduct1(Product product) {
+    public ProductDTO createProduct(Product product) {
         Category category = categoryRepository.findById(product.getCategory().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", product.getCategory().getId()));
 
-        if (productRepository.existsProductByName(product.getName())) {
-            throw  new APIException(HttpStatus.BAD_REQUEST, "Product by name already exists");
-        }
-
         String uniqueSlug = slugGenerator.generateUniqueSlug(product, product.getName());
         product.setSlug(uniqueSlug);
         product.setCategory(category);
 
         // Lưu thông tin sản phẩm
-        Product newProduct = productRepository.save(product);
-
-        return mapToDTO(newProduct);
-    }
-
-    @Override
-    public ProductDTO createProduct2(CreateProductDTO createProductDTO) {
-        Category category = categoryRepository.findById(createProductDTO.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", createProductDTO.getCategoryId()));
-
-        if (productRepository.existsProductByName(createProductDTO.getName())) {
-            throw  new APIException(HttpStatus.BAD_REQUEST, "Product by name already exists");
-        }
-
-        Product product = modelMapper.map(createProductDTO, Product.class);
-
-        String uniqueSlug = slugGenerator.generateUniqueSlug(product, product.getName());
-        product.setSlug(uniqueSlug);
-        product.setCategory(category);
-
-        List<OptionDTO> optionsDTO = createProductDTO.getOptions();
-        for (OptionDTO optionDTO : optionsDTO) {
-            Option option = modelMapper.map(optionDTO, Option.class);
-            option.setProduct(product);
-
-            List<OptionValueDTO> valuesDTO = optionDTO.getValues();
-            for (OptionValueDTO valueDTO : valuesDTO) {
-                OptionValue optionValue = modelMapper.map(valueDTO, OptionValue.class);
-                optionValue.setOption(option);
-
-                option.getValues().add(optionValue);
-            }
-
-            List<ProductSku> productSkus = new ArrayList<>();
-            for (ProductSkuDTO productSkuDTO : createProductDTO.getSkus()) {
-                ProductSku productSku = modelMapper.map(productSkuDTO, ProductSku.class);
-                productSku.setProduct(product);
-
-
-                for (SkuValueDTO skuValueDTO : productSkuDTO.getSkuValues()) {
-                    SkuValue skuValue = modelMapper.map(skuValueDTO, SkuValue.class);
-                    skuValue.setProductSku(productSku);
-                    skuValue.setOption(option);
-                }
-
-                productSkus.add(productSku);
-            }
-
-            product.getSkus().addAll(productSkus);
-            product.getOptions().add(option);
-        }
-
-        // Lưu Product và các Entity liên quan bằng JpaRepository
         Product newProduct = productRepository.save(product);
 
         return mapToDTO(newProduct);

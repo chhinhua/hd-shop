@@ -30,8 +30,9 @@ public class ProductController {
     @Operation(summary = "Create Product")
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody Product product) {
-        ProductDTO saveProduct = productService.createProduct1(product);
+        ProductDTO saveProduct = productService.createProduct(product);
         return new ResponseEntity<>(saveProduct, HttpStatus.CREATED);
+        // TODO Vấn đề lưu id của entity cấp cao cho cấp thấp
     }
 
     /**

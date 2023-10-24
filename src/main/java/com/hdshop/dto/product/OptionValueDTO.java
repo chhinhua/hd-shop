@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 @Hidden
 public class OptionValueDTO {
+    private Long valueId;
     private String valueName;
     private String imageUrl;
 }

@@ -21,7 +21,6 @@ public class ModelMapperConfig {
         // Định nghĩa Converter và tiêm ModelMapper vào để sử dụng trong Converter
         CreateProductDTOToProductConverter converter = new CreateProductDTOToProductConverter(modelMapper);
         modelMapper.addConverter(converter);
-
         return modelMapper;
     }
 }
