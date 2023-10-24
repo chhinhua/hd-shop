@@ -11,6 +11,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -32,6 +33,14 @@ public class OrderDTO {
 
     // TODO thiết kết kiểu thanh toán (enum or string)
     private String paymentType;
+
+    private String createdBy;
+
+    private String lastModifiedBy;
+
+    private Date createdDate;
+
+    private Date lastModifiedDate;
 
     @NotNull(message = "User id must be not null")
     private Long userId;

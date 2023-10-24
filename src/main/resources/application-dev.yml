@@ -2,15 +2,15 @@ server:
     port: 8080
 spring:
     datasource:
-        password: 123hua@
         url: jdbc:mysql://localhost:3306/hd-shop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
         username: root
+        password: 123hua@
     jpa:
         hibernate:
             ddl-auto: update
         properties:
             hibernate:
-                dialect: org.hibernate.dialect.MySQLDialect
+                dialect: org.hibernate.dialect.MySQL8Dialect
         show-sql: true
     security:
         user:

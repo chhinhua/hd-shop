@@ -1,19 +1,22 @@
 package com.hdshop.service.order.impl;
 
 import com.hdshop.dto.order.OrderDTO;
+import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.entity.Address;
-import com.hdshop.entity.Category;
 import com.hdshop.entity.Order;
 import com.hdshop.entity.User;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.AddressRepository;
-import com.hdshop.repository.OrderRepository;
+import com.hdshop.repository.order.OrderRepository;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.utils.EnumOrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * Create a new Order
+     *
      * @param orderDTO
      * @return orderDTO object have been created
      */
@@ -51,6 +55,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * Delete Order by orderId
+     *
      * @param orderId
      */
     @Override
@@ -62,6 +67,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * Get the order by identifier
+     *
      * @param orderId
      * @return
      */
@@ -80,6 +86,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * Update status for the order
+     *
      * @param orderId
      * @param statusKey
      * @return OrderDTO
@@ -103,6 +110,36 @@ public class OrderServiceImpl implements OrderService {
         orderDTO.setStatus(convertKeyToValue(order.getStatus()));
 
         return orderDTO;
+    }
+
+    /**
+     * Get list order of user with username parameter
+     * @param username
+     * @return list orderDTO
+     */
+    @Override
+    public List<OrderDTO> getOrdersByUsername(String username) {
+        List<Order> orderList = orderRepository.getOrdersByUser_UsernameOrderByCreatedDateDesc(username);
+
+        return orderList
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get list order of user with userId parameter
+     * @param userId
+     * @return
+     */
+    @Override
+    public List<OrderDTO> getOrdersByUserId(Long userId) {
+        List<Order> orderList = orderRepository.getOrdersByUserIdOrderByCreatedDateDesc(userId);
+
+        return orderList
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
     public String convertKeyToValue(String key) {

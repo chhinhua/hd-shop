@@ -16,24 +16,21 @@ import java.util.List;
 @Entity
 @Table(name = "option_values")
 public class OptionValue {
-    @EmbeddedId
-    private OptionValueId optionValueId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long valueId;
 
-    @Column(name = "value_name")
+    @Column(nullable = false)
     private String valueName;
 
     @Column(name = "image_url") // for color
     private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumns({
-            @JoinColumn(name = "option_id", referencedColumnName = "option_id", insertable = false, updatable = false),
-            @JoinColumn(name = "product_id", referencedColumnName = "product_id", insertable = false, updatable = false)
-    })
-    @MapsId("optionValueId")
+    @JoinColumn(name = "option_id")
     private Option option;
 
-    @OneToMany(mappedBy = "optionValue", cascade = CascadeType.ALL)
-    private List<SkuValue> skuValues = new ArrayList<>();
+    @ManyToMany(mappedBy = "optionValues", cascade = CascadeType.PERSIST)
+    private List<ProductSku> productSkus = new ArrayList<>();
 }
 

@@ -11,6 +11,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Setter
@@ -54,6 +55,10 @@ public class ProductDTO {
     private Boolean isActive = true;
 
     private Boolean isSelling = true;
+
+    private Date createdDate;
+
+    private Date lastModifiedDate;
 
     private String createdBy;
 

@@ -1,17 +1,14 @@
 package com.hdshop.service.product.impl;
 
 import com.hdshop.dto.product.OptionDTO;
-import com.hdshop.dto.product.OptionValueDTO;
 import com.hdshop.entity.product.Option;
 import com.hdshop.entity.product.OptionValue;
-import com.hdshop.entity.product.OptionValueId;
 import com.hdshop.entity.product.Product;
 import com.hdshop.repository.product.OptionValueRepository;
 import com.hdshop.service.product.OptionValueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
