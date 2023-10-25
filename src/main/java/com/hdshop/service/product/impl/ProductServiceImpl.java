@@ -1,27 +1,24 @@
 package com.hdshop.service.product.impl;
 
-import com.github.slugify.Slugify;
 import com.hdshop.component.UniqueSlugGenerator;
-import com.hdshop.dto.product.*;
+import com.hdshop.dto.product.ProductDTO;
+import com.hdshop.dto.product.ProductResponse;
+import com.hdshop.dto.product.ProductSkuDTO;
 import com.hdshop.entity.Category;
-import com.hdshop.entity.product.*;
-import com.hdshop.exception.APIException;
+import com.hdshop.entity.product.Product;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
-import com.hdshop.repository.product.OptionRepository;
 import com.hdshop.repository.product.ProductRepository;
-import com.hdshop.service.product.*;
+import com.hdshop.service.product.ProductService;
+import com.hdshop.validator.ProductValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,13 +26,9 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final OptionService optionService;
-    private final ProductSkuService productSkuService;
-    private final OptionValueService optionValueService;
     private final ModelMapper modelMapper;
-    private final Slugify slugify;
     private final UniqueSlugGenerator slugGenerator;
-    private final OptionRepository optionRepository;
+    private final ProductValidator productValidator;
 
     @Override
     public ProductDTO createProduct(Product product) {
@@ -46,8 +39,11 @@ public class ProductServiceImpl implements ProductService {
         product.setSlug(uniqueSlug);
         product.setCategory(category);
 
+        // Validate
+        Product productValid = productValidator.normalizeInput(product);
+
         // Lưu thông tin sản phẩm
-        Product newProduct = productRepository.save(product);
+        Product newProduct = productRepository.save(productValid);
 
         return mapToDTO(newProduct);
     }
@@ -84,6 +80,50 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
 
         return mapToDTO(product);
+    }
+
+    /**
+     * Update a product
+     * @date 25-10-2023
+     * @param product
+     * @param productId
+     * @return product DTO object
+     */
+    @Override
+    public ProductDTO updateProduct(Product product, Long productId) {
+        // check if product already exists
+        Product existingProduct = productRepository.findById(productId)
+                .orElseThrow(()-> new ResourceNotFoundException("Product", "id", productId));
+
+        // check if category already exists
+        Category category = categoryRepository.findById(product.getCategory().getId())
+                .orElseThrow(()-> new ResourceNotFoundException("Category", "id", product.getCategory().getId()));
+
+        if (existingProduct.getCategory().getId() != (product.getCategory().getId())) {
+            existingProduct.setCategory(category);
+        }
+
+        // set values
+        existingProduct.setName(product.getName());
+        existingProduct.setDescription(product.getDescription());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setListImages(product.getListImages());
+        existingProduct.setQuantity(product.getQuantity());
+        existingProduct.setQuantityAvailable(product.getQuantityAvailable());
+        existingProduct.setPromotionalPrice(product.getPromotionalPrice());
+        existingProduct.setOptions(product.getOptions());
+        existingProduct.setSkus(product.getSkus());
+
+        // set product cho mỗi sku
+        existingProduct.getSkus().forEach(sku -> sku.setProduct(existingProduct));
+
+        String uniqueSlug = slugGenerator.generateUniqueSlug(product, product.getName());
+        existingProduct.setSlug(uniqueSlug);
+
+        // save
+        Product updateProduct = productRepository.save(existingProduct);
+
+        return mapToDTO(updateProduct);
     }
 
     /**

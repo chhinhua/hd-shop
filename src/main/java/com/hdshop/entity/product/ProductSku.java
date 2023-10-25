@@ -1,5 +1,6 @@
 package com.hdshop.entity.product;
 
+import com.hdshop.component.SkuGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,7 +29,7 @@ public class ProductSku {
     private BigDecimal price;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", insertable = false, updatable = false)
+    @JoinColumn(name = "product_id")
     private Product product;
 
     @ManyToMany
@@ -37,6 +38,12 @@ public class ProductSku {
             joinColumns = @JoinColumn(name = "sku_id"), // Khóa ngoại của product_skus
             inverseJoinColumns = @JoinColumn(name = "value_id") // Khóa ngoại của option_values
     )
-    @Cascade(org.hibernate.annotations.CascadeType.PERSIST)
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
     private List<OptionValue> optionValues = new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    public void generateSku() {
+        this.sku = SkuGenerator.generateSku(product.getProductId(), optionValues);
+    }
 }

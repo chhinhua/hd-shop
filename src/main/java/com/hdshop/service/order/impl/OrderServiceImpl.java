@@ -1,7 +1,6 @@
 package com.hdshop.service.order.impl;
 
 import com.hdshop.dto.order.OrderDTO;
-import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.entity.Address;
 import com.hdshop.entity.Order;
 import com.hdshop.entity.User;

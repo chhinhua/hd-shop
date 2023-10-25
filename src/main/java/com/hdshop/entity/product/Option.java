@@ -27,6 +27,13 @@ public class Option {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToMany(mappedBy = "option", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "option", cascade = CascadeType.ALL)
     private List<OptionValue> values = new ArrayList<>();
+
+    @PrePersist
+    public void prePersist() {
+        for (OptionValue value : values) {
+            value.setOption(this);
+        }
+    }
 }

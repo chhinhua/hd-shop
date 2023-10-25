@@ -1,0 +1,215 @@
+{
+  "id": 1,
+  "name": "Áo phông tay lỡ form rộng nam nữ unisex chữ WHEN EVER vải dày mịn 7",
+  "description": "Áo phông tay lỡ form rộng nam nữ unisex chữ WHEN EVER vải dày mịn\n\n☘  Bảng kích thước\n🔜 Size XS : < 25 kg ... ☘ Xem thêm hơn 4000+ mẫu đẹp độc lạ tai Shopee: https://shopee.vn/ao.thun\n\n🎈 #aothunnam chất liệu thun cotton 4 chiều dày mịn, mềm mại co giãn tốt , thoáng mát 🎈 Sản xuất: Việt Nam 🎈 Kích thước XS S M L XL XXL 🎈 Kiểu tay áo: Tay ngắn, tay lỡ 🎈 Thiết kế thời trang #aothunhanquoc phù hợp xu hướng hiện nay 🎈 Kiểu dáng #aophongnam đa phong cách #aonamdep 🎈 Đường may tinh tế sắc sảo, vải cotton dày, mịn, thấm hút mồ hôi tạo sự thoải mái khi mặc! 🎈 Dễ dàng phối trang phục , thích hợp đi chơi đi làm đi dạo phố 🎈 Thích hợp cho sự kết hợp vứi quần jean, sọt,legging! 🎈 #aophongunisex uy tín đảm bảo trên thị trường 🎈 Tự hào sản phẩm #aophong 🎈 Áo thun trên công nghệ mới 🎈 #aothungiasi bán lẻ dù 1 sản phẩm 🎈 Sản phẩm #aothunthai giống hình 100% 😊",
+  "price": 39000,
+  "quantity": 100,
+  "quantityAvailable": 100,
+  "categoryId": 1,
+  "slug": "ao-phong-tay-lo-form-rong-nam-nu-unisex-chu-when-ever-vai-day-min-7",
+  "promotionalPrice": null,
+  "sold": 0,
+  "rating": 0.0,
+  "numberOfRatings": 0,
+  "favoriteCount": 0,
+  "isActive": true,
+  "isSelling": true,
+  "createdDate": "2023-10-24T17:10:47.179+00:00",
+  "lastModifiedDate": "2023-10-24T17:10:47.179+00:00",
+  "createdBy": "system",
+  "lastModifiedBy": "system",
+  "listImages": [
+    "https://down-vn.img.susercontent.com/file/ca96593b72deee14cb09b3bbfb37870d",
+    "https://down-vn.img.susercontent.com/file/0bef4d47fb0c75fb7873c270c943df0c"
+  ],
+  "options": [
+    {
+      "optionId": 1,
+      "optionName": "Màu",
+      "values": [
+        {
+          "valueId": 1,
+          "valueName": "Đỏ",
+          "imageUrl": "https://example.com/red.jpg"
+        },
+        {
+          "valueId": 2,
+          "valueName": "Xanh",
+          "imageUrl": "https://example.com/blue.jpg"
+        },
+        {
+          "valueId": 3,
+          "valueName": "Trắng",
+          "imageUrl": "https://example.com/white.jpg"
+        }
+      ]
+    },
+    {
+      "optionId": 2,
+      "optionName": "Size",
+      "values": [
+        {
+          "valueId": 4,
+          "valueName": "S",
+          "imageUrl": null
+        },
+        {
+          "valueId": 5,
+          "valueName": "M",
+          "imageUrl": null
+        },
+        {
+          "valueId": 6,
+          "valueName": "L",
+          "imageUrl": null
+        }
+      ]
+    }
+  ],
+  "skus": [
+    {
+      "skuId": 1,
+      "optionValues": [
+        {
+          "valueId": 7,
+          "valueName": "Đỏ",
+          "imageUrl": null
+        },
+        {
+          "valueId": 8,
+          "valueName": "S",
+          "imageUrl": null
+        }
+      ],
+      "price": 10.99
+    },
+    {
+      "skuId": 2,
+      "optionValues": [
+        {
+          "valueId": 9,
+          "valueName": "Đỏ",
+          "imageUrl": null
+        },
+        {
+          "valueId": 10,
+          "valueName": "M",
+          "imageUrl": null
+        }
+      ],
+      "price": 12.99
+    },
+    {
+      "skuId": 3,
+      "optionValues": [
+        {
+          "valueId": 11,
+          "valueName": "Đỏ",
+          "imageUrl": null
+        },
+        {
+          "valueId": 12,
+          "valueName": "L",
+          "imageUrl": null
+        }
+      ],
+      "price": 14.99
+    },
+    {
+      "skuId": 4,
+      "optionValues": [
+        {
+          "valueId": 13,
+          "valueName": "Xanh",
+          "imageUrl": null
+        },
+        {
+          "valueId": 14,
+          "valueName": "S",
+          "imageUrl": null
+        }
+      ],
+      "price": 11.99
+    },
+    {
+      "skuId": 5,
+      "optionValues": [
+        {
+          "valueId": 15,
+          "valueName": "Xanh",
+          "imageUrl": null
+        },
+        {
+          "valueId": 16,
+          "valueName": "M",
+          "imageUrl": null
+        }
+      ],
+      "price": 13.99
+    },
+    {
+      "skuId": 6,
+      "optionValues": [
+        {
+          "valueId": 17,
+          "valueName": "Xanh",
+          "imageUrl": null
+        },
+        {
+          "valueId": 18,
+          "valueName": "L",
+          "imageUrl": null
+        }
+      ],
+      "price": 15.99
+    },
+    {
+      "skuId": 7,
+      "optionValues": [
+        {
+          "valueId": 19,
+          "valueName": "Trắng",
+          "imageUrl": null
+        },
+        {
+          "valueId": 20,
+          "valueName": "S",
+          "imageUrl": null
+        }
+      ],
+      "price": 10.99
+    },
+    {
+      "skuId": 8,
+      "optionValues": [
+        {
+          "valueId": 21,
+          "valueName": "Trắng",
+          "imageUrl": null
+        },
+        {
+          "valueId": 22,
+          "valueName": "M",
+          "imageUrl": null
+        }
+      ],
+      "price": 12.99
+    },
+    {
+      "skuId": 9,
+      "optionValues": [
+        {
+          "valueId": 23,
+          "valueName": "Trắng",
+          "imageUrl": null
+        },
+        {
+          "valueId": 24,
+          "valueName": "L",
+          "imageUrl": null
+        }
+      ],
+      "price": 14.99
+    }
+  ]
+}

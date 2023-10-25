@@ -30,7 +30,7 @@ public class OptionValue {
     @JoinColumn(name = "option_id")
     private Option option;
 
-    @ManyToMany(mappedBy = "optionValues", cascade = CascadeType.PERSIST)
+    @ManyToMany(mappedBy = "optionValues", cascade = CascadeType.ALL)
     private List<ProductSku> productSkus = new ArrayList<>();
 }
 

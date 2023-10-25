@@ -1,6 +1,5 @@
 package com.hdshop.service.product.impl;
 
-import com.hdshop.entity.product.Option;
 import com.hdshop.entity.product.Product;
 import com.hdshop.entity.product.ProductSku;
 import com.hdshop.repository.product.ProductRepository;
