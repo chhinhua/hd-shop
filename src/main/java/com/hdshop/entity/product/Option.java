@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Cascade;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class Option {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToMany(mappedBy = "option", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "option", cascade = CascadeType.PERSIST)
     private List<OptionValue> values = new ArrayList<>();
 
     @PrePersist

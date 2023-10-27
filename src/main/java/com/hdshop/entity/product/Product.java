@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 
@@ -18,6 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@DynamicUpdate
 @Table(name = "products")
 public class Product extends BaseEntity {
     @Id
@@ -78,11 +80,16 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product")
     private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<Option> options = new ArrayList<>();
+    @OneToMany(
+            mappedBy = "product",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}
+    )
+    private List<Option> options;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<ProductSku> skus = new ArrayList<>();
+    @OneToMany(
+            mappedBy = "product",
+            cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+    private List<ProductSku> skus;
 
     @PrePersist
     @PreUpdate

@@ -30,7 +30,6 @@ public class ProductController {
     public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody Product product) {
         ProductDTO saveProduct = productService.createProduct(product);
         return new ResponseEntity<>(saveProduct, HttpStatus.CREATED);
-        // TODO Vấn đề lưu id của entity cấp cao cho cấp thấp
     }
 
     /**
@@ -60,7 +59,7 @@ public class ProductController {
 
     @Operation(summary = "Update a product")
     @PutMapping("{id}")
-    public ResponseEntity<ProductDTO> updateProduct(@RequestBody Product product,
+    public ResponseEntity<ProductDTO> updateProduct(@RequestBody ProductDTO product,
                                                     @PathVariable(value = "id") Long productId) {
         return ResponseEntity.ok(productService.updateProduct(product, productId));
     // TODO vấn đề lưu lại đối tượng đã có

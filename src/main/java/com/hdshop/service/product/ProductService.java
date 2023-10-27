@@ -11,5 +11,5 @@ public interface ProductService {
 
     ProductDTO getOne(final Long productId);
 
-    ProductDTO updateProduct(final Product product, final Long productId);
+    ProductDTO updateProduct(final ProductDTO productDTO, final Long productId);
 }
