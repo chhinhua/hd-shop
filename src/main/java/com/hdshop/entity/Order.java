@@ -1,6 +1,5 @@
 package com.hdshop.entity;
 
-import com.hdshop.utils.EnumOrderStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

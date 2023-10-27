@@ -6,5 +6,9 @@ import com.hdshop.entity.product.Product;
 import java.util.List;
 
 public interface OptionService {
-    List<Option> addOptions(final Product product, final List<Option> options);
+    List<Option> addOptions(final Long productId, final List<Option> options);
+
+    List<Option> addOptionsByProductId(Long productId, List<Option> options);
+
+    List<Option> saveOptionsFromProduct(final Product product);
 }

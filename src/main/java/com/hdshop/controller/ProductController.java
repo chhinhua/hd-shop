@@ -1,12 +1,10 @@
 package com.hdshop.controller;
 
-import com.hdshop.dto.product.CreateProductDTO;
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.product.Product;
 import com.hdshop.service.product.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +30,6 @@ public class ProductController {
     public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody Product product) {
         ProductDTO saveProduct = productService.createProduct(product);
         return new ResponseEntity<>(saveProduct, HttpStatus.CREATED);
-        // TODO Vấn đề lưu id của entity cấp cao cho cấp thấp
     }
 
     /**
@@ -58,5 +55,13 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getOne(@PathVariable(value = "id") Long productId) {
         return ResponseEntity.ok(productService.getOne(productId));
+    }
+
+    @Operation(summary = "Update a product")
+    @PutMapping("{id}")
+    public ResponseEntity<ProductDTO> updateProduct(@RequestBody ProductDTO product,
+                                                    @PathVariable(value = "id") Long productId) {
+        return ResponseEntity.ok(productService.updateProduct(product, productId));
+    // TODO vấn đề lưu lại đối tượng đã có
     }
 }

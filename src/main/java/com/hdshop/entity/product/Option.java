@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Cascade;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,4 +30,11 @@ public class Option {
 
     @OneToMany(mappedBy = "option", cascade = CascadeType.PERSIST)
     private List<OptionValue> values = new ArrayList<>();
+
+    @PrePersist
+    public void prePersist() {
+        for (OptionValue value : values) {
+            value.setOption(this);
+        }
+    }
 }

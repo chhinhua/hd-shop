@@ -64,7 +64,7 @@ public class ProductDTO {
 
     private String lastModifiedBy;
 
-    private List<String> listImages = new ArrayList<String>();
+    private List<String> listImages = new ArrayList<>();
 
     private List<OptionDTO> options = new ArrayList<>();
 

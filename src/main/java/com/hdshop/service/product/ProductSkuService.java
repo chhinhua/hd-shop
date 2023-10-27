@@ -6,5 +6,7 @@ import com.hdshop.entity.product.ProductSku;
 import java.util.List;
 
 public interface ProductSkuService {
-    List<ProductSku> addProductSkus(final Product product, final List<ProductSku> productSkus);
+    List<ProductSku> saveOrUpdateSkus(final Long productId, final List<ProductSku> skus);
+
+    List<ProductSku> saveSkusFromProduct(final Product product);
 }

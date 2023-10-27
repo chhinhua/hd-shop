@@ -11,6 +11,7 @@ import java.util.List;
 @Hidden
 public class ProductSkuDTO {
     private Long skuId;
-    private List<OptionValueDTO> optionValues;
+    private String sku;
     private Double price;
+    private List<OptionValueDTO> optionValues;
 }
