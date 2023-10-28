@@ -1,8 +1,11 @@
 package com.hdshop.service.product.impl;
 
+import com.github.slugify.Slugify;
 import com.hdshop.component.UniqueSlugGenerator;
+import com.hdshop.dto.product.OptionDTO;
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
+import com.hdshop.dto.product.ProductSkuDTO;
 import com.hdshop.entity.Category;
 import com.hdshop.entity.product.Option;
 import com.hdshop.entity.product.Product;
@@ -22,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +38,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductValidator productValidator;
     private final ProductSkuService productSkuService;
     private final OptionService optionService;
+    private final Slugify slugify;
 
     /**
      * Create new product
@@ -45,17 +50,17 @@ public class ProductServiceImpl implements ProductService {
         Category category = categoryRepository.findById(product.getCategory().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", product.getCategory().getId()));
 
-        String uniqueSlug = slugGenerator.generateUniqueSlug(product, product.getName());
+        String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
         product.setSlug(uniqueSlug);
         product.setCategory(category);
 
-        // Validate
-        Product productValid = productValidator.normalizeInput(product);
+        // normalize product input
+        Product normalizedProduct = normalizeProduct(product);
 
-        // Lưu thông tin sản phẩm
-        Product newProduct = productRepository.save(productValid);
+        // save product
+        Product newProduct = productRepository.save(normalizedProduct);
 
-        // Lưu productSku
+        // save productSkus
         productSkuService.saveSkusFromProduct(newProduct);
 
         return mapToDTO(newProduct);
@@ -102,7 +107,6 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO getOne(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
-
         return mapToDTO(product);
     }
 
@@ -118,12 +122,43 @@ public class ProductServiceImpl implements ProductService {
         // check if product already exists
         Product existingProduct = productRepository.findById(productId)
                 .orElseThrow(()-> new ResourceNotFoundException("Product", "id", productId));
-
+        
         // check if category already exists
         Category category = categoryRepository.findById(productDTO.getCategoryId())
                 .orElseThrow(()-> new ResourceNotFoundException("Category", "id", productDTO.getCategoryId()));
 
-        if (existingProduct.getCategory().getId() != (productDTO.getCategoryId())) {
+        // set changes fields
+        setProductFields(productDTO, existingProduct, category);
+
+        // normalize product input
+        Product normalizedProduct = normalizeProduct(existingProduct);
+
+        // save product
+        existingProduct = productRepository.save(normalizedProduct);
+
+        // save or update options & optionValues
+        List<Option> options = saveOrUpdateOptions(existingProduct, productDTO.getOptions());
+        existingProduct.setOptions(options);
+
+        // save or update productSkus
+        List<ProductSku> skus = saveOrUpdateSkus(existingProduct, productDTO.getSkus());
+        existingProduct.setSkus(skus);
+
+        return mapToDTO(existingProduct);
+    }
+
+    private Product normalizeProduct(Product product) {
+        return productValidator.normalizeInput(product);
+    }
+
+    /**
+     * Set fields for product entity is values from productDTO and Category entity
+     * @param productDTO
+     * @param existingProduct
+     * @param category
+     */
+    private void setProductFields(ProductDTO productDTO, Product existingProduct, Category category) {
+        if (!Objects.equals(existingProduct.getCategory().getId(), productDTO.getCategoryId())) {
             existingProduct.setCategory(category);
         }
 
@@ -139,32 +174,34 @@ public class ProductServiceImpl implements ProductService {
         // set unique slug for product
         String uniqueSlug = slugGenerator.generateUniqueSlug(existingProduct, productDTO.getName());
         existingProduct.setSlug(uniqueSlug);
+    }
 
-        // save
-        existingProduct = productRepository.save(existingProduct);
-
-        // Convert list optionDTO to list option entity
-        List<Option> optionListFromDTO = productDTO.getOptions().stream()
-                .map((optionDTO) -> modelMapper.map(optionDTO, Option.class))
+    /**
+     * Save or update options if it exists
+     * @param existingProduct
+     * @param optionDTOList
+     * @return option entity list
+     */
+    private List<Option> saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
+        List<Option> optionListFromDTO = optionDTOList.stream()
+                .map(optionDTO -> modelMapper.map(optionDTO, Option.class))
                 .collect(Collectors.toList());
 
-        // Save or update options
-        List<Option> options = optionService
-                .addOptionsByProductId(existingProduct.getProductId(), optionListFromDTO);
-        existingProduct.setOptions(options);
+        return optionService.saveOrUpdateOptionsByProductId(existingProduct.getProductId(), optionListFromDTO);
+    }
 
-        // Convert list optionDTO to list option entity
-        List<ProductSku> skuListFromDTO = productDTO.getSkus().stream()
-                .map((skuDTO) -> modelMapper.map(skuDTO, ProductSku.class))
+    /**
+     * Save or update productSkus if it exists
+     * @param existingProduct
+     * @param skuDTOList
+     * @return productSku entity list
+     */
+    private List<ProductSku> saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
+        List<ProductSku> skuListFromDTO = skuDTOList.stream()
+                .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
                 .collect(Collectors.toList());
 
-        // save or update ProductSkus
-        // TODO  cập nhật product còn phần skus
-        List<ProductSku> skus = productSkuService
-                .saveOrUpdateSkus(existingProduct.getProductId(), skuListFromDTO);
-        existingProduct.setSkus(skus);
-
-        return mapToDTO(existingProduct);
+        return productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skuListFromDTO);
     }
 
     /**
@@ -177,12 +214,6 @@ public class ProductServiceImpl implements ProductService {
         return modelMapper.map(productDTO, Product.class);
     }
 
-    /**
-     * Convert Product entity to ProductDTO
-     *
-     * @param product
-     * @return ProductDTO object
-     */
     private ProductDTO mapToDTO(Product product) {
         return modelMapper.map(product, ProductDTO.class);
     }

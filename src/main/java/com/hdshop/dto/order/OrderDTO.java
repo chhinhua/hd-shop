@@ -31,7 +31,6 @@ public class OrderDTO {
 
     private Boolean isPaidBefore = false;
 
-    // TODO thiết kết kiểu thanh toán (enum or string)
     private String paymentType;
 
     private String createdBy;

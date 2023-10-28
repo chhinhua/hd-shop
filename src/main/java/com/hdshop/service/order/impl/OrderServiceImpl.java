@@ -44,7 +44,6 @@ public class OrderServiceImpl implements OrderService {
         Order order = mapToEntity(orderDTO);
         order.setUser(user);
         order.setAddress(address);
-        //TODO Set status for order base on status value from frontend
 
         // save order
         Order newOrder = orderRepository.save(order);

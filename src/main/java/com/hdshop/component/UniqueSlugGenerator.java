@@ -37,7 +37,7 @@ public class UniqueSlugGenerator {
      * @param baseSlug
      * @return unique slug have been generated
      */
-    private String generateUniqueProductSlug(String baseSlug) {
+    public String generateUniqueProductSlug(String baseSlug) {
         String generatedSlug = baseSlug;
         int counter = 1;
 

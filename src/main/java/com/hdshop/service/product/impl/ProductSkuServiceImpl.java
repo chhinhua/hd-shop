@@ -39,21 +39,20 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
         for (ProductSku productSku : skus) {
             Optional<ProductSku> existingProductSku = productSkuRepository
-                    .findBySku(productSku.getSku());
+                    .findBySkuAndProduct_ProductId(productSku.getSku(), productId);
 
             // check nếu có tồn tại thì set giá price thay đổi
             // nếu không tồn tại thì tạo mới rồi set optionValues cho nó
             // để khỏi bị tạo lại optionValues
             if (existingProductSku.isPresent()) {
                 existingProductSku.get().setPrice(productSku.getPrice());
-
                 saveProductSkus.add(existingProductSku.get());
             } else {
                 List<OptionValue> valueList = new ArrayList<>();
                 for (OptionValue value : productSku.getOptionValues()) {
                     // mặc định là đã tồn tại optionValue này vì logic trước đó đã lưu nó
                     OptionValue existingOptionValue = optionValueService
-                            .getByOptionNameAndProductId(value.getValueName(), productId)
+                            .getByValueNameAndProductId(value.getValueName(), productId)
                             .orElseThrow(
                                     () -> new ResourceNotFoundException(
                                             "OptionValue",
@@ -85,7 +84,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
             List<OptionValue> optionValues = new ArrayList<>();
             for (OptionValue value : sku.getOptionValues()) {
                 Optional<OptionValue> newOptionValue = optionValueService
-                        .getByOptionNameAndProductId(value.getValueName(), product.getProductId());
+                        .getByValueNameAndProductId(value.getValueName(), product.getProductId());
 
                 if (newOptionValue.isPresent()) {
                     optionValues.add(newOptionValue.get());

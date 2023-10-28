@@ -15,7 +15,7 @@ public class OptionValueServiceImpl implements OptionValueService {
     private final OptionValueRepository optionValueRepository;
 
     @Override
-    public Optional<OptionValue> getByOptionNameAndProductId(String valueName, Long productId) {
+    public Optional<OptionValue> getByValueNameAndProductId(String valueName, Long productId) {
          return optionValueRepository.findByValueNameAndOption_ProductProductId(valueName, productId);
     }
 }

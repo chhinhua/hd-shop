@@ -62,6 +62,5 @@ public class ProductController {
     public ResponseEntity<ProductDTO> updateProduct(@RequestBody ProductDTO product,
                                                     @PathVariable(value = "id") Long productId) {
         return ResponseEntity.ok(productService.updateProduct(product, productId));
-    // TODO vấn đề lưu lại đối tượng đã có
     }
 }

@@ -20,6 +20,7 @@ import java.util.List;
 @Hidden
 public class ProductDTO {
     private Long id;
+
     @NotBlank(message = "Product name must not be empty")
     private String name;
 

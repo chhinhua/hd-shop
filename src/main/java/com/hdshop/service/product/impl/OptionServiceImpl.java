@@ -33,7 +33,7 @@ public class OptionServiceImpl implements OptionService {
      * @return option list
      */
     @Override
-    public List<Option> addOptionsByProductId(Long productId, List<Option> options) {
+    public List<Option> saveOrUpdateOptionsByProductId(Long productId, List<Option> options) {
         List<Option> savedOptions = new ArrayList<>();
         for (Option option : options) {
 
@@ -42,22 +42,25 @@ public class OptionServiceImpl implements OptionService {
                     .findByOptionNameAndProduct_ProductId(option.getOptionName(), productId)
                     .orElse(option);
 
+            List<OptionValue> newListOptionValues = new ArrayList<>();
             for (OptionValue value : option.getValues()) {
-                Optional<OptionValue> newOptionValue = optionValueService
-                        .getByOptionNameAndProductId(value.getValueName(), productId);
+                Optional<OptionValue> existingOptionValue = optionValueService
+                        .getByValueNameAndProductId(value.getValueName(), productId);
 
                 // Kiểm tra nếu đã tồn tại optionvalue thì thay đổi imageUrl mới
-                // Nếu không tồn tại thì set option cho nó và lưu
-                if (newOptionValue.isPresent()) {
-                    newOptionValue.get().setImageUrl(value.getImageUrl());
+                // Nếu không tồn tại thì set option cho nó và set nó cho option
+                // Khi lưu option nó sẽ được lưu
+                if (existingOptionValue.isPresent()) {
+                    existingOptionValue.get().setImageUrl(value.getImageUrl());
+                    newListOptionValues.add(existingOptionValue.get());
                 } else {
                     value.setOption(existingOption);
-                    existingOption.getValues().add(optionValueRepository.save(value));
+                    newListOptionValues.add(optionValueRepository.save(value));
                 }
             }
-            optionRepository.flush();
 
-            savedOptions.add(existingOption);
+            existingOption.setValues(newListOptionValues);
+            savedOptions.add(optionRepository.save(existingOption));
         }
 
         return savedOptions.stream().toList();
@@ -76,7 +79,7 @@ public class OptionServiceImpl implements OptionService {
             List<OptionValue> newOptionValues = new ArrayList<>();
             for (OptionValue value : existingOption.getValues()) {
                 Optional<OptionValue> newOptionValue = optionValueService
-                        .getByOptionNameAndProductId(value.getValueName(), product.getProductId());
+                        .getByValueNameAndProductId(value.getValueName(), product.getProductId());
 
                 if (newOptionValue.isPresent()) {
                     newOptionValues.add(newOptionValue.get());
@@ -84,7 +87,6 @@ public class OptionServiceImpl implements OptionService {
                     newOptionValues.add(optionValueRepository.save(value));
                 }
             }
-            optionRepository.flush();
 
             existingOption.setValues(newOptionValues);
             savedOptions.add(optionRepository.save(existingOption));
