@@ -1,5 +1,7 @@
 package com.hdshop.controller;
 
+import com.hdshop.dto.auth.JwtAuthResponse;
+import com.hdshop.dto.auth.LoginDTO;
 import com.hdshop.dto.auth.RegisterDTO;
 import com.hdshop.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,14 +24,20 @@ public class AuthController {
         this.authService = authService;
     }
 
-    /**
-     * User registration new account
-     * @param registerDTO
-     * @return
-     */
     @Operation(summary = "Register new account")
     @PostMapping
     public ResponseEntity<String> register(@Valid @RequestBody RegisterDTO registerDTO) {
         return new ResponseEntity<>(authService.register(registerDTO), HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Login account")
+    @PostMapping(value = {"/login", "/sign-in"})
+    public ResponseEntity<JwtAuthResponse> login(@Valid @RequestBody LoginDTO loginDTO) {
+        String token = authService.login(loginDTO);
+
+        JwtAuthResponse jwtAuthResponse = new JwtAuthResponse();
+        jwtAuthResponse.setAccessToken(token);
+
+        return ResponseEntity.ok(jwtAuthResponse);
     }
 }

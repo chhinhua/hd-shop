@@ -42,6 +42,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Create new product
+     *
      * @param product
      * @return productDTO
      */
@@ -68,6 +69,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Get all product pagination
+     *
      * @param pageNo
      * @param pageSize
      * @return list of product pagination
@@ -75,7 +77,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse getAllProducts(int pageNo, int pageSize) {
         // create Pageable instances
-        Pageable pageable = PageRequest.of(pageNo-1, pageSize);
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
         Page<Product> productPage = productRepository.findAllByIsActiveIsTrue(pageable);
 
@@ -100,6 +102,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Get the single product
+     *
      * @param productId
      * @return product DTO object
      */
@@ -112,20 +115,21 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Update a product
-     * @date 25-10-2023
+     *
      * @param productDTO
      * @param productId
      * @return product DTO object
+     * @date 25-10-2023
      */
     @Override
     public ProductDTO updateProduct(ProductDTO productDTO, Long productId) {
         // check if product already exists
         Product existingProduct = productRepository.findById(productId)
-                .orElseThrow(()-> new ResourceNotFoundException("Product", "id", productId));
-        
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+
         // check if category already exists
         Category category = categoryRepository.findById(productDTO.getCategoryId())
-                .orElseThrow(()-> new ResourceNotFoundException("Category", "id", productDTO.getCategoryId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", productDTO.getCategoryId()));
 
         // set changes fields
         setProductFields(productDTO, existingProduct, category);
@@ -153,6 +157,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Set fields for product entity is values from productDTO and Category entity
+     *
      * @param productDTO
      * @param existingProduct
      * @param category
@@ -178,6 +183,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Save or update options if it exists
+     *
      * @param existingProduct
      * @param optionDTOList
      * @return option entity list
@@ -192,6 +198,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * Save or update productSkus if it exists
+     *
      * @param existingProduct
      * @param skuDTOList
      * @return productSku entity list

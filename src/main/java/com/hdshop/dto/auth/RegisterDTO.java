@@ -14,7 +14,7 @@ import lombok.Setter;
 @Hidden
 public class RegisterDTO {
     @NotBlank(message = "Username is required")
-    @Pattern(regexp = "^[a-zA-Z0-9]{4,}$", message = "Tên người dùng không hợp lệ")
+    @Pattern(regexp = "^[a-zA-Z0-9]{4,}$", message = "Invalid username")
     private String username;
 
     @NotEmpty(message = "First name is required")
