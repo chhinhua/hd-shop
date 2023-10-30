@@ -5,6 +5,7 @@ import com.hdshop.entity.Role;
 import com.hdshop.entity.User;
 import com.hdshop.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -13,10 +14,12 @@ import java.util.Set;
 @Component
 public class UserCommandLineRunnerImpl implements CommandLineRunner {
     private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
 
-    public UserCommandLineRunnerImpl(UserRepository userRepository) {
+    public UserCommandLineRunnerImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-    }
+		this.passwordEncoder = passwordEncoder;
+	}
 
     /**
      * Init a new User and save to database
@@ -30,29 +33,29 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 	}
 
 	private void createXampleUser() {
-		User user = new User();
-		user.setUsername("johndoe");
-		user.setPassword("johndoee");
-		user.setFirstName("John");
-		user.setLastName("Doe");
-		user.setEmail("johndoe@example.com");
-		user.setId_card("123456789");
-		user.setPhoneNumber("123456789");
-		user.setGender("Male");
-		user.setAvatarUrl("avatar-url");
+		User admin = new User();
+		admin.setUsername("admin");
+		admin.setPassword(passwordEncoder.encode("admin"));
+		admin.setFirstName("admin");
+		admin.setLastName("1");
+		admin.setEmail("admin@gmail.com");
+		admin.setId_card("123456789");
+		admin.setPhoneNumber("123456789");
+		admin.setGender("Male");
+		admin.setAvatarUrl("avatar-url");
 
 		// create new address
-		Address address = new Address();
-		address.setUser(user);
-		address.setFullName("John doe");
-		address.setCity("TP. Hồ Chí Minh");
-		address.setDistrict("TP. Thủ Đức");
-		address.setWard("P. Linh Xuân");
-		address.setPhoneNumber("0326474614");
-		address.setOrderDetails("162/9 Đường số 8");
-		address.setIsDefault(true);
+		Address adminAddress = new Address();
+		adminAddress.setUser(admin);
+		adminAddress.setFullName("Admin");
+		adminAddress.setCity("TP. Hồ Chí Minh");
+		adminAddress.setDistrict("TP. Thủ Đức");
+		adminAddress.setWard("P. Linh Xuân");
+		adminAddress.setPhoneNumber("0326474614");
+		adminAddress.setOrderDetails("162/9 Đường số 8");
+		adminAddress.setIsDefault(true);
 
-		user.getAddresses().add(address);
+		admin.getAddresses().add(adminAddress);
 
 		// Tạo và thiết lập các đối tượng Role
 		Role role_user = new Role();
@@ -65,8 +68,8 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		roles.add(role_user);
 		roles.add(role_admin);
 
-		user.setRoles(roles);
+		admin.setRoles(roles);
 
-		userRepository.save(user);
+		userRepository.save(admin);
 	}
 }

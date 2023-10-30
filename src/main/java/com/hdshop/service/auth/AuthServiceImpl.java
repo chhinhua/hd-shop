@@ -8,6 +8,7 @@ import com.hdshop.exception.APIException;
 import com.hdshop.repository.RoleRepository;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.security.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,20 +25,13 @@ import java.util.Set;
  * @date 29-10-2023
  */
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-
-    public AuthServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
 
     /**
      * Registers a new user based on the provided registration data.
@@ -61,8 +55,6 @@ public class AuthServiceImpl implements AuthService {
         // Create a new User object and populate it with the provided registration data
         User user = new User();
         user.setUsername(registerDTO.getUsername());
-        user.setFirstName(registerDTO.getFirstName());
-        user.setLastName(registerDTO.getLastName());
         user.setEmail(registerDTO.getEmail());
         user.setPassword(registerDTO.getPassword());
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));

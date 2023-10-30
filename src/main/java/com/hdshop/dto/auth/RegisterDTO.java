@@ -17,12 +17,6 @@ public class RegisterDTO {
     @Pattern(regexp = "^[a-zA-Z0-9]{4,}$", message = "Invalid username")
     private String username;
 
-    @NotEmpty(message = "First name is required")
-    private String firstName;
-
-    @NotEmpty(message = "Last name is required")
-    private String lastName;
-
     @NotEmpty(message = "Email is required")
     @Email(message = "Email is invalid")
     private String email;

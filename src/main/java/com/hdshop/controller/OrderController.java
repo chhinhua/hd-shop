@@ -3,11 +3,13 @@ package com.hdshop.controller;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +29,8 @@ public class OrderController {
     }
 
     @Operation(summary = "Delete order by id")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
+    @SecurityRequirement(name = "Bear Authentication")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrderById(id);
@@ -44,6 +48,8 @@ public class OrderController {
             summary = "Update order status by id",
             description = "Update order status by one of values {CANCELED, DELIVERED, ,CANCELED, PROCESSING, PENDING_PROCESSING}"
     )
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
+    @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("{id}/status")
     public ResponseEntity<OrderDTO> updateStatus(@PathVariable Long id,
                                                  @RequestParam String status) {

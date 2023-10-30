@@ -3,10 +3,12 @@ package com.hdshop.controller;
 import com.hdshop.dto.CategoryDTO;
 import com.hdshop.service.category.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +36,8 @@ public class CategoryController {
     }
 
     @Operation(summary = "Add new category")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bear Authentication")
     @PostMapping
     public ResponseEntity<CategoryDTO> addNewCategory(@Valid @RequestBody CategoryDTO categoryDTO) {
         CategoryDTO saveCategory = categoryService.createCategory(categoryDTO);
@@ -41,6 +45,8 @@ public class CategoryController {
     }
 
     @Operation(summary = "Update a category by id")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bear Authentication")
     @PostMapping("/{id}")
     public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id,
                                                       @Valid @RequestBody CategoryDTO categoryDTO) {
@@ -48,6 +54,8 @@ public class CategoryController {
     }
 
     @Operation(summary = "Delete a category by id")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bear Authentication")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
