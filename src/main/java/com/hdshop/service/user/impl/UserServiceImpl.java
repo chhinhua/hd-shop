@@ -3,7 +3,7 @@ package com.hdshop.service.user.impl;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.entity.User;
 import com.hdshop.exception.ResourceNotFoundException;
-import com.hdshop.repository.UserRepository;
+import com.hdshop.repository.user.UserRepository;
 import com.hdshop.service.user.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;

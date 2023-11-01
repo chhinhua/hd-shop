@@ -1,14 +1,19 @@
 server:
-    port: 5000
+    port: 8080
+
 spring:
     datasource:
-        password: your password
-        url: jdbc:mysql://<url your data is stored>/hdshop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-        username: your username
+        url: jdbc:mysql://sql12.freemysqlhosting.net:3306/sql12658177?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+        username: sql12658177
+        password: 2WwFHiiHLk
     jpa:
         hibernate:
-            ddl-auto: update
+            ddl-auto: create
         properties:
             hibernate:
-                dialect: org.hibernate.dialect.MySQLDialect
+                dialect: org.hibernate.dialect.MySQL8Dialect
         show-sql: true
+
+app:
+    jwt-secret: 38a0963a6364b09ad867aa9a66c6d009673c21e182015461da236ec361877f77
+    jwt-expiration-milliseconds: 86400000

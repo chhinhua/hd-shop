@@ -46,6 +46,6 @@ public class Category extends BaseEntity {
     @OneToMany(mappedBy = "parent", cascade = CascadeType.PERSIST)
     private List<Category> children = new ArrayList<>();
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "category", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private List<Product> products = new ArrayList<>();
 }

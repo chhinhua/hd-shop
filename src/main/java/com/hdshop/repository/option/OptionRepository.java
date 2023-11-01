@@ -1,4 +1,4 @@
-package com.hdshop.repository.product;
+package com.hdshop.repository.option;
 
 import com.hdshop.entity.product.Option;
 import com.hdshop.entity.product.Product;

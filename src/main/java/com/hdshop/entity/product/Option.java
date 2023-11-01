@@ -28,7 +28,10 @@ public class Option {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToMany(mappedBy = "option", cascade = CascadeType.PERSIST)
+    @OneToMany(
+            mappedBy = "option",
+            cascade = {CascadeType.PERSIST, CascadeType.REMOVE}
+    )
     private List<OptionValue> values = new ArrayList<>();
 
     @PrePersist

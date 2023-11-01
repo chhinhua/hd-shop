@@ -3,7 +3,7 @@ package com.hdshop.init;
 import com.hdshop.entity.Address;
 import com.hdshop.entity.Role;
 import com.hdshop.entity.User;
-import com.hdshop.repository.UserRepository;
+import com.hdshop.repository.user.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
