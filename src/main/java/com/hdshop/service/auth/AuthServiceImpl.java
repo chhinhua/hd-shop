@@ -6,7 +6,7 @@ import com.hdshop.entity.Role;
 import com.hdshop.entity.User;
 import com.hdshop.exception.APIException;
 import com.hdshop.repository.RoleRepository;
-import com.hdshop.repository.user.UserRepository;
+import com.hdshop.repository.UserRepository;
 import com.hdshop.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,4 +1,4 @@
-package com.hdshop.repository.user;
+package com.hdshop.repository;
 
 import com.hdshop.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;

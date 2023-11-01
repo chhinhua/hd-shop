@@ -1,6 +1,6 @@
-package com.hdshop.repository.product;
+package com.hdshop.repository;
 
-import com.hdshop.entity.product.Product;
+import com.hdshop.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

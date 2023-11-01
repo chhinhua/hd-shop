@@ -1,7 +1,7 @@
 package com.hdshop.security;
 
 import com.hdshop.entity.User;
-import com.hdshop.repository.user.UserRepository;
+import com.hdshop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -1,4 +1,4 @@
-package com.hdshop.repository.cart;
+package com.hdshop.repository;
 
 import com.hdshop.entity.Cart;
 import com.hdshop.entity.CartItem;

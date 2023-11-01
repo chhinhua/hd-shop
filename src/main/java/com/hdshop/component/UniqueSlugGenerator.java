@@ -2,9 +2,9 @@ package com.hdshop.component;
 import com.github.slugify.Slugify;
 import com.hdshop.entity.BaseEntity;
 import com.hdshop.entity.Category;
-import com.hdshop.entity.product.Product;
+import com.hdshop.entity.Product;
 import com.hdshop.repository.CategoryRepository;
-import com.hdshop.repository.product.ProductRepository;
+import com.hdshop.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

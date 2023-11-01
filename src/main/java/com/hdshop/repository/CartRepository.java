@@ -1,4 +1,4 @@
-package com.hdshop.repository.cart;
+package com.hdshop.repository;
 
 import com.hdshop.entity.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;

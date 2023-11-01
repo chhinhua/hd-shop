@@ -1,20 +1,15 @@
-package com.hdshop.entity.product;
+package com.hdshop.entity;
 
-import com.hdshop.component.ApplicationContextProvider;
 import com.hdshop.component.SkuGenerator;
-import com.hdshop.service.product.OptionValueService;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Cascade;
-import org.springframework.context.ApplicationContext;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Getter
 @Setter

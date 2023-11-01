@@ -1,11 +1,11 @@
 package com.hdshop.service.product.impl;
 
-import com.hdshop.entity.product.OptionValue;
-import com.hdshop.entity.product.Product;
-import com.hdshop.entity.product.ProductSku;
+import com.hdshop.entity.OptionValue;
+import com.hdshop.entity.Product;
+import com.hdshop.entity.ProductSku;
 import com.hdshop.exception.ResourceNotFoundException;
-import com.hdshop.repository.product.ProductRepository;
-import com.hdshop.repository.product.ProductSkuRepository;
+import com.hdshop.repository.ProductRepository;
+import com.hdshop.repository.ProductSkuRepository;
 import com.hdshop.service.product.OptionValueService;
 import com.hdshop.service.product.ProductSkuService;
 import lombok.RequiredArgsConstructor;

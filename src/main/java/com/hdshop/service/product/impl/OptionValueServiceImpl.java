@@ -1,7 +1,7 @@
 package com.hdshop.service.product.impl;
 
-import com.hdshop.entity.product.OptionValue;
-import com.hdshop.repository.option.OptionValueRepository;
+import com.hdshop.entity.OptionValue;
+import com.hdshop.repository.OptionValueRepository;
 import com.hdshop.service.product.OptionValueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

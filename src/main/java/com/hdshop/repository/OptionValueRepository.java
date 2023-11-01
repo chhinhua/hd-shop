@@ -1,7 +1,6 @@
-package com.hdshop.repository.option;
+package com.hdshop.repository;
 
-import com.hdshop.entity.product.OptionValue;
-import com.hdshop.entity.product.Product;
+import com.hdshop.entity.OptionValue;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
