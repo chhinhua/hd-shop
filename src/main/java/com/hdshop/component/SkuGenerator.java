@@ -1,7 +1,7 @@
 package com.hdshop.component;
 
 import com.github.slugify.Slugify;
-import com.hdshop.entity.product.OptionValue;
+import com.hdshop.entity.OptionValue;
 
 import java.util.List;
 

@@ -15,20 +15,18 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("HD-Shop Application API")
-
                         .description("Fashion shop RESTful API documentation")
-
                         .contact(new Contact()
                                 .email("chhinhua.com")
                                 .name("Chhin Hua")
-                                .url("https://www.linkedin.com/in/chhin-hua/"))
-
+                                //.url("https://www.linkedin.com/in/chhin-hua/")
+                        )
                         .license(new License()
                                 .name("Apache 2.0")
-                                .url("http://www.apache.org/licenses/LICENSE-2.0.html"))
-
-                        .version("v1.0"))
-
+                                .url("http://www.apache.org/licenses/LICENSE-2.0.html")
+                        )
+                        .version("v1.0")
+                )
                 .externalDocs(new ExternalDocumentation()
                         .description("Github repository")
                         .url("https://github.com/chhinhua/hd-shop")

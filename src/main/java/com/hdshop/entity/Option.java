@@ -1,11 +1,10 @@
-package com.hdshop.entity.product;
+package com.hdshop.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Cascade;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +27,10 @@ public class Option {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToMany(mappedBy = "option", cascade = CascadeType.PERSIST)
+    @OneToMany(
+            mappedBy = "option",
+            cascade = {CascadeType.PERSIST, CascadeType.REMOVE}
+    )
     private List<OptionValue> values = new ArrayList<>();
 
     @PrePersist

@@ -1,6 +1,6 @@
-package com.hdshop.repository.product;
+package com.hdshop.repository;
 
-import com.hdshop.entity.product.ProductSku;
+import com.hdshop.entity.ProductSku;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

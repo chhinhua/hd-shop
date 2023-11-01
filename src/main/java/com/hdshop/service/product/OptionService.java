@@ -1,7 +1,7 @@
 package com.hdshop.service.product;
 
-import com.hdshop.entity.product.Option;
-import com.hdshop.entity.product.Product;
+import com.hdshop.entity.Option;
+import com.hdshop.entity.Product;
 
 import java.util.List;
 

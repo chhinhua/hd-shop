@@ -108,11 +108,11 @@ public class CategoryServiceImpl implements CategoryService {
 
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
-        setParentById(categoryDTO.getParentId(), category);
 
         String uniqueSlug = slugGenerator.generateUniqueSlug(category, category.getName());
         category.setSlug(uniqueSlug);
 
+        setParentById(categoryDTO.getParentId(), category);
 
         Category updateCategory = categoryRepository.save(category);
 
@@ -120,12 +120,21 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     /**
-     * Set the unique slug
-     * @param category
+     * Delete category by id
+     * @param id
      */
-    private void setUniqueSlug(Category category) {
-        String uniqueSlug = slugGenerator.generateUniqueCategorySlug(slugify.slugify(category.getName()));
-        category.setSlug(uniqueSlug);
+    @Override
+    public void deleteCategory(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+
+        if (category.getChildren() != null) {
+            for (Category child : category.getChildren()) {
+                child.setParent(null);
+                categoryRepository.save(child);
+            }
+        }
+        categoryRepository.delete(category);
     }
 
     /**
@@ -139,17 +148,6 @@ public class CategoryServiceImpl implements CategoryService {
                 : Optional.empty();
 
         category.setParent(parentCategory.orElse(null));
-    }
-
-    /**
-     * Delete category by id
-     * @param id
-     */
-    @Override
-    public void deleteCategory(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
-        categoryRepository.delete(category);
     }
 
     /**

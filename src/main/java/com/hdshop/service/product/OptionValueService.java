@@ -1,6 +1,6 @@
 package com.hdshop.service.product;
 
-import com.hdshop.entity.product.OptionValue;
+import com.hdshop.entity.OptionValue;
 
 import java.util.Optional;
 

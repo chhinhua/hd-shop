@@ -1,6 +1,5 @@
-package com.hdshop.entity.product;
+package com.hdshop.entity;
 
-import com.hdshop.entity.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

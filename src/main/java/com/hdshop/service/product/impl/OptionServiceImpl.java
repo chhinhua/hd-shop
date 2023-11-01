@@ -1,10 +1,10 @@
 package com.hdshop.service.product.impl;
 
-import com.hdshop.entity.product.Option;
-import com.hdshop.entity.product.OptionValue;
-import com.hdshop.entity.product.Product;
-import com.hdshop.repository.product.OptionRepository;
-import com.hdshop.repository.product.OptionValueRepository;
+import com.hdshop.entity.Option;
+import com.hdshop.entity.OptionValue;
+import com.hdshop.entity.Product;
+import com.hdshop.repository.OptionRepository;
+import com.hdshop.repository.OptionValueRepository;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.OptionValueService;
 import lombok.RequiredArgsConstructor;

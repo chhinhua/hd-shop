@@ -7,12 +7,12 @@ import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.dto.product.ProductSkuDTO;
 import com.hdshop.entity.Category;
-import com.hdshop.entity.product.Option;
-import com.hdshop.entity.product.Product;
-import com.hdshop.entity.product.ProductSku;
+import com.hdshop.entity.Option;
+import com.hdshop.entity.Product;
+import com.hdshop.entity.ProductSku;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
-import com.hdshop.repository.product.ProductRepository;
+import com.hdshop.repository.ProductRepository;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
@@ -41,38 +41,45 @@ public class ProductServiceImpl implements ProductService {
     private final Slugify slugify;
 
     /**
-     * Create new product
+     * Create a new product.
      *
-     * @param product
-     * @return productDTO
+     * @param product The product object to create.
+     * @return ProductDTO representing the created product.
+     * @throws ResourceNotFoundException if the corresponding category is not found.
      */
     @Override
     public ProductDTO createProduct(Product product) {
+        // find the product category based on its ID
         Category category = categoryRepository.findById(product.getCategory().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", product.getCategory().getId()));
 
+        // generate a unique slug for the product
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
         product.setSlug(uniqueSlug);
+
+        // assign the category to the product
         product.setCategory(category);
 
-        // normalize product input
+        // normalize product information
         Product normalizedProduct = normalizeProduct(product);
 
-        // save product
+        // save the product to the database
         Product newProduct = productRepository.save(normalizedProduct);
 
-        // save productSkus
+        // save information about product variants (productSkus)
         productSkuService.saveSkusFromProduct(newProduct);
 
+        // convert the product to a ProductDTO object and return it
         return mapToDTO(newProduct);
     }
 
+
     /**
-     * Get all product pagination
+     * Get all products within pagination.
      *
-     * @param pageNo
-     * @param pageSize
-     * @return list of product pagination
+     * @param pageNo   Page number.
+     * @param pageSize Number of items per page.
+     * @return List of paginated products.
      */
     @Override
     public ProductResponse getAllProducts(int pageNo, int pageSize) {
@@ -100,11 +107,13 @@ public class ProductServiceImpl implements ProductService {
         return productResponse;
     }
 
+
     /**
-     * Get the single product
+     * Get a single product.
      *
-     * @param productId
-     * @return product DTO object
+     * @param productId Product ID.
+     * @return Product DTO object.
+     * @throws ResourceNotFoundException if the product is not found.
      */
     @Override
     public ProductDTO getOne(Long productId) {
@@ -113,12 +122,13 @@ public class ProductServiceImpl implements ProductService {
         return mapToDTO(product);
     }
 
+
     /**
-     * Update a product
+     * Update a product.
      *
-     * @param productDTO
-     * @param productId
-     * @return product DTO object
+     * @param productDTO Updated product information.
+     * @param productId  Product ID to update.
+     * @return Updated product DTO object.
      * @date 25-10-2023
      */
     @Override
@@ -151,9 +161,48 @@ public class ProductServiceImpl implements ProductService {
         return mapToDTO(existingProduct);
     }
 
-    private Product normalizeProduct(Product product) {
-        return productValidator.normalizeInput(product);
+
+    /**
+     * Deactivate or activate a product based on its ID.
+     *
+     * @param productId ID of the product to deactivate or activate.
+     * @return A ProductDTO representing the updated state of the product.
+     * @throws ResourceNotFoundException if the product is not found.
+     * @date 01-11-2023
+     */
+    @Override
+    public ProductDTO toggleProductActiveStatus(Long productId) {
+        Product existingProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+
+        existingProduct.setIsActive(!existingProduct.getIsActive());
+
+        Product updateIsAcitve = productRepository.save(existingProduct);
+
+        return mapToDTO(updateIsAcitve);
     }
+
+
+    /**
+     * Deactivate or activate the selling status of a product based on its ID.
+     *
+     * @param productId ID of the product to deactivate or activate selling.
+     * @return A ProductDTO representing the updated status of the product.
+     * @throws ResourceNotFoundException if the product is not found.
+     * @date 01-11-2023
+     */
+    @Override
+    public ProductDTO toggleProductSellingStatus(Long productId) {
+        Product existingProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+
+        existingProduct.setIsSelling(!existingProduct.getIsSelling());
+
+        Product updateIsAcitve = productRepository.save(existingProduct);
+
+        return mapToDTO(updateIsAcitve);
+    }
+
 
     /**
      * Set fields for product entity is values from productDTO and Category entity
@@ -181,6 +230,12 @@ public class ProductServiceImpl implements ProductService {
         existingProduct.setSlug(uniqueSlug);
     }
 
+
+    private Product normalizeProduct(Product product) {
+        return productValidator.normalizeInput(product);
+    }
+
+
     /**
      * Save or update options if it exists
      *
@@ -195,6 +250,7 @@ public class ProductServiceImpl implements ProductService {
 
         return optionService.saveOrUpdateOptionsByProductId(existingProduct.getProductId(), optionListFromDTO);
     }
+
 
     /**
      * Save or update productSkus if it exists
@@ -211,15 +267,6 @@ public class ProductServiceImpl implements ProductService {
         return productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skuListFromDTO);
     }
 
-    /**
-     * Convert ProductDTO to  Product entity class
-     *
-     * @param productDTO
-     * @return Product entity object
-     */
-    private Product mapToEntity(ProductDTO productDTO) {
-        return modelMapper.map(productDTO, Product.class);
-    }
 
     private ProductDTO mapToDTO(Product product) {
         return modelMapper.map(product, ProductDTO.class);

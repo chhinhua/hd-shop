@@ -1,6 +1,6 @@
 package com.hdshop.validator;
 
-import com.hdshop.entity.product.Product;
+import com.hdshop.entity.Product;
 import org.springframework.stereotype.Component;
 
 @Component
