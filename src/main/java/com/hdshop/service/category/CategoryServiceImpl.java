@@ -1,13 +1,20 @@
 package com.hdshop.service.category;
 
 import com.github.slugify.Slugify;
-import com.hdshop.dto.CategoryDTO;
+import com.hdshop.dto.category.CategoryDTO;
+import com.hdshop.dto.category.CategoryResponse;
+import com.hdshop.dto.product.ProductDTO;
+import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Category;
+import com.hdshop.entity.Product;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
 import com.hdshop.component.UniqueSlugGenerator;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -135,6 +142,39 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
         categoryRepository.delete(category);
+    }
+
+    /**
+     * Retrieves a paginated list of categories.
+     *
+     * @param pageNo   The page number (1-based).
+     * @param pageSize The number of items per page.
+     * @return A CategoryResponse object containing the paginated category data.
+     */
+    @Override
+    public CategoryResponse getAllCategories(int pageNo, int pageSize) {
+        // create Pageable instances
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        Page<Category> categoryPage = categoryRepository.findAll(pageable);
+
+        // get content for page object
+        List<Category> categoryList = categoryPage.getContent();
+
+        List<CategoryDTO> content = categoryList.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+
+        // set data to the category response
+        CategoryResponse categoryResponse = new CategoryResponse();
+        categoryResponse.setContent(content);
+        categoryResponse.setPageNo(categoryPage.getNumber() + 1);
+        categoryResponse.setPageSize(categoryPage.getSize());
+        categoryResponse.setTotalPages(categoryPage.getTotalPages());
+        categoryResponse.setTotalElements(categoryPage.getTotalElements());
+        categoryResponse.setLast(categoryPage.isLast());
+
+        return categoryResponse;
     }
 
     /**

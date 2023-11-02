@@ -1,4 +1,4 @@
-package com.hdshop.dto.product;
+package com.hdshop.dto.category;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,10 +12,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Hidden
-@Schema(description = "Product Response Information")
-public class ProductResponse {
-    @Schema(description = "Product Content")
-    private List<ProductDTO> content;
+@Schema(description = "Category Response Information")
+public class CategoryResponse {
+    @Schema(description = "Category Content")
+    private List<CategoryDTO> content;
 
     @Schema(description = "Page Number")
     private int pageNo;
@@ -23,7 +23,7 @@ public class ProductResponse {
     @Schema(description = "Page Size")
     private int pageSize;
 
-    @Schema(description = "Total Product")
+    @Schema(description = "Total category")
     private long totalElements;
 
     @Schema(description = "Total Pages")
@@ -32,3 +32,4 @@ public class ProductResponse {
     @Schema(description = "Is it the last page?")
     private boolean last;
 }
+
