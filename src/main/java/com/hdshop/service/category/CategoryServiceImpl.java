@@ -11,6 +11,7 @@ import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
 import com.hdshop.component.UniqueSlugGenerator;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,18 +24,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
-    private final Slugify slugify;
     private final UniqueSlugGenerator slugGenerator;
-
-    public CategoryServiceImpl(CategoryRepository categoryRepository, ModelMapper modelMapper, Slugify slugify, UniqueSlugGenerator slugGenerator) {
-        this.categoryRepository = categoryRepository;
-        this.modelMapper = modelMapper;
-        this.slugify = slugify;
-        this.slugGenerator = slugGenerator;
-    }
 
     /**
      * Query all categories
