@@ -28,6 +28,8 @@ public class CartItem {
 
     private BigDecimal subTotal;
 
+    private String imageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id")
     private Cart cart;

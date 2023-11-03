@@ -55,7 +55,7 @@ public class ProductDTO {
 
     private Boolean isActive = true;
 
-    private Boolean isSelling = true;
+    private Boolean isSelling = false;
 
     private Date createdDate;
 

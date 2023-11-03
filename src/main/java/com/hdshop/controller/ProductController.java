@@ -22,7 +22,7 @@ public class ProductController {
     private final ProductService productService;
 
     @Operation(summary = "Create Product")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bear Authentication")
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody Product product) {
@@ -46,7 +46,7 @@ public class ProductController {
     }
 
     @Operation(summary = "Update a Product")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("{id}")
     public ResponseEntity<ProductDTO> updateProduct(
@@ -56,7 +56,7 @@ public class ProductController {
     }
 
     @Operation(summary = "Toggle Active Status of a Product")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("/{id}/active")
     public ResponseEntity<ProductDTO> toggleActiveProduct(@PathVariable(value = "id") Long productId) {
@@ -64,7 +64,7 @@ public class ProductController {
     }
 
     @Operation(summary = "Toggle Selling Status of a Product")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("/{id}/selling")
     public ResponseEntity<ProductDTO> toggleSellingProduct(@PathVariable(value = "id") Long productId) {

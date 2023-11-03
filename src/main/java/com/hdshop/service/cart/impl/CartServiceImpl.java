@@ -1,6 +1,7 @@
 package com.hdshop.service.cart.impl;
 
 import com.hdshop.dto.cart.CartItemDTO;
+import com.hdshop.dto.cart.CartItemResponse;
 import com.hdshop.entity.*;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
@@ -30,7 +31,7 @@ public class CartServiceImpl implements CartService {
      * @return The updated CartItemDTO.
      */
     @Override
-    public CartItemDTO addToCart(Long cartId, CartItemDTO itemDTO) {
+    public CartItemResponse addToCart(Long cartId, CartItemDTO itemDTO) {
         // TODO Handle vấn đề số lượng sản phẩm tồn tại trước khi thêm vào giỏ (quantityAvailable)
         Cart cart = getCartById(cartId);
         Product product = getProductById(itemDTO.getProductId());
@@ -65,13 +66,35 @@ public class CartServiceImpl implements CartService {
     }
 
     /**
+     * Overrides the method to change the quantity of a CartItem.
+     *
+     * @param cartItemId The ID of the CartItem to be updated.
+     * @param quantity The new quantity for the CartItem.
+     * @return A CartItemDTO representing the updated CartItem.
+     * @throws ResourceNotFoundException if a CartItem with the given ID is not found.
+     */
+    @Override
+    public CartItemResponse changeQuantity(Long cartItemId, int quantity) {
+        // check existing CartItem by id
+        CartItem existingItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(()-> new ResourceNotFoundException("CartItem", "id", cartItemId));
+
+        existingItem.setQuantity(quantity);
+        existingItem.setSubTotal(existingItem.getPrice().multiply(BigDecimal.valueOf(quantity)));
+
+        CartItem changeItemQuantity =  cartItemRepository.save(existingItem);
+
+        return mapToResponse(changeItemQuantity);
+    }
+
+    /**
      * Processes a cart item with SKU information.
      * @param cart The cart to process the item for.
      * @param product The product associated with the item.
      * @param itemDTO The DTO containing the item information.
      * @return The updated CartItemDTO.
      */
-    private CartItemDTO processCartItemWithSku(Cart cart, Product product, CartItemDTO itemDTO) {
+    private CartItemResponse processCartItemWithSku(Cart cart, Product product, CartItemDTO itemDTO) {
         ProductSku sku = getSkuById(itemDTO.getSkuId());
 
         Optional<CartItem> existingItem = cartItemRepository
@@ -82,10 +105,12 @@ public class CartServiceImpl implements CartService {
             existingCartItem.setQuantity(existingCartItem.getQuantity() + itemDTO.getQuantity());
             existingCartItem.setPrice(sku.getPrice());
             existingCartItem.setSubTotal(existingCartItem.getPrice().multiply(BigDecimal.valueOf(existingCartItem.getQuantity())));
-            return mapToDTO(cartItemRepository.save(existingCartItem));
+
+            return mapToResponse(cartItemRepository.save(existingCartItem));
         } else {
             CartItem newCartItem = createNewCartItemWithSku(cart, product, sku, itemDTO);
-            return mapToDTO(cartItemRepository.save(newCartItem));
+
+            return mapToResponse(cartItemRepository.save(newCartItem));
         }
     }
 
@@ -96,7 +121,8 @@ public class CartServiceImpl implements CartService {
      * @param itemDTO The DTO containing the item information.
      * @return The updated CartItemDTO.
      */
-    private CartItemDTO processCartItemWithoutSku(Cart cart, Product product, CartItemDTO itemDTO) {
+    private CartItemResponse processCartItemWithoutSku(Cart cart, Product product, CartItemDTO itemDTO) {
+
         Optional<CartItem> existingItem = cartItemRepository
                 .findByCart_IdAndProduct_ProductId(cart.getId(), product.getProductId());
 
@@ -105,10 +131,13 @@ public class CartServiceImpl implements CartService {
             existingCartItem.setQuantity(existingCartItem.getQuantity() + itemDTO.getQuantity());
             existingCartItem.setPrice(product.getPrice());
             existingCartItem.setSubTotal(existingCartItem.getPrice().multiply(BigDecimal.valueOf(existingCartItem.getQuantity())));
-            return mapToDTO(cartItemRepository.save(existingCartItem));
+            existingCartItem.setImageUrl(product.getListImages().get(0));
+
+            return mapToResponse(cartItemRepository.save(existingCartItem));
         } else {
             CartItem newCartItem = createNewCartItemWithoutSku(cart, product, itemDTO);
-            return mapToDTO(cartItemRepository.save(newCartItem));
+
+            return mapToResponse(cartItemRepository.save(newCartItem));
         }
     }
 
@@ -125,6 +154,7 @@ public class CartServiceImpl implements CartService {
         newCartItem.setPrice(sku.getPrice());
         newCartItem.setQuantity(itemDTO.getQuantity());
         newCartItem.setSubTotal(sku.getPrice().multiply(BigDecimal.valueOf(itemDTO.getQuantity())));
+        newCartItem.setImageUrl(findImageUrlFromOptionValues(sku));
         newCartItem.setCart(cart);
         newCartItem.setProduct(product);
         newCartItem.setSku(sku);
@@ -143,6 +173,7 @@ public class CartServiceImpl implements CartService {
         newCartItem.setPrice(product.getPrice());
         newCartItem.setQuantity(itemDTO.getQuantity());
         newCartItem.setSubTotal(product.getPrice().multiply(BigDecimal.valueOf(itemDTO.getQuantity())));
+        newCartItem.setImageUrl(product.getListImages().get(0));
         newCartItem.setCart(cart);
         newCartItem.setProduct(product);
         return newCartItem;
@@ -163,7 +194,15 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new ResourceNotFoundException("ProductSku", "skuId", skuId));
     }
 
-    private CartItemDTO mapToDTO(CartItem entity) {
-        return modelMapper.map(entity, CartItemDTO.class);
+    private String findImageUrlFromOptionValues(ProductSku sku) {
+        return sku.getOptionValues().stream()
+                .filter(value -> value.getImageUrl() != null)
+                .map(OptionValue::getImageUrl)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private CartItemResponse mapToResponse(CartItem entity) {
+        return modelMapper.map(entity, CartItemResponse.class);
     }
 }
