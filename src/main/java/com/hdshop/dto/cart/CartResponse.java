@@ -17,6 +17,6 @@ public class CartResponse {
     private Long id;
     private Boolean isDeleted;
     private List<CartItemResponse> cartItems;
-    private Integer totalItems;
+    private long totalItems;
     private BigDecimal totalPrice;
 }

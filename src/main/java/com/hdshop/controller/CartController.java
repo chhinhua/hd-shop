@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @Tag(name = "Cart")
 @RestController
@@ -39,26 +40,24 @@ public class CartController {
         return new ResponseEntity<>(addedItem, HttpStatus.CREATED);
     }
 
-
-    @Operation(summary = "Change Cart item quantity")
-    @PutMapping("/items/{itemId}")
-    public ResponseEntity<CartItemResponse> changeItemQuantity(@PathVariable(value = "itemId") Long cartItemId,
-                                                          @RequestParam int quantity) {
-        CartItemResponse changeItem = cartService.changeQuantity(cartItemId, quantity);
-
-        return ResponseEntity.ok(changeItem);
-    }
-    @Operation(summary = "Delete one Cart item")
-    @DeleteMapping("/items/{itemId}")
-    public ResponseEntity<String> deteleOneCartItem(@PathVariable(value = "itemId") Long cartItemId) {
-        cartService.deleteOneCartItem(cartItemId);
-        return ResponseEntity.ok("Cart item deleted successfully");
-    }
-
     @Operation(summary = "Get Cart by id")
     @GetMapping("/{cartId}")
     public ResponseEntity<CartResponse> getCart(@PathVariable Long cartId) {
         return ResponseEntity.ok(cartService.getCartById(cartId));
+    }
+
+    @Operation(summary = "Clear cart items")
+    @DeleteMapping("/clear")
+    public ResponseEntity<CartResponse> clearItems(Principal principal) {
+        String username = principal.getName();
+        return ResponseEntity.ok(cartService.clearItems(username));
+    }
+
+    @Operation(summary = "Clear cart items")
+    @DeleteMapping("/remove")
+    public ResponseEntity<CartResponse> removeListItems(@RequestBody List<Long> itemIds, Principal principal) {
+        String username = principal.getName();
+        return ResponseEntity.ok(cartService.removeListItems(username, itemIds));
     }
 
 }

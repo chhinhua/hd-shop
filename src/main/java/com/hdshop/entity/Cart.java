@@ -25,6 +25,10 @@ public class Cart extends BaseEntity {
 
     private Boolean isDeleted = false;
 
+    private long totalItems;
+
+    private BigDecimal totalPrice;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;

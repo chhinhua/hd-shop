@@ -10,6 +10,7 @@ import com.hdshop.service.product.OptionValueService;
 import com.hdshop.service.product.ProductSkuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,71 +32,99 @@ public class ProductSkuServiceImpl implements ProductSkuService {
      * @date 27-10-2023
      */
     @Override
+    @Transactional
     public List<ProductSku> saveOrUpdateSkus(Long productId, List<ProductSku> skus) {
         List<ProductSku> saveProductSkus = new ArrayList<>();
-
-        Product product = productRepository.findById(productId)
-                .orElseThrow(()-> new ResourceNotFoundException("Product", "id", productId));
+        Product product = getProductById(productId);
 
         for (ProductSku productSku : skus) {
-            Optional<ProductSku> existingProductSku = productSkuRepository
-                    .findBySkuAndProduct_ProductId(productSku.getSku(), productId);
+            Optional<ProductSku> existingProductSku = getProductSkuBySkuAndProductId(productSku.getSku(), productId);
 
-            // check nếu có tồn tại thì set giá price thay đổi
-            // nếu không tồn tại thì tạo mới rồi set optionValues cho nó
-            // để khỏi bị tạo lại optionValues
             if (existingProductSku.isPresent()) {
-                existingProductSku.get().setPrice(productSku.getPrice());
+                updateExistingProductSku(existingProductSku.get(), productSku);
                 saveProductSkus.add(existingProductSku.get());
             } else {
-                List<OptionValue> valueList = new ArrayList<>();
-                for (OptionValue value : productSku.getOptionValues()) {
-                    // mặc định là đã tồn tại optionValue này vì logic trước đó đã lưu nó
-                    OptionValue existingOptionValue = optionValueService
-                            .getByValueNameAndProductId(value.getValueName(), productId)
-                            .orElseThrow(
-                                    () -> new ResourceNotFoundException(
-                                            "OptionValue",
-                                            "valueName and productId",
-                                            value.getValueName()
-                                    )
-                            );
-
-                    valueList.add(existingOptionValue);
-                }
-
-                // set values and save sku to database
-                productSku.setProduct(product);
-                productSku.setOptionValues(valueList);
-                saveProductSkus.add(productSkuRepository.save(productSku));
+                ProductSku newProductSku = createNewProductSku(productSku, product);
+                saveProductSkus.add(newProductSku);
             }
         }
 
-        return saveProductSkus.stream().toList();
+        return saveProductSkus;
     }
 
     @Override
+    @Transactional
     public List<ProductSku> saveSkusFromProduct(Product product) {
         List<ProductSku> savedSkus = new ArrayList<>();
 
         for (ProductSku sku : product.getSkus()) {
             sku.setProduct(product);
 
-            List<OptionValue> optionValues = new ArrayList<>();
-            for (OptionValue value : sku.getOptionValues()) {
-                Optional<OptionValue> newOptionValue = optionValueService
-                        .getByValueNameAndProductId(value.getValueName(), product.getProductId());
+            List<OptionValue> optionValues = getOptionValuesForSku(sku, product);
 
-                if (newOptionValue.isPresent()) {
-                    optionValues.add(newOptionValue.get());
-                }
-            }
-
-            // save sku within set values
             sku.setOptionValues(optionValues);
             savedSkus.add(productSkuRepository.save(sku));
         }
 
         return savedSkus.stream().toList();
     }
+
+    private List<OptionValue> getOptionValuesForSku(ProductSku sku, Product product) {
+        List<OptionValue> optionValues = new ArrayList<>();
+
+        for (OptionValue value : sku.getOptionValues()) {
+            OptionValue newOptionValue = getOrCreateOptionValue(value, product);
+
+            optionValues.add(newOptionValue);
+        }
+
+        return optionValues;
+    }
+
+    private OptionValue getOrCreateOptionValue(OptionValue value, Product product) {
+        Optional<OptionValue> newOptionValue = optionValueService
+                .getByValueNameAndProductId(value.getValueName(), product.getProductId());
+
+        return newOptionValue.orElse(value); // Return existing or create new
+    }
+
+    private Product getProductById(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+    }
+
+    private Optional<ProductSku> getProductSkuBySkuAndProductId(String sku, Long productId) {
+        return productSkuRepository.findBySkuAndProduct_ProductId(sku, productId);
+    }
+
+    private void updateExistingProductSku(ProductSku existingProductSku, ProductSku newProductSku) {
+        existingProductSku.setPrice(newProductSku.getPrice());
+        // Add any other fields that need to be updated
+    }
+
+    private ProductSku createNewProductSku(ProductSku productSku, Product product) {
+        List<OptionValue> valueList = getExistingOptionValues(productSku.getOptionValues(), product.getProductId());
+
+        productSku.setProduct(product);
+        productSku.setOptionValues(valueList);
+
+        return productSkuRepository.save(productSku);
+    }
+
+    private List<OptionValue> getExistingOptionValues(List<OptionValue> optionValues, Long productId) {
+        List<OptionValue> valueList = new ArrayList<>();
+
+        for (OptionValue value : optionValues) {
+            OptionValue existingOptionValue = getOptionValueByValueNameAndProductId(value.getValueName(), productId);
+            valueList.add(existingOptionValue);
+        }
+
+        return valueList;
+    }
+
+    private OptionValue getOptionValueByValueNameAndProductId(String valueName, Long productId) {
+        return optionValueService.getByValueNameAndProductId(valueName, productId)
+                .orElseThrow(() -> new ResourceNotFoundException("OptionValue", "valueName and productId", valueName));
+    }
+
 }
