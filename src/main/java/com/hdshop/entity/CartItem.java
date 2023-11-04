@@ -17,7 +17,7 @@ import java.util.Date;
 @DynamicUpdate
 @Entity
 @Table(name = "cart_items")
-public class CartItem extends BaseEntity {
+public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,9 +28,7 @@ public class CartItem extends BaseEntity {
 
     private BigDecimal subTotal;
 
-    private Date createAt;
-
-    private Date updateAt;
+    private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id")
@@ -39,4 +37,8 @@ public class CartItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sku_id")
+    private ProductSku sku;
 }

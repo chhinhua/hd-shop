@@ -2,6 +2,7 @@ package com.hdshop.dto.order;
 
 import com.hdshop.dto.AddressDTO;
 import com.hdshop.utils.EnumOrderStatus;
+import com.hdshop.utils.EnumPaymentType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -24,14 +25,15 @@ public class OrderDTO {
     @NotBlank
     private String status = EnumOrderStatus.PENDING_PROCESSING.getKey();
 
+    @NotBlank
+    private String paymentType = EnumPaymentType.COD.getKey();
+
     @NotNull(message = "Total price must be not null and larger or equal to zero")
     private BigDecimal total;
 
     private String note;
 
     private Boolean isPaidBefore = false;
-
-    private String paymentType;
 
     private String createdBy;
 

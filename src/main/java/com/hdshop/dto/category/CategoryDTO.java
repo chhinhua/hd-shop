@@ -1,4 +1,4 @@
-package com.hdshop.dto;
+package com.hdshop.dto.category;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;

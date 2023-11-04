@@ -1,5 +1,6 @@
 package com.hdshop.entity;
 
+import com.hdshop.utils.EnumPaymentType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,9 +33,9 @@ public class Order extends BaseEntity {
 
     private String note;
 
-    private Boolean isPaidBefore = false;
+    private Boolean isPaidBefore;
 
-    // TODO thiết kết kiểu thanh toán (enum or string)
+    // TODO thiết lập nullable
     private String paymentType;
 
     @CreatedBy

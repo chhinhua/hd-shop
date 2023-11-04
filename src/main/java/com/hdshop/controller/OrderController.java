@@ -29,7 +29,7 @@ public class OrderController {
     }
 
     @Operation(summary = "Delete order by id")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @SecurityRequirement(name = "Bear Authentication")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteOrder(@PathVariable Long id) {
@@ -48,7 +48,7 @@ public class OrderController {
             summary = "Update order status by id",
             description = "Update order status by one of values {CANCELED, DELIVERED, ,CANCELED, PROCESSING, PENDING_PROCESSING}"
     )
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("{id}/status")
     public ResponseEntity<OrderDTO> updateStatus(@PathVariable Long id,
@@ -67,4 +67,5 @@ public class OrderController {
     public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
+    // TODO trước mắt chỉ cho thanh toán online (vnpay)
 }

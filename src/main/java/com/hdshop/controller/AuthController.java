@@ -24,13 +24,13 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @Operation(summary = "Register new account")
+    @Operation(summary = "Sinup new account")
     @PostMapping(value = {"/signup", "/register"})
     public ResponseEntity<String> register(@Valid @RequestBody RegisterDTO registerDTO) {
         return new ResponseEntity<>(authService.register(registerDTO), HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Login account")
+    @Operation(summary = "Signin account")
     @PostMapping(value = {"/signin", "/login"})
     public ResponseEntity<JwtAuthResponse> login(@Valid @RequestBody LoginDTO loginDTO) {
         String accessToken = authService.login(loginDTO);

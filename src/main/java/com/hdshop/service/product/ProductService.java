@@ -14,6 +14,7 @@ public interface ProductService {
     ProductDTO updateProduct(final ProductDTO productDTO, final Long productId);
 
     ProductDTO toggleProductActiveStatus(final Long productId);
+
     ProductDTO toggleProductSellingStatus(final Long productId);
 
 }

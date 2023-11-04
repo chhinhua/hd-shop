@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -48,6 +49,7 @@ public class ProductServiceImpl implements ProductService {
      * @throws ResourceNotFoundException if the corresponding category is not found.
      */
     @Override
+    @Transactional
     public ProductDTO createProduct(Product product) {
         // find the product category based on its ID
         Category category = categoryRepository.findById(product.getCategory().getId())
@@ -72,7 +74,6 @@ public class ProductServiceImpl implements ProductService {
         // convert the product to a ProductDTO object and return it
         return mapToDTO(newProduct);
     }
-
 
     /**
      * Get all products within pagination.
@@ -107,7 +108,6 @@ public class ProductServiceImpl implements ProductService {
         return productResponse;
     }
 
-
     /**
      * Get a single product.
      *
@@ -117,11 +117,9 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductDTO getOne(Long productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        Product product = getExistingProductById(productId);
         return mapToDTO(product);
     }
-
 
     /**
      * Update a product.
@@ -132,10 +130,10 @@ public class ProductServiceImpl implements ProductService {
      * @date 25-10-2023
      */
     @Override
+    @Transactional
     public ProductDTO updateProduct(ProductDTO productDTO, Long productId) {
         // check if product already exists
-        Product existingProduct = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        Product existingProduct = getExistingProductById(productId);
 
         // check if category already exists
         Category category = categoryRepository.findById(productDTO.getCategoryId())
@@ -161,7 +159,6 @@ public class ProductServiceImpl implements ProductService {
         return mapToDTO(existingProduct);
     }
 
-
     /**
      * Deactivate or activate a product based on its ID.
      *
@@ -172,8 +169,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductDTO toggleProductActiveStatus(Long productId) {
-        Product existingProduct = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        Product existingProduct = getExistingProductById(productId);
 
         existingProduct.setIsActive(!existingProduct.getIsActive());
 
@@ -181,7 +177,6 @@ public class ProductServiceImpl implements ProductService {
 
         return mapToDTO(updateIsAcitve);
     }
-
 
     /**
      * Deactivate or activate the selling status of a product based on its ID.
@@ -193,8 +188,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductDTO toggleProductSellingStatus(Long productId) {
-        Product existingProduct = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        Product existingProduct = getExistingProductById(productId);
 
         existingProduct.setIsSelling(!existingProduct.getIsSelling());
 
@@ -202,7 +196,6 @@ public class ProductServiceImpl implements ProductService {
 
         return mapToDTO(updateIsAcitve);
     }
-
 
     /**
      * Set fields for product entity is values from productDTO and Category entity
@@ -230,20 +223,8 @@ public class ProductServiceImpl implements ProductService {
         existingProduct.setSlug(uniqueSlug);
     }
 
-
-    private Product normalizeProduct(Product product) {
-        return productValidator.normalizeInput(product);
-    }
-
-
-    /**
-     * Save or update options if it exists
-     *
-     * @param existingProduct
-     * @param optionDTOList
-     * @return option entity list
-     */
-    private List<Option> saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
+    @Transactional
+    protected List<Option> saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
         List<Option> optionListFromDTO = optionDTOList.stream()
                 .map(optionDTO -> modelMapper.map(optionDTO, Option.class))
                 .collect(Collectors.toList());
@@ -251,15 +232,7 @@ public class ProductServiceImpl implements ProductService {
         return optionService.saveOrUpdateOptionsByProductId(existingProduct.getProductId(), optionListFromDTO);
     }
 
-
-    /**
-     * Save or update productSkus if it exists
-     *
-     * @param existingProduct
-     * @param skuDTOList
-     * @return productSku entity list
-     */
-    private List<ProductSku> saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
+    protected List<ProductSku> saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
         List<ProductSku> skuListFromDTO = skuDTOList.stream()
                 .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
                 .collect(Collectors.toList());
@@ -267,6 +240,15 @@ public class ProductServiceImpl implements ProductService {
         return productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skuListFromDTO);
     }
 
+    private Product getExistingProductById(Long productId) {
+        Product existingProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        return existingProduct;
+    }
+
+    private Product normalizeProduct(Product product) {
+        return productValidator.normalizeInput(product);
+    }
 
     private ProductDTO mapToDTO(Product product) {
         return modelMapper.map(product, ProductDTO.class);

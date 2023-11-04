@@ -1,5 +1,6 @@
 package com.hdshop.entity;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,6 +13,7 @@ import org.hibernate.annotations.DynamicUpdate;
 @AllArgsConstructor
 @NoArgsConstructor
 @DynamicUpdate
+@Hidden
 @Entity
 public class Address {
     @Id
