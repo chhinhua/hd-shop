@@ -49,7 +49,6 @@ public class ProductServiceImpl implements ProductService {
      * @throws ResourceNotFoundException if the corresponding category is not found.
      */
     @Override
-    @Transactional
     public ProductDTO createProduct(Product product) {
         // find the product category based on its ID
         Category category = categoryRepository.findById(product.getCategory().getId())

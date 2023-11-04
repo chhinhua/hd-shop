@@ -4,6 +4,7 @@ import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Product;
 import com.hdshop.service.product.ProductService;
+import com.hdshop.utils.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,8 +34,10 @@ public class ProductController {
     @Operation(summary = "Get All Products", description = "Get all Products via REST API with pagination")
     @GetMapping
     public ResponseEntity<ProductResponse> getAllProduct(
-            @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
-            @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize
+            @RequestParam(value = "pageNo", required = false,
+                    defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int pageNo,
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int pageSize
     ) {
         return ResponseEntity.ok(productService.getAllProducts(pageNo, pageSize));
     }

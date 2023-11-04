@@ -23,10 +23,6 @@ public class Cart extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Boolean isDeleted = false;
-
-    private long totalItems;
-
     private BigDecimal totalPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)

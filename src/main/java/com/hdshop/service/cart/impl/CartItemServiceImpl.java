@@ -14,11 +14,7 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 public class CartItemServiceImpl implements CartItemService {
-    private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final UserRepository userRepository;
-    private final ProductRepository productRepository;
-    private final ProductSkuRepository skuRepository;
     private final ModelMapper modelMapper;
 
     /**
