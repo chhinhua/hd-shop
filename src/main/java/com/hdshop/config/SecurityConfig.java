@@ -73,7 +73,6 @@ public class SecurityConfig {
                 .csrf().disable()
                 .formLogin().disable()
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/api/v1/cart").hasRole("USER")
                         .requestMatchers(WHITE_LIST_URL).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
                         .anyRequest()

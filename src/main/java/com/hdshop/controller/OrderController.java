@@ -67,4 +67,5 @@ public class OrderController {
     public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
+    // TODO trước mắt chỉ cho thanh toán online (vnpay)
 }

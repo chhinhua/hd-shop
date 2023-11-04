@@ -2,6 +2,7 @@ package com.hdshop.service.cart.impl;
 
 import com.hdshop.dto.cart.CartItemDTO;
 import com.hdshop.dto.cart.CartItemResponse;
+import com.hdshop.dto.cart.CartResponse;
 import com.hdshop.entity.*;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
@@ -11,6 +12,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -33,8 +36,8 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartItemResponse addToCart(Long cartId, CartItemDTO itemDTO) {
         // TODO Handle vấn đề số lượng sản phẩm tồn tại trước khi thêm vào giỏ (quantityAvailable)
-        Cart cart = getCartById(cartId);
-        Product product = getProductById(itemDTO.getProductId());
+        Cart cart = getExistingCartById(cartId);
+        Product product = getExistingProductById(itemDTO.getProductId());
 
         boolean hasSku = itemDTO.getSkuId() != null;
 
@@ -84,7 +87,26 @@ public class CartServiceImpl implements CartService {
 
         CartItem changeItemQuantity =  cartItemRepository.save(existingItem);
 
-        return mapToResponse(changeItemQuantity);
+        return mapToItemResponse(changeItemQuantity);
+    }
+
+    @Override
+    public void deleteOneCartItem(Long cartItemId) {
+        CartItem item = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "id", cartItemId));
+        cartItemRepository.delete(item);
+    }
+
+    @Override
+    public CartResponse getCartById(Long cartId) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
+
+        CartResponse response = modelMapper.map(cart, CartResponse.class);
+        response.setTotalItems((int) cart.getCartItems().stream().count());
+        response.setTotalPrice(calculateTotalPrice(cart.getCartItems()));
+
+        return response;
     }
 
     /**
@@ -95,7 +117,7 @@ public class CartServiceImpl implements CartService {
      * @return The updated CartItemDTO.
      */
     private CartItemResponse processCartItemWithSku(Cart cart, Product product, CartItemDTO itemDTO) {
-        ProductSku sku = getSkuById(itemDTO.getSkuId());
+        ProductSku sku = getExistingSkuById(itemDTO.getSkuId());
 
         Optional<CartItem> existingItem = cartItemRepository
                 .findByCart_IdAndProduct_ProductIdAndSku_SkuId(cart.getId(), product.getProductId(), sku.getSkuId());
@@ -106,11 +128,11 @@ public class CartServiceImpl implements CartService {
             existingCartItem.setPrice(sku.getPrice());
             existingCartItem.setSubTotal(existingCartItem.getPrice().multiply(BigDecimal.valueOf(existingCartItem.getQuantity())));
 
-            return mapToResponse(cartItemRepository.save(existingCartItem));
+            return mapToItemResponse(cartItemRepository.save(existingCartItem));
         } else {
             CartItem newCartItem = createNewCartItemWithSku(cart, product, sku, itemDTO);
 
-            return mapToResponse(cartItemRepository.save(newCartItem));
+            return mapToItemResponse(cartItemRepository.save(newCartItem));
         }
     }
 
@@ -133,11 +155,11 @@ public class CartServiceImpl implements CartService {
             existingCartItem.setSubTotal(existingCartItem.getPrice().multiply(BigDecimal.valueOf(existingCartItem.getQuantity())));
             existingCartItem.setImageUrl(product.getListImages().get(0));
 
-            return mapToResponse(cartItemRepository.save(existingCartItem));
+            return mapToItemResponse(cartItemRepository.save(existingCartItem));
         } else {
             CartItem newCartItem = createNewCartItemWithoutSku(cart, product, itemDTO);
 
-            return mapToResponse(cartItemRepository.save(newCartItem));
+            return mapToItemResponse(cartItemRepository.save(newCartItem));
         }
     }
 
@@ -179,30 +201,33 @@ public class CartServiceImpl implements CartService {
         return newCartItem;
     }
 
-    private Cart getCartById(Long cartId) {
+    private Cart getExistingCartById(Long cartId) {
         return cartRepository.findById(cartId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
     }
 
-    private Product getProductById(Long productId) {
+    private Product getExistingProductById(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
     }
 
-    private ProductSku getSkuById(Long skuId) {
+    private ProductSku getExistingSkuById(Long skuId) {
         return skuRepository.findById(skuId)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductSku", "skuId", skuId));
     }
 
     private String findImageUrlFromOptionValues(ProductSku sku) {
         return sku.getOptionValues().stream()
-                .filter(value -> value.getImageUrl() != null)
                 .map(OptionValue::getImageUrl)
+                .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
     }
 
-    private CartItemResponse mapToResponse(CartItem entity) {
+    private BigDecimal calculateTotalPrice(List<CartItem> cartItems) {
+        return cartItems.stream().map(CartItem::getSubTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+    private CartItemResponse mapToItemResponse(CartItem entity) {
         return modelMapper.map(entity, CartItemResponse.class);
     }
 }

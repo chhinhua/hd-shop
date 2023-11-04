@@ -10,7 +10,6 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 
-@Hidden
 @Getter
 @Setter
 @NoArgsConstructor
