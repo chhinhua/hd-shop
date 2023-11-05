@@ -22,6 +22,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @Operation(summary = "Create new order")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping
     public ResponseEntity<OrderDTO> createOrder(@Valid @RequestBody OrderDTO orderDTO) {
         OrderDTO newOrder = orderService.createOrder(orderDTO);

@@ -25,6 +25,11 @@ public class UserServiceImpl implements UserService {
         return mapToDTO(user);
     }
 
+    @Override
+    public void changePassword(String newPassword) {
+
+    }
+
     private UserDTO mapToDTO(User user) {
         return modelMapper.map(user, UserDTO.class);
     }
