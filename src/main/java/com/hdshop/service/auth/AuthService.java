@@ -1,10 +1,13 @@
 package com.hdshop.service.auth;
 
 import com.hdshop.dto.auth.LoginDTO;
+import com.hdshop.dto.auth.LoginResponse;
 import com.hdshop.dto.auth.RegisterDTO;
 
 public interface AuthService {
     String register(final RegisterDTO registerDTO);
 
-    String login(final LoginDTO loginDTO);
+    LoginResponse login(final LoginDTO loginDTO);
+
+    String sendCodeByPhoneNumber(final String phoneNumber);
 }

@@ -15,7 +15,7 @@ import java.util.List;
 public class CartResponse {
     private Long id;
     private Boolean isDeleted;
-    private int totalItems;
+    private Integer totalItems;
     private BigDecimal totalPrice;
     private List<CartItemResponse> cartItems;
 }

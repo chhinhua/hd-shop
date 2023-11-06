@@ -86,6 +86,9 @@ public class CartServiceImpl implements CartService {
     public CartResponse clearItems(String username) {
         Cart cart = getExistingCartByUsername(username);
 
+        // delete all items for of this cart
+        cartItemRepository.deleteAll(cart.getCartItems());
+
         // clear items
         cart.getCartItems().clear();
 
@@ -101,6 +104,9 @@ public class CartServiceImpl implements CartService {
         Cart cart = getExistingCartByUsername(username);
 
         List<CartItem> items = cartItemRepository.findByIdIn(itemIds);
+
+        // delete items
+        cartItemRepository.deleteAll(items);
 
         // clear items
         cart.getCartItems().removeAll(items);

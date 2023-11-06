@@ -20,4 +20,10 @@ public class UserController {
     public ResponseEntity<UserDTO> getSingleUser(@PathVariable(value = "id") Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
+
+    @Operation(summary = "Get user by username")
+    @GetMapping()
+    public ResponseEntity<UserDTO> getSingleUser(@RequestParam String username) {
+        return ResponseEntity.ok(userService.getUserByUsername(username));
+    }
 }

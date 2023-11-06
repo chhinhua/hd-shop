@@ -2,6 +2,7 @@ package com.hdshop.controller;
 
 import com.hdshop.dto.auth.JwtAuthResponse;
 import com.hdshop.dto.auth.LoginDTO;
+import com.hdshop.dto.auth.LoginResponse;
 import com.hdshop.dto.auth.RegisterDTO;
 import com.hdshop.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,12 +33,14 @@ public class AuthController {
 
     @Operation(summary = "Signin account")
     @PostMapping(value = {"/signin", "/login"})
-    public ResponseEntity<JwtAuthResponse> login(@Valid @RequestBody LoginDTO loginDTO) {
-        String accessToken = authService.login(loginDTO);
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginDTO loginDTO) {
+        LoginResponse response = authService.login(loginDTO);
+        return ResponseEntity.ok(response);
+    }
 
-        JwtAuthResponse jwtAuthResponse = new JwtAuthResponse();
-        jwtAuthResponse.setAccessToken(accessToken);
-
-        return ResponseEntity.ok(jwtAuthResponse);
+    @PostMapping(value = {"/signup/send-sms", "/register/send-sms"})
+    public ResponseEntity<String> sendSms(@RequestBody String phoneNumber) {
+        String code = authService.sendCodeByPhoneNumber(phoneNumber);
+        return ResponseEntity.ok(code);
     }
 }

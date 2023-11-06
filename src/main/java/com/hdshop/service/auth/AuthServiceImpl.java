@@ -1,13 +1,19 @@
 package com.hdshop.service.auth;
 
+import com.hdshop.component.RandomCodeGenerator;
+import com.hdshop.dto.auth.JwtAuthResponse;
 import com.hdshop.dto.auth.LoginDTO;
+import com.hdshop.dto.auth.LoginResponse;
 import com.hdshop.dto.auth.RegisterDTO;
+import com.hdshop.dto.user.UserDTO;
 import com.hdshop.entity.Role;
 import com.hdshop.entity.User;
 import com.hdshop.exception.APIException;
 import com.hdshop.repository.RoleRepository;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.security.JwtTokenProvider;
+import com.hdshop.service.sms.SmsService;
+import com.hdshop.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +25,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Chhin Hua
@@ -32,6 +40,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final SmsService smsService;
+    private final UserService userService;
 
     /**
      * Registers a new user based on the provided registration data.
@@ -58,6 +68,9 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(registerDTO.getEmail());
         user.setPassword(registerDTO.getPassword());
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
+        user.setIsEmailActive(true);
+        user.setIsEnabled(true);
+        user.setIsPhoneActive(false);
 
         // Set the user's role(s)
         Set<Role> roles = new HashSet<>();
@@ -79,7 +92,7 @@ public class AuthServiceImpl implements AuthService {
      * @return The JWT token generated upon successful authentication.
      */
     @Override
-    public String login(LoginDTO loginDTO) {
+    public LoginResponse login(LoginDTO loginDTO) {
         // Authenticate user using provided credentials
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -93,7 +106,45 @@ public class AuthServiceImpl implements AuthService {
         // Generate a JWT token for the authenticated user
         String token = jwtTokenProvider.generateToken(authentication);
 
-        // Return the generated JWT token
-        return token;
+        // Get user from token
+        UserDTO user = userService.getUserByToken(token);
+
+        // create jwtResponse object
+        JwtAuthResponse jwtResponse = new JwtAuthResponse();
+        jwtResponse.setAccessToken(token);
+
+        // create LoginResponse object
+        LoginResponse response = new LoginResponse(
+                user,
+                jwtResponse
+        );
+
+        return response;
+    }
+
+    @Override
+    public String sendCodeByPhoneNumber(String phoneNumber) {
+        // Verify sdt theo chuẩn số của việt nam
+        if (!isValidPhoneNumber(phoneNumber)) {
+            throw new IllegalArgumentException("Số điện thoại không hợp lệ");
+        }
+
+        String randomCode = RandomCodeGenerator.generateRandomCode();
+
+        // Gửi randomCode đến số điện thoại phoneNumber
+        smsService.sendSms(phoneNumber, "Mã xác thực của bạn là: #" + randomCode);
+
+        return randomCode;
+    }
+
+    public boolean isValidPhoneNumber(String phoneNumber) {
+        // Regex cho số điện thoại theo chuẩn Việt Nam
+        String regex = "^(03[2-9]|05[6-9]|07[0-9]|08[0-9]|09[0-9]|01[2-9])[0-9]{7}$";
+
+        // Kiểm tra sự khớp đúng
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(phoneNumber);
+
+        return matcher.matches();
     }
 }
