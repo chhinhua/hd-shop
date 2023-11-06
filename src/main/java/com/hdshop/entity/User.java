@@ -51,7 +51,7 @@ public class User extends BaseEntity {
 
     private String avatarUrl;
 
-    private Boolean isEnabled = false;
+    private Boolean isEnabled = true;
 
     private Boolean isEmailActive = false;
 

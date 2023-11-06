@@ -97,7 +97,7 @@ public class OrderServiceImpl implements OrderService {
         // thay đổi nếu trạng thái khác trạng thái hiện tại
         if (!order.getStatus().equals(statusKey)) {
             for (EnumOrderStatus status : EnumOrderStatus.values()) {
-                if (status.getKey().toLowerCase().equals(statusKey.toLowerCase())) {
+                if (status.getKey().equalsIgnoreCase(statusKey)) {
                     order.setStatus(status.getKey());
                     orderRepository.save(order);
                 }

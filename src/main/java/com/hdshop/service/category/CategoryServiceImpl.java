@@ -1,16 +1,12 @@
 package com.hdshop.service.category;
 
-import com.github.slugify.Slugify;
+import com.hdshop.component.UniqueSlugGenerator;
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;
-import com.hdshop.dto.product.ProductDTO;
-import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Category;
-import com.hdshop.entity.Product;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
-import com.hdshop.component.UniqueSlugGenerator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;

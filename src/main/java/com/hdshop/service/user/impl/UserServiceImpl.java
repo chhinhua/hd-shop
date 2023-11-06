@@ -25,12 +25,12 @@ public class UserServiceImpl implements UserService {
         return mapToDTO(user);
     }
 
-    private UserDTO mapToDTO(User user) {
-        return modelMapper.map(user, UserDTO.class);
+    @Override
+    public void changePassword(String newPassword) {
+
     }
 
-    // convert DTO to entity
-    private User mapToEntity(UserDTO userDTO) {
-        return modelMapper.map(userDTO, User.class);
+    private UserDTO mapToDTO(User user) {
+        return modelMapper.map(user, UserDTO.class);
     }
 }

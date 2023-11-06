@@ -51,7 +51,7 @@ public class Product extends BaseEntity {
 
     private Boolean isActive = true;
 
-    private Boolean isSelling = true;
+    private Boolean isSelling = false;
 
     @CreatedBy
     private String createdBy;

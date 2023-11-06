@@ -5,4 +5,4 @@ logging:
                 security: debug
 spring:
     profiles:
-        active: dev
+        active: prod

@@ -53,7 +53,6 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     }
 
     @Override
-    @Transactional
     public List<ProductSku> saveSkusFromProduct(Product product) {
         List<ProductSku> savedSkus = new ArrayList<>();
 

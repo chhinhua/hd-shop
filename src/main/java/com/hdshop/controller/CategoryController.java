@@ -2,8 +2,8 @@ package com.hdshop.controller;
 
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;
-import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.service.category.CategoryService;
+import com.hdshop.utils.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,8 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Category")
 @RestController
@@ -25,11 +23,16 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    @Operation(summary = "Get All Categories", description = "Get all Categories via REST API with pagination")
+    @Operation(
+            summary = "Get All Categories",
+            description = "Get all Categories via REST API with pagination"
+    )
     @GetMapping
     public ResponseEntity<CategoryResponse> getAllCategories(
-            @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
-            @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize
+            @RequestParam(value = "pageNo", required = false,
+                    defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int pageNo,
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int pageSize
     ) {
         return ResponseEntity.ok(categoryService.getAllCategories(pageNo, pageSize));
     }
