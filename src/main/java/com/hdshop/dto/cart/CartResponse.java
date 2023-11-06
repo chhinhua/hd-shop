@@ -1,6 +1,5 @@
 package com.hdshop.dto.cart;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,7 +15,7 @@ import java.util.List;
 public class CartResponse {
     private Long id;
     private Boolean isDeleted;
-    private List<CartItemResponse> cartItems;
-    private long totalItems;
+    private int totalItems;
     private BigDecimal totalPrice;
+    private List<CartItemResponse> cartItems;
 }

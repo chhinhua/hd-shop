@@ -8,6 +8,7 @@ import com.hdshop.service.cart.CartItemService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -26,6 +27,7 @@ public class CartItemServiceImpl implements CartItemService {
      * @throws ResourceNotFoundException if a CartItem with the given ID is not found.
      */
     @Override
+    @Transactional
     public CartItemResponse changeQuantity(Long cartItemId, int quantity) {
         // check existing CartItem by id
         CartItem existingItem = cartItemRepository.findById(cartItemId)
