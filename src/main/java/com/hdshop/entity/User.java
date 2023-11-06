@@ -11,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -47,15 +48,13 @@ public class User extends BaseEntity {
 
     private String gender;
 
-    private LocalDate dateOfBirth;
-
     private String avatarUrl;
 
-    private Boolean isEnabled = true;
+    private Boolean isEnabled;
 
-    private Boolean isEmailActive = false;
+    private Boolean isEmailActive;
 
-    private Boolean isPhoneActive = false;
+    private Boolean isPhoneActive;
 
     @CreatedBy
     private String createdBy;
@@ -70,9 +69,12 @@ public class User extends BaseEntity {
     private List<Review> reviews = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
-    private Set<Role> roles;
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
+    )
+    private Set<Role> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserFollowProduct> userFollowProducts = new ArrayList<>();

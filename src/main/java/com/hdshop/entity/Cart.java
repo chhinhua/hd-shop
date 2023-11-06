@@ -23,7 +23,7 @@ public class Cart extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int totalItems;
+    private Integer totalItems;
 
     private BigDecimal totalPrice;
 

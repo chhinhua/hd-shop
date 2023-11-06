@@ -27,13 +27,13 @@ public class UserDTO {
     @NotBlank(message = "Password is required")
     private String password;
 
-    private String firstName;
-
-    private String lastName;
-
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email address")
     private String email;
+
+    private String firstName;
+
+    private String lastName;
 
     @Pattern(regexp = "^[0-9]{9}$|^[0-9]{12}$", message = "Số CMND/CCCD không hợp lệ")
     private String id_card;
@@ -43,11 +43,9 @@ public class UserDTO {
 
     private String gender;
 
-    private LocalDate dateOfBirth;
-
     private String avatarUrl;
 
-    private Boolean isEnable = false;
+    private Boolean isEnabled;
 
     private String createdBy;
 
