@@ -128,7 +128,7 @@ public class AuthServiceImpl implements AuthService {
         String otp = OtpUtils.generateOTP();
 
         // save register information
-        User user = retrieveNewUser(registerDTO, otp);
+        saveRegisterInfo(registerDTO, otp);
 
         return sendOTP(registerDTO.getEmail(), otp);
     }
@@ -197,7 +197,7 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    private User retrieveNewUser(RegisterDTO registerDTO, String otp) {
+    private User saveRegisterInfo(RegisterDTO registerDTO, String otp) {
         // create a new User object and populate it with the provided registration data
         User user = new User();
         user.setUsername(registerDTO.getUsername());
