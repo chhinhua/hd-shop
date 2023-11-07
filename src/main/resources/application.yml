@@ -19,13 +19,6 @@ spring:
             enable: true
           from: Duck Shop
 
-twilio:
-  account:
-    sid: ACdcdd3eb62a29ba5c3f489e4775707c63
-  auth:
-    token: 4ab981696f5f7672fe56856962430e73
-  phone:
-    number: +84326474614
 
 
 
