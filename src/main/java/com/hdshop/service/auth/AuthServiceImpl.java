@@ -1,19 +1,19 @@
 package com.hdshop.service.auth;
 
 import com.hdshop.component.RandomCodeGenerator;
-import com.hdshop.dto.auth.JwtAuthResponse;
-import com.hdshop.dto.auth.LoginDTO;
-import com.hdshop.dto.auth.LoginResponse;
-import com.hdshop.dto.auth.RegisterDTO;
+import com.hdshop.dto.auth.*;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.entity.Role;
 import com.hdshop.entity.User;
 import com.hdshop.exception.APIException;
+import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.RoleRepository;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.security.JwtTokenProvider;
+import com.hdshop.service.opt.OtpService;
 import com.hdshop.service.sms.SmsService;
 import com.hdshop.service.user.UserService;
+import com.hdshop.utils.OtpUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -41,6 +41,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final SmsService smsService;
+    private final OtpService otpService;
     private final UserService userService;
 
     /**
@@ -52,37 +53,42 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public String register(RegisterDTO registerDTO) {
-        // Check if the username already exists in the database
+        // check if the username already exists in the database
         if (userRepository.existsUserByUsername(registerDTO.getUsername())) {
             throw new APIException(HttpStatus.BAD_REQUEST, "Username is already exists!");
         }
 
-        // Check if the email already exists in the database
+        // check if the email already exists in the database
         if (userRepository.existsUserByEmail(registerDTO.getEmail())) {
             throw new APIException(HttpStatus.BAD_REQUEST, "Email is already exists!");
         }
 
-        // Create a new User object and populate it with the provided registration data
+        // create a new User object and populate it with the provided registration data
         User user = new User();
         user.setUsername(registerDTO.getUsername());
         user.setEmail(registerDTO.getEmail());
         user.setPassword(registerDTO.getPassword());
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
-        user.setIsEmailActive(true);
-        user.setIsEnabled(true);
+        user.setIsEmailActive(false);
+        user.setIsEnabled(false);
         user.setIsPhoneActive(false);
 
-        // Set the user's role(s)
+        // set the user's role(s)
         Set<Role> roles = new HashSet<>();
         Role userRole = roleRepository.findByName("ROLE_USER").get();
         roles.add(userRole);
         user.setRoles(roles);
 
-        // Save the user to the database
+        // save the user to the database
         userRepository.save(user);
 
+        String otp = OtpUtils.generateOTP();
+
+        // send otp
+        otpService.sendOTP(user.getEmail(), otp);
+
         // Return a success message
-        return "User registered successfully!";
+        return "Vui lòng kiểm tra email để hoàn tất đăng ký tài khoản!";
     }
 
     /**
@@ -137,6 +143,33 @@ public class AuthServiceImpl implements AuthService {
         return randomCode;
     }
 
+    @Override
+    public String sendOTP_ByEmail(String email) {
+        if (!isValidEmail(email)) {
+            throw new IllegalArgumentException("Địa chỉ email không hợp lệ");
+        }
+
+        String otp = OtpUtils.generateOTP();
+
+        otpService.sendOTP(email, otp);
+
+        return "Mã OTP đã được gửi, vui lòng kiểm tra email";
+    }
+
+    @Override
+    public String verifyOTP_ByEmail(VerifyOtpRequest otpRequest) {
+        // check if the email already exists in the database
+        User user = userRepository
+                .findByEmail(otpRequest.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("Địa chỉ email không chính xác"));
+
+        user.setIsEnabled(true);
+        user.setIsEmailActive(true);
+        userRepository.save(user);
+
+        return "Xác thực thành công, bạn đã có thể đăng nhập.";
+    }
+
     public boolean isValidPhoneNumber(String phoneNumber) {
         // Regex cho số điện thoại theo chuẩn Việt Nam
         String regex = "^(03[2-9]|05[6-9]|07[0-9]|08[0-9]|09[0-9]|01[2-9])[0-9]{7}$";
@@ -144,6 +177,17 @@ public class AuthServiceImpl implements AuthService {
         // Kiểm tra sự khớp đúng
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(phoneNumber);
+
+        return matcher.matches();
+    }
+
+    public boolean isValidEmail(String email) {
+        // Regex cho định dạng email
+        String regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+
+        // Kiểm tra sự khớp đúng
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(email);
 
         return matcher.matches();
     }

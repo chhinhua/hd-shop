@@ -25,7 +25,7 @@ public class AuditingConfig implements AuditorAware<String> {
                 !authentication.isAuthenticated() ||
                     authentication instanceof AnonymousAuthenticationToken
         ) {
-            return Optional.empty();
+            return Optional.of("system");
         }
 
         if (authentication.getPrincipal() instanceof User)
