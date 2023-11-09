@@ -10,9 +10,9 @@ public interface AuthService {
 
     LoginResponse login(final LoginDTO loginDTO);
 
-    String sendCodeByPhoneNumber(final String phoneNumber);
-
     String sendOTP_ByEmail(final String email);
+
+    String sendOTP_ByUsername(final String username);
 
     String verifyOTP_ByEmail(final VerifyOtpRequest otpRequest);
 }

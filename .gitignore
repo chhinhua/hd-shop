@@ -4,8 +4,6 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 json-test/
-.env
-Dockerfile
 
 ### STS ###
 .apt_generated
@@ -21,6 +19,8 @@ Dockerfile
 *.iws
 *.iml
 *.ipr
+.env
+Dockerfile
 
 ### NetBeans ###
 /nbproject/private/

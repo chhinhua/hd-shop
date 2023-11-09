@@ -5,15 +5,4 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/hd-shop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: 123hua@
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
-
-app:
-  jwt-secret: 38a0963a6364b09ad867aa9a66c6d009673c21e182015461da236ec361877f77
-  jwt-expiration-milliseconds: 86400000  # 1 day
+    password: 123456789

@@ -20,7 +20,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy User có id là " + id));
         return mapToDTO(user);
     }
 
@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService {
             // get user by username
             user = userRepository.findByUsernameOrEmail(username, username)
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            String.format("Không tìm thấy người dùng với tên người dùng hoặc email là: %s", username))
+                            "Không tìm thấy người dùng với tên người dùng hoặc email là " + username)
                     );
         }
 
@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService {
     public UserDTO getUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(()-> new ResourceNotFoundException(
-                        String.format("Không tìm tấy tài khoản người dùng với tên tài khoản là %s" , username))
+                        "Không tìm tấy tài khoản người dùng với tên tài khoản là " + username)
                 );
         return mapToDTO(user);
     }

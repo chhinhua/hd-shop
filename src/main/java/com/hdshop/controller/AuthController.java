@@ -35,15 +35,14 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/send-sms")
-    public ResponseEntity<String> sendSms(@RequestBody String phoneNumber) {
-        String code = authService.sendCodeByPhoneNumber(phoneNumber);
-        return ResponseEntity.ok(code);
+    @PostMapping("/send-otp")
+    public ResponseEntity<String> sendOtpByEmail(@RequestParam String email) {
+        return ResponseEntity.ok(authService.sendOTP_ByEmail(email));
     }
 
-    @PostMapping("/send-otp")
-    public ResponseEntity<String> sendOtp(@RequestParam String email) {
-        return ResponseEntity.ok(authService.sendOTP_ByEmail(email));
+    @GetMapping("/send-otp")
+    public ResponseEntity<String> sendOtpByUsername(@RequestParam String username) {
+        return ResponseEntity.ok(authService.sendOTP_ByUsername(username));
     }
 
     @PostMapping("/verify-otp")

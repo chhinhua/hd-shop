@@ -35,9 +35,9 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<ProductResponse> getAllProduct(
             @RequestParam(value = "pageNo", required = false,
-                    defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int pageNo,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false,
-                    defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int pageSize
+                    defaultValue = "${paging.default.page-size}") int pageSize
     ) {
         return ResponseEntity.ok(productService.getAllProducts(pageNo, pageSize));
     }
