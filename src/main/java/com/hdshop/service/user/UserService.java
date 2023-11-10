@@ -2,10 +2,14 @@ package com.hdshop.service.user;
 
 import com.hdshop.dto.user.UserDTO;
 
+import java.security.Principal;
+
 public interface UserService {
     UserDTO getUserById(final Long id);
 
-    void changePassword(final String newPassword);
+    String changePasswordOfCurrentUser(final String newPassword, final Principal pricipal);
+
+    String changePasswordByUserEmail(final String email, final String newPassword);
 
     UserDTO getUserByToken(final String token);
 

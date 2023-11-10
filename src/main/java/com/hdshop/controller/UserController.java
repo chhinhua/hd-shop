@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @Tag(name = "User")
 @RequiredArgsConstructor
 @RestController
@@ -25,5 +27,18 @@ public class UserController {
     @GetMapping()
     public ResponseEntity<UserDTO> getSingleUser(@RequestParam String username) {
         return ResponseEntity.ok(userService.getUserByUsername(username));
+    }
+
+    @PutMapping("/password/change")
+    public ResponseEntity<String> changePasswordOfCurrentUser(@RequestParam String newPassword, Principal principal) {
+        String result = userService.changePasswordOfCurrentUser(newPassword, principal);
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/password/forgot")
+    public ResponseEntity<String> changePasswordByUserEmail(@RequestParam String email,
+                                                            @RequestParam String newPassword) {
+        String result = userService.changePasswordByUserEmail(email, newPassword);
+        return ResponseEntity.ok(result);
     }
 }
