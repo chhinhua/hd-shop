@@ -5,7 +5,6 @@ import com.hdshop.entity.User;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.UserRepository;
-import com.hdshop.security.JwtTokenProvider;
 import com.hdshop.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -21,11 +20,8 @@ import java.security.Principal;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
-    private final JwtTokenProvider jwtTokenProvider;
     private final MessageSource messageSource;
     private final PasswordEncoder passwordEncoder;
-    private String email;
-    private String newPassword;
 
     @Override
     public UserDTO getUserById(Long id) {
@@ -56,24 +52,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO getUserByToken(String token) {
-        User user = new User();
-
-        if (jwtTokenProvider.validateToken(token)) {
-            // get username from token
-            String username = jwtTokenProvider.getUsername(token);
-
-            // get user by username
-            user = userRepository.findByUsernameOrEmail(username, username)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Không tìm thấy người dùng với tên người dùng hoặc email là " + username)
-                    );
-        }
-
-        return mapToDTO(user);
-    }
-
-    @Override
     public UserDTO getUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(()-> new ResourceNotFoundException(
@@ -86,7 +64,6 @@ public class UserServiceImpl implements UserService {
     public UserDTO getUserByUsernameOrEmail(String usernameOrEmail) {
         User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
                 .orElseThrow(()-> new ResourceNotFoundException(getMessage("user-not-found")));
-
         return mapToDTO(user);
     }
 

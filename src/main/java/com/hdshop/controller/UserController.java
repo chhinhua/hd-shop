@@ -17,16 +17,16 @@ import java.security.Principal;
 public class UserController {
     private final UserService userService;
 
-    @Operation(summary = "Get one user")
-    @GetMapping("/{id}")
+    @Operation(summary = "Get a user by id")
+    @GetMapping("/id/{id}")
     public ResponseEntity<UserDTO> getSingleUser(@PathVariable(value = "id") Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @Operation(summary = "Get user by username")
-    @GetMapping()
-    public ResponseEntity<UserDTO> getSingleUser(@RequestParam String username) {
-        return ResponseEntity.ok(userService.getUserByUsername(username));
+    @Operation(summary = "Get a user by username or by email")
+    @GetMapping("/{usernameOrEmail}")
+    public ResponseEntity<UserDTO> getSingleUserByUsernameOrEamil(@PathVariable(value = "usernameOrEmail") String usernameOrEmail) {
+        return ResponseEntity.ok(userService.getUserByUsernameOrEmail(usernameOrEmail));
     }
 
     @PutMapping("/password/change")

@@ -11,8 +11,6 @@ public interface UserService {
 
     String changePasswordByUserEmail(final String email, final String newPassword);
 
-    UserDTO getUserByToken(final String token);
-
     UserDTO getUserByUsername(final String username);
 
     UserDTO getUserByUsernameOrEmail(final String usernameOrEmail);
