@@ -13,15 +13,15 @@ import lombok.Setter;
 @AllArgsConstructor
 @Hidden
 public class RegisterDTO {
-    @Pattern(regexp = "^[a-zA-Z0-9]{4,}$", message = "Invalid username")
+    @Pattern(
+            regexp = "^[a-zA-Z0-9]{4,}$",
+            message = "{invalid-username} ({cannot-be-less-than-4-characters})"
+    )
     private String username;
 
-    @Pattern(regexp = "^(0[0-9]{9}|\\+84[0-9]{9})$", message = "Invalid phone number")
-    private String phoneNumber;
-
-    @Email(message = "Email is invalid")
+    @Email(message = "{invalid-email-address}")
     private String email;
 
-    @Size(min = 8, message = "Password must be minimum 8 characters")
+    @Size(min = 8, message = "{password-length-cannot-be-less-than-8-characters}")
     private String password;
 }

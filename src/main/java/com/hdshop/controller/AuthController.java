@@ -1,19 +1,16 @@
 package com.hdshop.controller;
 
-import com.hdshop.dto.auth.JwtAuthResponse;
 import com.hdshop.dto.auth.LoginDTO;
 import com.hdshop.dto.auth.LoginResponse;
 import com.hdshop.dto.auth.RegisterDTO;
+import com.hdshop.dto.auth.VerifyOtpRequest;
 import com.hdshop.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Auth")
 @RestController
@@ -38,9 +35,18 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping(value = {"/signup/send-sms", "/register/send-sms"})
-    public ResponseEntity<String> sendSms(@RequestBody String phoneNumber) {
-        String code = authService.sendCodeByPhoneNumber(phoneNumber);
-        return ResponseEntity.ok(code);
+    @PostMapping("/send-otp")
+    public ResponseEntity<String> sendOtpByEmail(@RequestParam String email) {
+        return ResponseEntity.ok(authService.sendOTP_ByEmail(email));
+    }
+
+    @GetMapping("/send-otp")
+    public ResponseEntity<String> sendOtpByUsername(@RequestParam String username) {
+        return ResponseEntity.ok(authService.sendOTP_ByUsername(username));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<String> sendOtp(@RequestBody VerifyOtpRequest otpRequest) {
+        return ResponseEntity.ok(authService.verifyOTP_ByEmail(otpRequest));
     }
 }

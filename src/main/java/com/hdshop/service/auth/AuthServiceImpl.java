@@ -1,28 +1,34 @@
 package com.hdshop.service.auth;
 
-import com.hdshop.component.RandomCodeGenerator;
-import com.hdshop.dto.auth.JwtAuthResponse;
-import com.hdshop.dto.auth.LoginDTO;
-import com.hdshop.dto.auth.LoginResponse;
-import com.hdshop.dto.auth.RegisterDTO;
+import com.hdshop.dto.auth.*;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.entity.Role;
 import com.hdshop.entity.User;
 import com.hdshop.exception.APIException;
+import com.hdshop.exception.BadCredentialsException;
+import com.hdshop.exception.InvalidException;
+import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.RoleRepository;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.security.JwtTokenProvider;
-import com.hdshop.service.sms.SmsService;
+import com.hdshop.service.opt.OtpService;
 import com.hdshop.service.user.UserService;
+import com.hdshop.utils.OtpUtils;
+import com.hdshop.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.mail.MailException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -40,50 +46,10 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final SmsService smsService;
+    private final OtpService otpService;
     private final UserService userService;
-
-    /**
-     * Registers a new user based on the provided registration data.
-     *
-     * @param registerDTO The data containing user registration information.
-     * @return A success message indicating that the user has been registered.
-     * @throws APIException If the provided username or email already exist in the database, an exception is thrown with a Bad Request status and a specific message.
-     */
-    @Override
-    public String register(RegisterDTO registerDTO) {
-        // Check if the username already exists in the database
-        if (userRepository.existsUserByUsername(registerDTO.getUsername())) {
-            throw new APIException(HttpStatus.BAD_REQUEST, "Username is already exists!");
-        }
-
-        // Check if the email already exists in the database
-        if (userRepository.existsUserByEmail(registerDTO.getEmail())) {
-            throw new APIException(HttpStatus.BAD_REQUEST, "Email is already exists!");
-        }
-
-        // Create a new User object and populate it with the provided registration data
-        User user = new User();
-        user.setUsername(registerDTO.getUsername());
-        user.setEmail(registerDTO.getEmail());
-        user.setPassword(registerDTO.getPassword());
-        user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
-        user.setIsEmailActive(true);
-        user.setIsEnabled(true);
-        user.setIsPhoneActive(false);
-
-        // Set the user's role(s)
-        Set<Role> roles = new HashSet<>();
-        Role userRole = roleRepository.findByName("ROLE_USER").get();
-        roles.add(userRole);
-        user.setRoles(roles);
-
-        // Save the user to the database
-        userRepository.save(user);
-
-        // Return a success message
-        return "User registered successfully!";
-    }
+    private final MessageSource messageSource;
+    private final UserValidator userValidator;
 
     /**
      * Handles user login based on the provided login credentials.
@@ -93,57 +59,191 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public LoginResponse login(LoginDTO loginDTO) {
-        // Authenticate user using provided credentials
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginDTO.getUsernameOrEmail(),
-                        loginDTO.getPassword())
-        );
+        try {
+            // Authenticate user using provided credentials
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginDTO.getUsernameOrEmail(),
+                            loginDTO.getPassword())
+            );
 
-        // Set the authenticated user's information in the SecurityContext
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+            // Set the authenticated user's information in the SecurityContext
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Generate a JWT token for the authenticated user
-        String token = jwtTokenProvider.generateToken(authentication);
+            // Generate a JWT token for the authenticated user
+            String token = jwtTokenProvider.generateToken(authentication);
 
-        // Get user from token
-        UserDTO user = userService.getUserByToken(token);
+            // Get user from token
+            UserDTO user = userService.getUserByUsernameOrEmail(loginDTO.getUsernameOrEmail());
 
-        // create jwtResponse object
-        JwtAuthResponse jwtResponse = new JwtAuthResponse();
-        jwtResponse.setAccessToken(token);
+            // Check if user is enabled
+            if (!user.getIsEnabled()) {
+                throw new RuntimeException(getMessage("unverified-account"));
+            }
 
-        // create LoginResponse object
-        LoginResponse response = new LoginResponse(
-                user,
-                jwtResponse
-        );
+            // create jwtResponse object
+            JwtAuthResponse jwtResponse = new JwtAuthResponse();
+            jwtResponse.setAccessToken(token);
 
-        return response;
+            return new LoginResponse(user, jwtResponse);
+        } catch (org.springframework.security.authentication.BadCredentialsException exception) {
+            throw new BadCredentialsException(getMessage("username-or-password-incorrect"));
+        }
+    }
+
+    /**
+     * Registers a new user based on the provided registration data.
+     *
+     * @param registerDTO The data containing user registration information.
+     * @return A success message indicating that the user has been registered.
+     * @throws APIException If the provided username or email already exist in the database, an exception is thrown with a Bad Request status and a specific message.
+     */
+    @Override
+    @Transactional
+    public String register(RegisterDTO registerDTO) {
+        // validate
+        userValidator.validateRegisterRequest(registerDTO);
+
+        // generate OTP
+        String OTP = OtpUtils.generateOTP();
+
+        // save register information
+        saveRegisterInfo(registerDTO, OTP);
+
+        // send OTP
+        String successMessage = getMessage(String.format("%s (%s) %s",
+                getMessage("please-check-your-email"), registerDTO.getEmail(),
+                getMessage("to-confirm-account")));
+        return sendOTP(successMessage, registerDTO.getEmail(), OTP);
     }
 
     @Override
-    public String sendCodeByPhoneNumber(String phoneNumber) {
-        // Verify sdt theo chuẩn số của việt nam
-        if (!isValidPhoneNumber(phoneNumber)) {
-            throw new IllegalArgumentException("Số điện thoại không hợp lệ");
-        }
+    public String verifyOTP_ByEmail(VerifyOtpRequest otpRequest) {
+        // check already exists email
+        User user = checkExistingUserByEmail(otpRequest.getEmail());
 
-        String randomCode = RandomCodeGenerator.generateRandomCode();
+        // validate otp
+        validateOtp(otpRequest.getOtp(), user);
 
-        // Gửi randomCode đến số điện thoại phoneNumber
-        smsService.sendSms(phoneNumber, "Mã xác thực của bạn là: #" + randomCode);
+        // active account
+        user.setIsEnabled(true);
+        user.setIsEmailActive(true);
+        userRepository.save(user);
 
-        return randomCode;
+        return getMessage("auth-verify-successful");
     }
 
-    public boolean isValidPhoneNumber(String phoneNumber) {
-        // Regex cho số điện thoại theo chuẩn Việt Nam
-        String regex = "^(03[2-9]|05[6-9]|07[0-9]|08[0-9]|09[0-9]|01[2-9])[0-9]{7}$";
+    @Override
+    public String sendOTP_ByEmail(String email) {
+        if (!isValidEmail(email)) {
+            throw new InvalidException(getMessage("invalid-email-address"));
+        }
+
+        User user = checkExistingUserByEmail(email);
+
+        String otp = OtpUtils.generateOTP();
+
+        // save new otp for this user account
+        user.setOtp(otp);
+        user.setOtpCreatedTime(LocalDateTime.now());
+        userRepository.save(user);
+
+        // send OTP
+        String successMessage = getMessage(String.format("%s. %s (%s).",
+                getMessage("otp-send-successful"),
+                getMessage("please-check-your-email"), email));
+        return sendOTP(successMessage, email, otp);
+    }
+
+    @Override
+    public String sendOTP_ByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        String.format("%s %s", getMessage("user-not-found-with-username-is"), username))
+                );
+
+        String otp = OtpUtils.generateOTP();
+
+        // save new otp for this user account
+        user.setOtp(otp);
+        user.setOtpCreatedTime(LocalDateTime.now());
+        userRepository.save(user);
+
+        // send OTP
+        String email = user.getEmail();
+        String successMessage = getMessage(String.format("%s. %s (%s).",
+                getMessage("otp-send-successful"),
+                getMessage("please-check-your-email"), email));
+        return sendOTP(successMessage, email, otp);
+    }
+
+    public String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+    }
+
+    private User checkExistingUserByEmail(String email) {
+        return userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("email-address-incorrect")));
+    }
+
+    private void saveRegisterInfo(RegisterDTO registerDTO, String otp) {
+        // create a new User object and populate it with the provided registration data
+        User user = new User();
+        user.setUsername(registerDTO.getUsername());
+        user.setEmail(registerDTO.getEmail());
+        user.setPassword(registerDTO.getPassword());
+        user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
+        user.setIsEmailActive(false);
+        user.setIsEnabled(false);
+        user.setIsPhoneActive(false);
+        user.setOtp(otp);
+        user.setOtpCreatedTime(LocalDateTime.now());
+
+        // set the user's role(s)
+        Set<Role> roles = new HashSet<>();
+        Role userRole = roleRepository.findByName("ROLE_USER").get();
+        roles.add(userRole);
+        user.setRoles(roles);
+
+        userRepository.save(user);
+    }
+
+    private String sendOTP(String messsage, String email, String OTP) {
+        try {
+            otpService.sendOTP(email, OTP);
+            return messsage;
+        } catch (MailException e) {
+            e.printStackTrace();
+            return getMessage("otp-send-failed");
+        }
+    }
+
+    private void validateOtp(String otp, User user) {
+        if (user.getOtp() == null || user.getOtpCreatedTime() == null) {
+            throw new InvalidException(String.format("%s, %s"
+                    ,getMessage("auth-verify-failed")
+                    ,getMessage("please-try-again")));
+        }
+
+        if (!user.getOtp().equals(otp)) {
+            throw new InvalidException(getMessage("otp-code-incorrect"));
+        }
+
+        if (Duration.between(user.getOtpCreatedTime(), LocalDateTime.now()).toMinutes() > 5) {
+            throw new InvalidException(String.format("%s, %s"
+                    ,getMessage("otp-code-has-expired")
+                    ,getMessage("please-require-resend-otp")));
+        }
+    }
+
+    public boolean isValidEmail(String email) {
+        // Regex cho định dạng email
+        String regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
         // Kiểm tra sự khớp đúng
         Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(phoneNumber);
+        Matcher matcher = pattern.matcher(email);
 
         return matcher.matches();
     }

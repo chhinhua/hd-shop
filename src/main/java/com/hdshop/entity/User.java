@@ -10,6 +10,7 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +56,10 @@ public class User extends BaseEntity {
     private Boolean isEmailActive;
 
     private Boolean isPhoneActive;
+
+    private String otp;
+
+    private LocalDateTime otpCreatedTime;
 
     @CreatedBy
     private String createdBy;

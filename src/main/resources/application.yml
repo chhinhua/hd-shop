@@ -3,15 +3,61 @@ logging:
         org:
             springframework:
                 security: debug
-spring:
-    profiles:
-        active: dev
 
-twilio:
-    account:
-        sid: ACdcdd3eb62a29ba5c3f489e4775707c63
-    auth:
-        token: 4ab981696f5f7672fe56856962430e73
-    phone:
-        number: +84326474614
+spring:
+    application:
+        name: hdshop
+    jpa:
+        hibernate:
+            ddl-auto: update
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.MySQLDialect
+        show-sql: true
+    profiles:
+        active: prod
+    mail:
+        default-encoding: UTF-8
+        host: smtp.gmail.com
+        port: 587
+        username: huachhin@gmail.com
+        password: sawm mnph hinp cqgy
+        properties:
+            mail:
+                debug: true
+                smtp:
+                    auth: true
+                    connectiontimeout: 5000
+                    timeout: 5000
+                    from: Duck Shop
+                    starttls:
+                        enable: true
+    http:
+        encoding:
+            charset: UTF-8
+    mvc:
+        charset: UTF-8
+    messages:
+        basename: message
+        encoding: UTF-8
+        use-code-as-default-message: true
+
+    web:
+        locale: vi
+        locale-resolver: fixed
+
+app:
+    jwt-secret: 38a0963a6364b09ad867aa9a66c6d009673c21e182015461da236ec361877f77
+    jwt-expiration-milliseconds: 86400000
+
+paging:
+    default:
+        page-number: 1
+        page-size: 20
+
+
+
+
+
+
 
