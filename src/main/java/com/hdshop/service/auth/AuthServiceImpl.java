@@ -74,11 +74,11 @@ public class AuthServiceImpl implements AuthService {
             String token = jwtTokenProvider.generateToken(authentication);
 
             // Get user from token
-            UserDTO user = userService.getUserByToken(token);
+            UserDTO user = userService.getUserByUsernameOrEmail(loginDTO.getUsernameOrEmail());
 
             // Check if user is enabled
             if (!user.getIsEnabled()) {
-                throw new RuntimeException("account-not-verify");
+                throw new RuntimeException(getMessage("unverified-account"));
             }
 
             // create jwtResponse object
@@ -87,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
 
             return new LoginResponse(user, jwtResponse);
         } catch (org.springframework.security.authentication.BadCredentialsException exception) {
-            throw new BadCredentialsException(getMessage("auth-login-username-or-password-incorrect"));
+            throw new BadCredentialsException(getMessage("username-or-password-incorrect"));
         }
     }
 

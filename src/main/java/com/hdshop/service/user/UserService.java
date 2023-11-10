@@ -10,4 +10,6 @@ public interface UserService {
     UserDTO getUserByToken(final String token);
 
     UserDTO getUserByUsername(final String username);
+
+    UserDTO getUserByUsernameOrEmail(final String usernameOrEmail);
 }
