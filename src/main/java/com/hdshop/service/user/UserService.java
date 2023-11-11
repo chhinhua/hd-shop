@@ -20,5 +20,5 @@ public interface UserService {
 
     UserDTO updateProfileByUserId(final UserProfile profile, final Long userId);
 
-    UserDTO changeEnabledStatus(final Long userId);
+    UserDTO changeLockedStatus(final Long userId);
 }

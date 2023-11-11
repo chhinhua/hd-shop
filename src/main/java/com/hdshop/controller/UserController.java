@@ -64,9 +64,7 @@ public class UserController {
     @Operation(summary = "Change lock-unlock user account by id user")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{userId}/status")
-    public ResponseEntity<UserDTO> changeEnabledStatus(@PathVariable Long userId) {
-        return ResponseEntity.ok(userService.changeEnabledStatus(userId));
+    public ResponseEntity<UserDTO> changeLockedStatus(@PathVariable Long userId) {
+        return ResponseEntity.ok(userService.changeLockedStatus(userId));
     }
-
-    // TODO, handle lỗi access denied sang tiếng việt
 }

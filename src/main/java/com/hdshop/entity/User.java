@@ -47,6 +47,8 @@ public class User extends BaseEntity {
 
     private Boolean isEnabled;
 
+    private boolean isLocked;
+
     private Boolean isEmailActive;
 
     private Boolean isPhoneActive;

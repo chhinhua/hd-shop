@@ -40,6 +40,8 @@ public class UserDTO {
 
     private Boolean isEnabled;
 
+    private boolean isLocked;
+
     private String lastModifiedBy;
 
     private Date createdDate;

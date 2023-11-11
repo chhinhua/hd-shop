@@ -88,13 +88,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO changeEnabledStatus(Long userId) {
+    public UserDTO changeLockedStatus(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format(
                         getMessage("user-not-found-with-id-is"), userId))
                 );
 
-        user.setIsEnabled(!user.getIsEnabled());
+        user.setLocked(!user.isLocked());
 
         return mapToDTO(userRepository.save(user));
     }

@@ -5,7 +5,6 @@ import com.hdshop.dto.user.UserDTO;
 import com.hdshop.entity.Role;
 import com.hdshop.entity.User;
 import com.hdshop.exception.APIException;
-import com.hdshop.exception.BadCredentialsException;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.RoleRepository;
@@ -20,6 +19,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.MailException;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -81,13 +81,18 @@ public class AuthServiceImpl implements AuthService {
                 throw new RuntimeException(getMessage("unverified-account"));
             }
 
+            // check account is locked
+            if (user.isLocked()) {
+                throw new RuntimeException(getMessage("account-has-been-locked,-please-contact-admin-for-support"));
+            }
+
             // create jwtResponse object
             JwtAuthResponse jwtResponse = new JwtAuthResponse();
             jwtResponse.setAccessToken(token);
 
             return new LoginResponse(user, jwtResponse);
-        } catch (org.springframework.security.authentication.BadCredentialsException exception) {
-            throw new BadCredentialsException(getMessage("username-or-password-incorrect"));
+        } catch (BadCredentialsException exception) {
+            throw new com.hdshop.exception.BadCredentialsException(getMessage("username-or-password-incorrect"));
         }
     }
 
