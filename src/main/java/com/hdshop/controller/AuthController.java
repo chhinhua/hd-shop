@@ -35,17 +35,20 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/send-otp")
+    @Operation(summary = "Send OTP by email address")
+    @PostMapping("/otp/send")
     public ResponseEntity<String> sendOtpByEmail(@RequestParam String email) {
         return ResponseEntity.ok(authService.sendOTP_ByEmail(email));
     }
 
-    @GetMapping("/send-otp")
+    @Operation(summary = "Send OTP by username")
+    @GetMapping("/otp/send")
     public ResponseEntity<String> sendOtpByUsername(@RequestParam String username) {
         return ResponseEntity.ok(authService.sendOTP_ByUsername(username));
     }
 
-    @PostMapping("/verify-otp")
+    @Operation(summary = "Verify OTP")
+    @PostMapping("/otp/verify")
     public ResponseEntity<String> sendOtp(@RequestBody VerifyOtpRequest otpRequest) {
         return ResponseEntity.ok(authService.verifyOTP_ByEmail(otpRequest));
     }

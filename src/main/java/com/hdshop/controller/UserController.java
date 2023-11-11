@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -29,12 +30,15 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserByUsernameOrEmail(usernameOrEmail));
     }
 
+    @Operation(summary = "Change password for current user")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PutMapping("/password/change")
     public ResponseEntity<String> changePasswordOfCurrentUser(@RequestParam String newPassword, Principal principal) {
         String result = userService.changePasswordOfCurrentUser(newPassword, principal);
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Change password for Forgot password")
     @PutMapping("/password/forgot")
     public ResponseEntity<String> changePasswordByUserEmail(@RequestParam String email,
                                                             @RequestParam String newPassword) {
