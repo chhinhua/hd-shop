@@ -1,10 +1,16 @@
 package com.hdshop.exception;
 
+import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+@NoArgsConstructor
 public class APIException extends RuntimeException {
-    private final HttpStatus httpStatus;
-    private final String message;
+    private HttpStatus httpStatus;
+    private String message;
+
+    public APIException(String message) {
+        super(message);
+    }
 
     public APIException(HttpStatus httpStatus, String message) {
         this.httpStatus = httpStatus;
@@ -15,10 +21,6 @@ public class APIException extends RuntimeException {
         super(message);
         this.httpStatus = httpStatus;
         this.message = message1;
-    }
-
-    public HttpStatus getHttpStatus() {
-        return httpStatus;
     }
 
     @Override

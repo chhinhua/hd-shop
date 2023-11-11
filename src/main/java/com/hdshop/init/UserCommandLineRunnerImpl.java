@@ -57,10 +57,8 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		User admin = new User();
 		admin.setUsername("admin");
 		admin.setPassword(passwordEncoder.encode("admin"));
-		admin.setFirstName("admin");
-		admin.setLastName("1");
+		admin.setName("admin");
 		admin.setEmail("admin@gmail.com");
-		admin.setId_card("123456789");
 		admin.setPhoneNumber("0444444444");
 		admin.setGender("Male");
 		admin.setAvatarUrl("avatar-url");
@@ -76,10 +74,8 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		User user = new User();
 		user.setUsername("user");
 		user.setPassword(passwordEncoder.encode("user"));
-		user.setFirstName("user");
-		user.setLastName("2");
+		user.setName("user");
 		user.setEmail("user@gmail.com");
-		user.setId_card("98765321");
 		user.setPhoneNumber("0333333333");
 		user.setGender("Male");
 		user.setAvatarUrl("avatar-url");

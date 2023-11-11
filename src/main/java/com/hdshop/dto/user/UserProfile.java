@@ -1,32 +1,19 @@
 package com.hdshop.dto.user;
 
-import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.Date;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Hidden
-public class UserDTO {
+public class UserProfile {
     private Long id;
 
     @NotBlank(message = "{username-must-not-be-empty}")
     private String username;
 
-    @NotBlank(message = "{password-must-not-be-empty}")
-    private String password;
-
     @NotBlank(message = "{email-must-not-be-empty}")
-    @Email(message = "{invalid-email-address}")
     private String email;
 
     private String name;
@@ -37,14 +24,4 @@ public class UserDTO {
     private String gender;
 
     private String avatarUrl;
-
-    private Boolean isEnabled;
-
-    private boolean isLocked;
-
-    private String lastModifiedBy;
-
-    private Date createdDate;
-
-    private Date lastModifiedDate;
 }

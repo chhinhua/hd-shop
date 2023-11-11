@@ -3,7 +3,17 @@ server:
 
 spring:
     datasource:
+<<<<<<< Updated upstream
         url: jdbc:mysql://${PROD_DB_HOST}:${PROD_DB_PORT}/${PROD_DB_NAME}?useSSL=false
         username: ${PROD_DB_USERNAME}
         password: ${PROD_DB_PASSWORD}
+=======
+        url: jdbc:mysql://db-instance-hdshop.crzucsfqxps5.ap-northeast-1.rds.amazonaws.com:3306/hd-shop?useSSL=false&allowPublicKeyRetrieval=true
+        username: admin
+        password: jvVJ7j7k
+#    datasource:
+#        url: jdbc:mysql://${PROD_DB_HOST}:${PROD_DB_PORT}/${PROD_DB_NAME}?useSSL=false
+#        username: ${PROD_DB_USERNAME}
+#        password: ${PROD_DB_PASSWORD}
+>>>>>>> Stashed changes
 
