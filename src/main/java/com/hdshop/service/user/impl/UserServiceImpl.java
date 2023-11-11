@@ -34,30 +34,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String changePasswordOfCurrentUser(String newPassword, Principal principal) {
-        User user = userRepository.findByUsernameOrEmail(principal.getName(), principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
-
-        validateNewPassword(newPassword);
-
-        return tryToChangeNewPassword(newPassword, user);
-    }
-
-    @Override
-    public String changePasswordByUserEmail(String email, String newPassword) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("%s %s",
-                        getMessage("user-not-found-with-email-is"), email)));
-
-        validateNewPassword(newPassword);
-
-        return tryToChangeNewPassword(newPassword, user);
-    }
-
-    @Override
     public UserDTO getUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(()-> new ResourceNotFoundException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm tấy tài khoản người dùng với tên tài khoản là " + username)
                 );
         return mapToDTO(user);
@@ -66,7 +45,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO getUserByUsernameOrEmail(String usernameOrEmail) {
         User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
-                .orElseThrow(()-> new ResourceNotFoundException(getMessage("user-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
         return mapToDTO(user);
     }
 
@@ -108,6 +87,39 @@ public class UserServiceImpl implements UserService {
         return mapToDTO(userRepository.save(updateUserProfile));
     }
 
+    @Override
+    public UserDTO changeEnabledStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format(
+                        getMessage("user-not-found-with-id-is"), userId))
+                );
+
+        user.setIsEnabled(!user.getIsEnabled());
+
+        return mapToDTO(userRepository.save(user));
+    }
+
+    @Override
+    public String changePasswordOfCurrentUser(String newPassword, Principal principal) {
+        User user = userRepository.findByUsernameOrEmail(principal.getName(), principal.getName())
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
+
+        userValidator.validatePassword(newPassword);
+
+        return tryToChangeNewPassword(newPassword, user);
+    }
+
+    @Override
+    public String changePasswordByUserEmail(String email, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("%s %s",
+                        getMessage("user-not-found-with-email-is"), email)));
+
+        userValidator.validatePassword(newPassword);
+
+        return tryToChangeNewPassword(newPassword, user);
+    }
+
     private void setFieldValues(UserProfile profile, User updateUserProfile) {
         updateUserProfile.setUsername(profile.getUsername());
         updateUserProfile.setName(profile.getName());
@@ -125,14 +137,6 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             e.printStackTrace();
             return getMessage("password-changed-failed");
-        }
-    }
-
-    private void validateNewPassword(String newPassword) {
-        if (newPassword.length() < 8) {
-            throw new InvalidException(String.format("%s %s",
-                    getMessage("password-length"),
-                    String.format(getMessage("cannot-be-less-than-n-characters"), 8)));
         }
     }
 

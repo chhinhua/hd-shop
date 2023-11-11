@@ -72,6 +72,14 @@ public class UserValidator {
         }
     }
 
+    public void validatePassword(String password) {
+        if (!isValidPassword(password)) {
+            throw new InvalidException(String.format("%s %s",
+                    getMessage("password-length"),
+                    String.format(getMessage("cannot-be-less-than-n-characters"), 8)));
+        }
+    }
+
     private boolean isValidEmail(String email) {
         return email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
@@ -82,6 +90,10 @@ public class UserValidator {
 
     private boolean isValidPhoneNumber(String phoneNumber) {
         return phoneNumber.matches("^[0-9]{10,11}$");
+    }
+
+    private boolean isValidPassword(String password) {
+        return password.matches("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
     }
 
     private String getMessage(String code) {

@@ -19,4 +19,6 @@ public interface UserService {
     UserDTO updateProfile(final UserProfile profile, final Principal principal);
 
     UserDTO updateProfileByUserId(final UserProfile profile, final Long userId);
+
+    UserDTO changeEnabledStatus(final Long userId);
 }

@@ -1,7 +1,6 @@
 package com.hdshop.dto.user;
 
 import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -10,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
 import java.util.Date;
 
 @Getter
@@ -41,6 +39,8 @@ public class UserDTO {
     private String avatarUrl;
 
     private Boolean isEnabled;
+
+    private String lastModifiedBy;
 
     private Date createdDate;
 
