@@ -1,9 +1,11 @@
 package com.hdshop.controller;
 
 import com.hdshop.dto.user.UserDTO;
+import com.hdshop.dto.user.UserProfile;
 import com.hdshop.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,5 +46,18 @@ public class UserController {
                                                             @RequestParam String newPassword) {
         String result = userService.changePasswordByUserEmail(email, newPassword);
         return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Update account profile of signed in user")
+    @PutMapping("/profile")
+    public ResponseEntity<UserDTO> updateProfile(@Valid @RequestBody UserProfile profile, Principal principal) {
+        return ResponseEntity.ok(userService.updateProfile(profile, principal));
+    }
+
+    @Operation(summary = "Update account profile by id user")
+    @PutMapping("/profile/{userId}")
+    public ResponseEntity<UserDTO> updateProfileByUserId(@RequestBody @Valid UserProfile profile,
+                                                         @PathVariable Long userId) {
+        return ResponseEntity.ok(userService.updateProfileByUserId(profile, userId));
     }
 }

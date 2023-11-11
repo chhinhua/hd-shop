@@ -1,11 +1,13 @@
 package com.hdshop.service.user.impl;
 
 import com.hdshop.dto.user.UserDTO;
+import com.hdshop.dto.user.UserProfile;
 import com.hdshop.entity.User;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.service.user.UserService;
+import com.hdshop.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
@@ -22,6 +24,7 @@ public class UserServiceImpl implements UserService {
     private final ModelMapper modelMapper;
     private final MessageSource messageSource;
     private final PasswordEncoder passwordEncoder;
+    private final UserValidator userValidator;
 
     @Override
     public UserDTO getUserById(Long id) {
@@ -65,6 +68,53 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
                 .orElseThrow(()-> new ResourceNotFoundException(getMessage("user-not-found")));
         return mapToDTO(user);
+    }
+
+    @Override
+    public UserDTO updateProfile(UserProfile profile, Principal principal) {
+        String usernameOrEmail = principal.getName();
+
+        // retrieve user from principal
+        User updateUserProfile = userRepository
+                .findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
+
+        // validate profile
+        userValidator.validateUpdateProfile(profile, updateUserProfile);
+
+        // set fields values
+        setFieldValues(profile, updateUserProfile);
+
+        // save the profile and return
+        return mapToDTO(userRepository.save(updateUserProfile));
+    }
+
+    @Override
+    public UserDTO updateProfileByUserId(UserProfile profile, Long userId) {
+        // retrieve user by id
+        User updateUserProfile = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        String.format(getMessage("user-not-found"), userId))
+                );
+
+        // validate profile
+        userValidator.validateUpdateProfile(profile, updateUserProfile);
+
+        // set fields values
+        setFieldValues(profile, updateUserProfile);
+
+        // save the profile and return
+        return mapToDTO(userRepository.save(updateUserProfile));
+    }
+
+    private void setFieldValues(UserProfile profile, User updateUserProfile) {
+        updateUserProfile.setUsername(profile.getUsername());
+        updateUserProfile.setName(profile.getName());
+        updateUserProfile.setEmail(profile.getEmail());
+        updateUserProfile.setPhoneNumber(profile.getPhoneNumber());
+        updateUserProfile.setAvatarUrl(profile.getAvatarUrl());
+        updateUserProfile.setGender(profile.getGender());
     }
 
     private String tryToChangeNewPassword(String newPassword, User user) {
