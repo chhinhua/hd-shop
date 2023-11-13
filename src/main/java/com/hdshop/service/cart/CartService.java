@@ -5,13 +5,14 @@ import com.hdshop.dto.cart.CartItemResponse;
 import com.hdshop.dto.cart.CartResponse;
 import com.hdshop.entity.Cart;
 
+import java.security.Principal;
 import java.util.List;
 
 public interface CartService {
 
-    CartItemResponse addToCart(final Long cartId, final CartItemDTO itemDTO);
+    CartItemResponse addToCart(final String username, final CartItemDTO itemDTO);
 
-    Cart getCartByUsername(final String username);
+    CartResponse getCartByUsername(final String username);
 
     CartResponse getCartById(final Long cartId);
 

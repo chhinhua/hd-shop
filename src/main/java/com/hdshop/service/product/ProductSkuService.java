@@ -9,4 +9,6 @@ public interface ProductSkuService {
     List<ProductSku> saveOrUpdateSkus(final Long productId, final List<ProductSku> skus);
 
     List<ProductSku> saveSkusFromProduct(final Product product);
+
+    ProductSku findByProductIdAndValueNames(final Long productId, final List<String> valueNames);
 }

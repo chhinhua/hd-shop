@@ -1,8 +1,5 @@
 package com.hdshop.dto.cart;
 
-import com.hdshop.dto.product.ProductSkuDTO;
-import com.hdshop.entity.Product;
-import com.hdshop.entity.ProductSku;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Hidden
 @Getter
@@ -30,4 +28,6 @@ public class CartItemDTO {
         private Long productId;
 
         private Long skuId;
+
+        private List<String> valueNames;
 }

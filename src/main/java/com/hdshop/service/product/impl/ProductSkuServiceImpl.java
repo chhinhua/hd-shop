@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +67,13 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         }
 
         return savedSkus.stream().toList();
+    }
+
+    @Override
+    public ProductSku findByProductIdAndValueNames(Long productId, List<String> valueNames) {
+        List<ProductSku> skus = productSkuRepository
+                .findByProductIdAndValueNames2(productId, valueNames, valueNames.size());
+        return skus.stream().findFirst().orElse(null);
     }
 
     private List<OptionValue> getOptionValuesForSku(ProductSku sku, Product product) {

@@ -28,25 +28,27 @@ public class CartController {
         this.cartService = cartService;
     }
 
-    @Operation(summary = "Add to cart")
+    @Operation(summary = "Add to cart of current user")
     @PostMapping
     public ResponseEntity<CartItemResponse> addItemToCart(@Valid @RequestBody CartItemDTO cartItemDTO, Principal principal) {
         String username = principal.getName();
 
-        Long cartId = cartService.getCartByUsername(username).getId();
-
-        CartItemResponse addedItem = cartService.addToCart(cartId, cartItemDTO);
+        CartItemResponse addedItem = cartService.addToCart(username, cartItemDTO);
 
         return new ResponseEntity<>(addedItem, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Get Cart by id")
-    @GetMapping("/{cartId}")
-    public ResponseEntity<CartResponse> getCart(@PathVariable Long cartId) {
-        return ResponseEntity.ok(cartService.getCartById(cartId));
+    @Operation(summary = "Get Cart of current user")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping()
+    public ResponseEntity<CartResponse> getCart(Principal principal) {
+        String username = principal.getName();
+        CartResponse response = cartService.getCartByUsername(username);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Clear cart items")
+    @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/clear")
     public ResponseEntity<CartResponse> clearItems(Principal principal) {
         String username = principal.getName();
@@ -57,7 +59,8 @@ public class CartController {
     @DeleteMapping("/remove")
     public ResponseEntity<CartResponse> removeListItems(@RequestBody List<Long> itemIds, Principal principal) {
         String username = principal.getName();
-        return ResponseEntity.ok(cartService.removeListItems(username, itemIds));
+        CartResponse response = cartService.removeListItems(username, itemIds);
+        return ResponseEntity.ok(response);
     }
 
 }
