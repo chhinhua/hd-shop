@@ -1,5 +1,6 @@
 package com.hdshop.controller;
 
+import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.service.order.OrderService;
@@ -17,6 +18,7 @@ import java.security.Principal;
 import java.util.List;
 
 @Tag(name = "Order")
+@SecurityRequirement(name = "Bear Authentication")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -41,7 +43,6 @@ public class OrderController {
 
     @Operation(summary = "Delete order by id")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @SecurityRequirement(name = "Bear Authentication")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrderById(id);
@@ -60,7 +61,6 @@ public class OrderController {
             description = "Update order status by one of values {CANCELED, DELIVERED, ,CANCELED, PROCESSING, ORDERED}"
     )
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("{id}/status")
     public ResponseEntity<OrderDTO> updateStatus(@PathVariable Long id,
                                                  @RequestParam String status) {
@@ -73,10 +73,23 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrdersByUsername(username));
     }
 
+    @Operation(summary = "Get list order of user by token")
+    @GetMapping("/token")
+    public ResponseEntity<List<OrderResponse>> getOrdersByToken(Principal principal) {
+        return ResponseEntity.ok(orderService.getListOrderByCurrentUser(principal));
+    }
+
     @Operation(summary = "Get list order of user by userId")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
     // TODO trước mắt chỉ cho thanh toán online (vnpay)
+
+    @Operation(summary = "Get checkout data for page", description = "From user information (adderss, total price of cart)")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/checkout-data")
+    public ResponseEntity<CheckOutDTO> getCheckoutData(Principal principal) {
+        return ResponseEntity.ok(orderService.getDataFromUserInfor(principal));
+    }
 }

@@ -1,5 +1,6 @@
 package com.hdshop.service.order;
 
+import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
 
@@ -20,4 +21,8 @@ public interface OrderService {
     List<OrderDTO> getOrdersByUsername(final String username);
 
     List<OrderDTO> getOrdersByUserId(final Long userId);
+
+    CheckOutDTO getDataFromUserInfor(final Principal principal);
+
+    List<OrderResponse> getListOrderByCurrentUser(Principal principal);
 }

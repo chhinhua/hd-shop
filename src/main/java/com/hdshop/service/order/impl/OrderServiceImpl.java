@@ -1,5 +1,7 @@
 package com.hdshop.service.order.impl;
 
+import com.hdshop.dto.address.AddressDTO;
+import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.entity.*;
@@ -14,6 +16,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -150,6 +153,45 @@ public class OrderServiceImpl implements OrderService {
         return orderList
                 .stream()
                 .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public CheckOutDTO getDataFromUserInfor(Principal principal) {
+        String username = principal.getName();
+
+        // retrieve the data from username
+        User currentUser = getUserByUsername(username);
+        Cart userCart = getCartByUsername(username);
+
+        BigDecimal cartTotal = userCart.getTotalPrice();
+
+        // set values
+        CheckOutDTO data = new CheckOutDTO();
+
+        List<AddressDTO> addresses = convertAddressesToAddressesDTO(currentUser.getAddresses());
+        data.setSubtotal(cartTotal);
+        data.setAddresses(addresses);
+
+        return data;
+    }
+
+    private List<AddressDTO> convertAddressesToAddressesDTO(List<Address> addresses) {
+        return addresses
+                .stream()
+                .map((element) -> modelMapper.map(element, AddressDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OrderResponse> getListOrderByCurrentUser(Principal principal) {
+        String username = principal.getName();
+
+        List<Order> orderList = orderRepository.findAllByUser_UsernameOrderByCreatedDateDesc(username);
+
+        return orderList
+                .stream()
+                .map((element) -> mapEntityToResponse(element))
                 .collect(Collectors.toList());
     }
 
