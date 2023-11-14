@@ -33,7 +33,7 @@ public class AddressDTO {
 
     private String orderDetails;
 
-    private Boolean isDefault = false;
+    private Boolean isDefault;
 
     private Long userId;
 }

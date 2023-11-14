@@ -7,9 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
@@ -26,5 +24,12 @@ public class AddressController {
     @GetMapping
     public ResponseEntity<List<AddressDTO>> getMyAddress(Principal principal) {
         return ResponseEntity.ok(addressService.getAllAddressForUser(principal));
+    }
+
+    @Operation(summary = "Add a new address")
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping
+    public ResponseEntity<AddressDTO> addAddress(@RequestBody AddressDTO addressDTO, Principal principal) {
+        return ResponseEntity.ok(addressService.addAddress(addressDTO, principal));
     }
 }
