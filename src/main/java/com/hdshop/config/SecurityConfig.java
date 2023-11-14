@@ -1,6 +1,5 @@
 package com.hdshop.config;
 
-import com.hdshop.exception.GlobalExceptionHandler;
 import com.hdshop.security.JwtAuthenticationEntryPoint;
 import com.hdshop.security.JwtAuthenticationFilter;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -20,9 +19,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -75,6 +75,16 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .formLogin().disable()
+                .cors(configurer -> {
+                    CorsConfigurationSource source = request -> {
+                        CorsConfiguration corsConfiguration = new CorsConfiguration();
+                        corsConfiguration.addAllowedOrigin("*");
+                        corsConfiguration.addAllowedMethod("*");
+                        corsConfiguration.addAllowedHeader("*");
+                        return corsConfiguration;
+                    };
+                    configurer.configurationSource(source);
+                })
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers(WHITE_LIST_URL).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()

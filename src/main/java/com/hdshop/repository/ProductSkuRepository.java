@@ -1,5 +1,6 @@
 package com.hdshop.repository;
 
+import com.hdshop.entity.OptionValue;
 import com.hdshop.entity.ProductSku;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,22 +15,23 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
     Optional<ProductSku> findBySkuAndProduct_ProductId(String sku, Long productId);
 
     @Query("SELECT ps FROM ProductSku ps " +
-            "JOIN ps.optionValues ov " +
             "WHERE ps.product.productId = :productId " +
-            "AND ov.valueName IN :valueNames")
-    List<ProductSku> findByProductIdAndValueNames(@Param("productId") Long productId,
-                                                  @Param("valueNames") List<String> valueNames);
+            "AND ps.optionValues = :values")
+    Optional<ProductSku> findByProduct_ProductIdAndOptionValues(
+            @Param("productId") Long productId,
+            @Param("values") List<OptionValue> values
+    );
 
     @Query("SELECT ps FROM ProductSku ps " +
+            "JOIN ps.product p " +
             "JOIN ps.optionValues ov " +
-            "WHERE ps.product.productId = :productId " +
+            "WHERE p.productId = :productId " +
             "AND ov.valueName IN :valueNames " +
             "GROUP BY ps " +
-            "HAVING COUNT(DISTINCT ov.valueName) = :valueCount")
-    List<ProductSku> findByProductIdAndValueNames2(@Param("productId") Long productId,
-                                                  @Param("valueNames") List<String> valueNames,
-                                                  @Param("valueCount") int valueCount);
-
+            "HAVING COUNT(DISTINCT ov) = :valueCount")
+    Optional<ProductSku> findByProductIdAndValueNames(@Param("productId") Long productId,
+                                                      @Param("valueNames") List<String> valueNames,
+                                                      @Param("valueCount") int valueCount);
 
 }
 

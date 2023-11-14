@@ -1,11 +1,15 @@
 package com.hdshop.service.order;
 
 import com.hdshop.dto.order.OrderDTO;
+import com.hdshop.dto.order.OrderResponse;
 
+import java.security.Principal;
 import java.util.List;
 
 public interface OrderService {
     OrderDTO createOrder(final OrderDTO order);
+
+    OrderResponse addOrder(final OrderDTO order, final Principal principal);
 
     void deleteOrderById(final Long orderId);
 

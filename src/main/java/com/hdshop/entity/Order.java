@@ -1,5 +1,6 @@
 package com.hdshop.entity;
 
+import com.hdshop.utils.EnumOrderStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,7 +27,8 @@ public class Order extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private EnumOrderStatus status;
 
     private BigDecimal total;
 

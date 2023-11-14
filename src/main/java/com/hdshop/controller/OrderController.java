@@ -1,6 +1,7 @@
 package com.hdshop.controller;
 
 import com.hdshop.dto.order.OrderDTO;
+import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @Tag(name = "Order")
@@ -24,8 +26,8 @@ public class OrderController {
     @Operation(summary = "Create new order")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping
-    public ResponseEntity<OrderDTO> createOrder(@Valid @RequestBody OrderDTO orderDTO) {
-        OrderDTO newOrder = orderService.createOrder(orderDTO);
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
+        OrderResponse newOrder = orderService.addOrder(orderDTO, principal);
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 
@@ -47,7 +49,7 @@ public class OrderController {
 
     @Operation(
             summary = "Update order status by id",
-            description = "Update order status by one of values {CANCELED, DELIVERED, ,CANCELED, PROCESSING, PENDING_PROCESSING}"
+            description = "Update order status by one of values {CANCELED, DELIVERED, ,CANCELED, PROCESSING, ORDERED}"
     )
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @SecurityRequirement(name = "Bear Authentication")

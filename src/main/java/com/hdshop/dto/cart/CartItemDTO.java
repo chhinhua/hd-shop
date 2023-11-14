@@ -27,7 +27,5 @@ public class CartItemDTO {
 
         private Long productId;
 
-        private Long skuId;
-
         private List<String> valueNames;
 }

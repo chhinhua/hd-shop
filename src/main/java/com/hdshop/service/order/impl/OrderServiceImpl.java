@@ -1,19 +1,23 @@
 package com.hdshop.service.order.impl;
 
 import com.hdshop.dto.order.OrderDTO;
+import com.hdshop.dto.order.OrderItemDTO;
+import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.entity.Address;
 import com.hdshop.entity.Order;
+import com.hdshop.entity.OrderItem;
 import com.hdshop.entity.User;
 import com.hdshop.exception.ResourceNotFoundException;
-import com.hdshop.repository.AddressRepository;
-import com.hdshop.repository.OrderRepository;
-import com.hdshop.repository.UserRepository;
+import com.hdshop.repository.*;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.utils.EnumOrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +27,10 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
+    private final ProductSkuRepository skuRepository;
     private final ModelMapper modelMapper;
+    private final ProductRepository productRepository;
+    private final MessageSource messageSource;
 
     /**
      * Create a new Order
@@ -38,8 +45,8 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", orderDTO.getUserId()));
 
         // Check existing address
-        Address address = addressRepository.findById(orderDTO.getAddress().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Address", "id", orderDTO.getAddress().getId()));
+        Address address = addressRepository.findById(orderDTO.getAddressId())
+                .orElseThrow(() -> new ResourceNotFoundException("Address", "id", orderDTO.getAddressId()));
 
         Order order = mapToEntity(orderDTO);
         order.setUser(user);
@@ -48,7 +55,61 @@ public class OrderServiceImpl implements OrderService {
         // save order
         Order newOrder = orderRepository.save(order);
 
-        return mapToDTO(newOrder);
+        return mapEntityToDTO(newOrder);
+    }
+
+    @Override
+    public OrderResponse addOrder(OrderDTO orderDTO, Principal principal) {
+        String username = principal.getName();
+
+        // Check existing user
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
+
+        // Check existing address
+        Address address = addressRepository.findById(orderDTO.getAddressId())
+                .orElseThrow(() -> new ResourceNotFoundException("Address", "id", orderDTO.getAddressId()));
+
+        // set fields
+        Order order = new Order();
+        order.setStatus(EnumOrderStatus.ORDERED);
+        order.setIsPaidBefore(false);
+        order.setNote(orderDTO.getNote());
+        order.setPaymentType(orderDTO.getPaymentType());
+        order.setTotal(orderDTO.getTotal());
+        order.setUser(user);
+        order.setAddress(address);
+
+        // set order for orderItems
+        List<OrderItem> orderItems = convertItemDTOsToItemsEntity(orderDTO.getOrderItems());
+        for (OrderItem orderItem : orderItems) {
+            orderItem.setOrder(order); // Set the order for each OrderItem
+        }
+        order.setOrderItems(orderItems);
+
+        // save order
+        Order newOrder = orderRepository.save(order);
+
+        return mapEntityToResponse(newOrder);
+    }
+
+    private List<OrderItem> convertItemDTOsToItemsEntity(List<OrderItemDTO> itemDTOS) {
+        return itemDTOS
+                .stream()
+                .map(itemDTO -> {
+                    OrderItem orderItem = modelMapper.map(itemDTO, OrderItem.class);
+
+                    // Thiết lập SKU thủ công dựa trên skuId từ DTO
+                    orderItem.setSku(skuRepository.findById(itemDTO.getSkuId()).orElse(null));
+
+                    // Thiết lập Product thủ công dựa trên productId từ DTO
+                    orderItem.setProduct(productRepository.findById(itemDTO.getProductId()).orElseThrow(()
+                            -> new ResourceNotFoundException(getMessage("product-not-found-with-id-is") + itemDTO.getProductId())
+                    ));
+
+                    return orderItem;
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -74,10 +135,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
-        String statusValue = convertKeyToValue(order.getStatus());
-
-        OrderDTO orderDTO = mapToDTO(order);
-        orderDTO.setStatus(statusValue);
+        OrderDTO orderDTO = mapEntityToDTO(order);
+        orderDTO.setStatus(order.getStatus().getValue());
 
         return orderDTO;
     }
@@ -95,23 +154,19 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
         // thay đổi nếu trạng thái khác trạng thái hiện tại
-        if (!order.getStatus().equals(statusKey)) {
-            for (EnumOrderStatus status : EnumOrderStatus.values()) {
-                if (status.getKey().equalsIgnoreCase(statusKey)) {
-                    order.setStatus(status.getKey());
-                    orderRepository.save(order);
-                }
-            }
+        String orderStatusKey = order.getStatus().getKey();
+        if (!orderStatusKey.equals(statusKey)) {
+            EnumOrderStatus newStatus = EnumOrderStatus.valueOf(statusKey.toUpperCase());
+            order.setStatus(newStatus);
+            orderRepository.save(order);
         }
 
-        OrderDTO orderDTO = mapToDTO(order);
-        orderDTO.setStatus(convertKeyToValue(order.getStatus()));
-
-        return orderDTO;
+        return mapEntityToDTO(order);
     }
 
     /**
      * Get list order of user with username parameter
+     *
      * @param username
      * @return list orderDTO
      */
@@ -121,12 +176,13 @@ public class OrderServiceImpl implements OrderService {
 
         return orderList
                 .stream()
-                .map(this::mapToDTO)
+                .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
 
     /**
      * Get list order of user with userId parameter
+     *
      * @param userId
      * @return
      */
@@ -136,7 +192,7 @@ public class OrderServiceImpl implements OrderService {
 
         return orderList
                 .stream()
-                .map(this::mapToDTO)
+                .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -154,7 +210,21 @@ public class OrderServiceImpl implements OrderService {
         return modelMapper.map(orderDTO, Order.class);
     }
 
-    private OrderDTO mapToDTO(Order order) {
-        return modelMapper.map(order, OrderDTO.class);
+    private OrderDTO mapEntityToDTO(Order order) {
+        OrderDTO dto = modelMapper.map(order, OrderDTO.class);
+        dto.setStatus(order.getStatus().getValue());
+        return dto;
+    }
+
+    private OrderResponse mapEntityToResponse(Order order) {
+        OrderResponse response = modelMapper.map(order, OrderResponse.class);
+        response.setStatus(order.getStatus().getValue());
+        return response;
+    }
+
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 }
+
+

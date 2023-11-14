@@ -23,6 +23,8 @@ public class OrderItem extends BaseEntity {
 
     private Integer quantity;
 
+    private BigDecimal price;
+
     private BigDecimal subTotal;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum EnumOrderStatus {
-    PENDING_PROCESSING("PENDING_PROCESSING", "Đang chờ xử lý"),
+    ORDERED("ORDERED", "Đã đặt hàng"),
     PROCESSING("PROCESSING", "Đang xử lý"),
     SHIPPED("SHIPPED", "Đã gửi"),
     DELIVERED("DELIVERED", "Đã giao"),

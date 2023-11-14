@@ -1,4 +1,4 @@
-package com.hdshop.dto;
+package com.hdshop.dto.address;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.NotBlank;

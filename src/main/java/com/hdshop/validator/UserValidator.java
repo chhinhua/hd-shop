@@ -40,7 +40,9 @@ public class UserValidator {
             throw new APIException(HttpStatus.BAD_REQUEST, getMessage("username-already-exists"));
         }
         if (userRepository.existsUserByEmail(email)) {
-            throw new APIException(HttpStatus.BAD_REQUEST, getMessage("email-already-exists"));
+            throw new APIException(HttpStatus.BAD_REQUEST, getMessage("email-already-used"));
+
+
         }
     }
 

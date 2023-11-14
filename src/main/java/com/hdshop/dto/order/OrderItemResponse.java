@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderItemDTO {
+public class OrderItemResponse {
     private Long id;
 
     private Integer quantity;
@@ -26,7 +26,7 @@ public class OrderItemDTO {
 
     private Long orderId;
 
-    private Long productId;
+    private ItemProductResponse product;
 
-    private Long skuId;
+    private ProductSkuDTO sku;
 }
