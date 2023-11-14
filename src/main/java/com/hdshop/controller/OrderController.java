@@ -23,11 +23,19 @@ import java.util.List;
 public class OrderController {
     private final OrderService orderService;
 
-    @Operation(summary = "Create new order")
+    @Operation(summary = "Create new order by list cartItem")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
         OrderResponse newOrder = orderService.addOrder(orderDTO, principal);
+        return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Create create order from user cart")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PostMapping
+    public ResponseEntity<OrderResponse> createOrderFromCart(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
+        OrderResponse newOrder = orderService.addOrderFromUserCart(orderDTO, principal);
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 

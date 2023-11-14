@@ -24,6 +24,8 @@ public class OrderItemResponse {
 
     private BigDecimal subTotal;
 
+    private String imageUrl;
+
     private Long orderId;
 
     private ItemProductResponse product;

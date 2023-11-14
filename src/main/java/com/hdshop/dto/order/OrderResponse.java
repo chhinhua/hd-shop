@@ -23,6 +23,8 @@ public class OrderResponse {
 
     private String paymentType;
 
+    private Integer totalItems;
+
     private BigDecimal total;
 
     private String note;

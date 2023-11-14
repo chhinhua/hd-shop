@@ -47,4 +47,6 @@ public class OrderDTO {
     private Long addressId;
 
     private List<OrderItemDTO> orderItems;
+
+    private List<Long> cartItemIds;
 }

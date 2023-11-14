@@ -5,6 +5,8 @@ import com.hdshop.security.JwtAuthenticationFilter;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -52,6 +54,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final JwtAuthenticationFilter authenticationFilter;
+    private final CorsConfigurationSource configurationSource;
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
@@ -75,16 +78,8 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .formLogin().disable()
-                .cors(configurer -> {
-                    CorsConfigurationSource source = request -> {
-                        CorsConfiguration corsConfiguration = new CorsConfiguration();
-                        corsConfiguration.addAllowedOrigin("*");
-                        corsConfiguration.addAllowedMethod("*");
-                        corsConfiguration.addAllowedHeader("*");
-                        return corsConfiguration;
-                    };
-                    configurer.configurationSource(source);
-                })
+                .cors().configurationSource(configurationSource)
+                .and()
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers(WHITE_LIST_URL).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
