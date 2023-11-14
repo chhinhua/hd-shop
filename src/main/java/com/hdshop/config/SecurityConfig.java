@@ -83,7 +83,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers(WHITE_LIST_URL).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
-                        .requestMatchers("/api/v1/cart/items/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest()
                         .authenticated()
                 )

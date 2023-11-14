@@ -29,7 +29,7 @@ public class AddressServiceImpl implements AddressService {
         String username = principal.getName();
         return addressRepository.findAllByUserUsername(username)
                 .stream()
-                .map((element) -> mapEntityToDTO(element))
+                .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -41,11 +41,70 @@ public class AddressServiceImpl implements AddressService {
 
         Address address = modelMapper.map(addressDTO, Address.class);
         address.setUser(user);
-        address.setIsDefault(user.getAddresses().isEmpty() ? true : false);
+        address.setIsDefault(user.getAddresses().isEmpty());
 
         Address newAddress = addressRepository.save(address);
 
         return mapEntityToDTO(newAddress);
+    }
+
+    @Override
+    public AddressDTO updateAddress(AddressDTO address, Long addressId) {
+        Address existingAddress = getAddressById(addressId);
+
+        // Cập nhật các trường từ addressDTO vào existingAddress
+        existingAddress.setFullName(address.getFullName());
+        existingAddress.setPhoneNumber(address.getPhoneNumber());
+        existingAddress.setDistrict(address.getDistrict());
+        existingAddress.setWard(address.getWard());
+        existingAddress.setOrderDetails(address.getOrderDetails());
+
+        // Lưu cập nhật vào cơ sở dữ liệu
+        Address updatedAddress = addressRepository.save(existingAddress);
+
+        return mapEntityToDTO(updatedAddress);
+    }
+
+    @Override
+    public AddressDTO getOneAddress(Long addressId) {
+        Address address = getAddressById(addressId);
+        return mapEntityToDTO(address);
+    }
+
+    @Override
+    public List<AddressDTO> setDefaultAddress(Long addressId, Principal principal) {
+        String username = principal.getName();
+
+        // find the address
+        Address newDefaultAddress = getAddressById(addressId);
+
+        User user = getUserByUsername(username);
+
+        // check the user's current default address
+        Address currentDefaultAddress = user.getAddresses().stream()
+                .filter(Address::getIsDefault)
+                .findFirst()
+                .orElse(null);
+
+        if (currentDefaultAddress != null) {
+            // cancel the current default address
+            currentDefaultAddress.setIsDefault(false);
+            addressRepository.save(currentDefaultAddress);
+        }
+
+        // set default
+        newDefaultAddress.setIsDefault(true);
+        addressRepository.save(newDefaultAddress);
+
+        return addressRepository.findAllByUserUsername(username)
+                .stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private Address getAddressById(Long addressId) {
+        return addressRepository.findById(addressId)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("retrieving-address-information-failed")));
     }
 
     private User getUserByUsername(String username) {
