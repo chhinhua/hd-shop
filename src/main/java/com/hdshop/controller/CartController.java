@@ -63,4 +63,10 @@ public class CartController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Get the count of items in your cart")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/items/count")
+    public ResponseEntity<Integer> getCountItems(Principal principal) {
+        return ResponseEntity.ok(cartService.getTotalItems(principal));
+    }
 }

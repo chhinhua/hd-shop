@@ -5,7 +5,10 @@ import com.hdshop.dto.cart.CartItemResponse;
 import com.hdshop.dto.cart.CartResponse;
 import com.hdshop.entity.*;
 import com.hdshop.exception.ResourceNotFoundException;
-import com.hdshop.repository.*;
+import com.hdshop.repository.CartItemRepository;
+import com.hdshop.repository.CartRepository;
+import com.hdshop.repository.ProductRepository;
+import com.hdshop.repository.UserRepository;
 import com.hdshop.service.cart.CartService;
 import com.hdshop.service.product.ProductSkuService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +31,6 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
-    private final ProductSkuRepository skuRepository;
     private final ModelMapper modelMapper;
     private final MessageSource messageSource;
     private final ProductSkuService skuService;
@@ -44,23 +46,6 @@ public class CartServiceImpl implements CartService {
     public CartResponse getCartByUsername(String username) {
         Cart cart = getCartByUsernameOrElseCreateNew(username);
         return modelMapper.map(cart, CartResponse.class);
-    }
-
-    private Cart getCartByUsernameOrElseCreateNew(String username) {
-        Cart cart =  cartRepository.findByUser_Username(username)
-                .orElseGet(() -> {
-                    User user = userRepository
-                            .findByUsernameOrEmail(username, username)
-                            .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
-
-                    Cart newCart = new Cart();
-                    newCart.setTotalPrice(BigDecimal.valueOf(0));
-                    newCart.setTotalItems(0);
-                    newCart.setUser(user);
-
-                    return cartRepository.save(newCart);
-                });
-        return cart;
     }
 
     @Override
@@ -136,9 +121,37 @@ public class CartServiceImpl implements CartService {
         return mapToResponse(cartWithRemovedItems);
     }
 
+    @Override
+    public Integer getTotalItems(Principal principal) {
+        String username = principal.getName();
+
+        Cart userCart = getExistingCartByUsername(username);
+
+        int totalItems = userCart.getCartItems().size();
+
+        return totalItems;
+    }
+
     private Cart getExistingCartByUsername(String username) {
         return cartRepository.findByUser_Username(username)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
+    }
+
+    private Cart getCartByUsernameOrElseCreateNew(String username) {
+        Cart cart =  cartRepository.findByUser_Username(username)
+                .orElseGet(() -> {
+                    User user = userRepository
+                            .findByUsernameOrEmail(username, username)
+                            .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+
+                    Cart newCart = new Cart();
+                    newCart.setTotalPrice(BigDecimal.valueOf(0));
+                    newCart.setTotalItems(0);
+                    newCart.setUser(user);
+
+                    return cartRepository.save(newCart);
+                });
+        return cart;
     }
 
     /**
@@ -172,11 +185,6 @@ public class CartServiceImpl implements CartService {
         }
     }
 
-    private void updateCartTotalsAndSaveChanged(Cart cart) {
-        updateCartTotals(cart);
-        cartRepository.save(cart);
-    }
-
     /**
      * Processes a cart item without SKU information.
      *
@@ -204,6 +212,11 @@ public class CartServiceImpl implements CartService {
 
             return mapToItemResponse(cartItemRepository.save(newCartItem));
         }
+    }
+
+    private void updateCartTotalsAndSaveChanged(Cart cart) {
+        updateCartTotals(cart);
+        cartRepository.save(cart);
     }
 
     private Optional<CartItem> getCartItemByCartAndProduct(Cart cart, Product product) {
@@ -275,14 +288,6 @@ public class CartServiceImpl implements CartService {
         cart.setTotalPrice(cart.getCartItems().stream().map(CartItem::getSubTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 
-    private BigDecimal calculateTotalPrice(List<CartItem> cartItems) {
-        return cartItems.stream().map(CartItem::getSubTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private Cart getExistingCartById(Long cartId) {
-        return cartRepository.findById(cartId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
-    }
 
     private Product getExistingProductById(Long productId) {
         return productRepository.findById(productId)
