@@ -1,19 +1,23 @@
 package com.hdshop.service.order.impl;
 
+import com.hdshop.dto.address.AddressDTO;
+import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
-import com.hdshop.entity.Address;
-import com.hdshop.entity.Order;
-import com.hdshop.entity.User;
+import com.hdshop.dto.order.OrderResponse;
+import com.hdshop.entity.*;
+import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
-import com.hdshop.repository.AddressRepository;
-import com.hdshop.repository.OrderRepository;
-import com.hdshop.repository.UserRepository;
+import com.hdshop.repository.*;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.utils.EnumOrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,31 +28,48 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final ModelMapper modelMapper;
+    private final MessageSource messageSource;
+    private final CartItemRepository cartItemRepository;
+    private final CartRepository cartRepository;
 
-    /**
-     * Create a new Order
-     *
-     * @param orderDTO
-     * @return orderDTO object have been created
-     */
     @Override
-    public OrderDTO createOrder(OrderDTO orderDTO) {
-        // Check existing user
-        User user = userRepository.findById(orderDTO.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", orderDTO.getUserId()));
+    public OrderResponse addOrder(OrderDTO orderDTO, Principal principal) {
+        String username = principal.getName();
+        User user = getUserByUsername(username);
+        Address address = getAddressById(orderDTO.getAddressId());
 
-        // Check existing address
-        Address address = addressRepository.findById(orderDTO.getAddress().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Address", "id", orderDTO.getAddress().getId()));
+        Order order = buildOrder(orderDTO, user, address);
+        List<OrderItem> orderItems = convertCartItemIdsToOrderItems(orderDTO.getCartItemIds());
 
-        Order order = mapToEntity(orderDTO);
-        order.setUser(user);
-        order.setAddress(address);
+        saveOrder(order, orderItems);
 
-        // save order
-        Order newOrder = orderRepository.save(order);
+        return mapEntityToResponse(order);
+    }
 
-        return mapToDTO(newOrder);
+    @Override
+    public OrderResponse addOrderFromUserCart(OrderDTO orderDTO, Principal principal) {
+        String username = principal.getName();
+
+        // retrieve data
+        User user = getUserByUsername(username);
+        Cart cart = getCartByUsername(username);
+        Address address = getAddressById(orderDTO.getAddressId());
+
+        // check items exist in cart
+        checkCartItems(cart);
+
+        // set all fields
+        Order order = buildOrder(orderDTO, user, address);
+
+        // create list order items from cart
+        List<OrderItem> orderItems = convertCartToOrderItems(cart);
+
+        saveOrder(order, orderItems);
+
+        // delete all items of this cart after order has been created
+        clearItems(cart);
+
+        return mapEntityToResponse(order);
     }
 
     /**
@@ -74,10 +95,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
-        String statusValue = convertKeyToValue(order.getStatus());
-
-        OrderDTO orderDTO = mapToDTO(order);
-        orderDTO.setStatus(statusValue);
+        OrderDTO orderDTO = mapEntityToDTO(order);
+        orderDTO.setStatus(order.getStatus().getValue());
 
         return orderDTO;
     }
@@ -95,23 +114,19 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
         // thay đổi nếu trạng thái khác trạng thái hiện tại
-        if (!order.getStatus().equals(statusKey)) {
-            for (EnumOrderStatus status : EnumOrderStatus.values()) {
-                if (status.getKey().equalsIgnoreCase(statusKey)) {
-                    order.setStatus(status.getKey());
-                    orderRepository.save(order);
-                }
-            }
+        String orderStatusKey = order.getStatus().getKey();
+        if (!orderStatusKey.equals(statusKey)) {
+            EnumOrderStatus newStatus = EnumOrderStatus.valueOf(statusKey.toUpperCase());
+            order.setStatus(newStatus);
+            orderRepository.save(order);
         }
 
-        OrderDTO orderDTO = mapToDTO(order);
-        orderDTO.setStatus(convertKeyToValue(order.getStatus()));
-
-        return orderDTO;
+        return mapEntityToDTO(order);
     }
 
     /**
      * Get list order of user with username parameter
+     *
      * @param username
      * @return list orderDTO
      */
@@ -121,12 +136,13 @@ public class OrderServiceImpl implements OrderService {
 
         return orderList
                 .stream()
-                .map(this::mapToDTO)
+                .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
 
     /**
      * Get list order of user with userId parameter
+     *
      * @param userId
      * @return
      */
@@ -136,25 +152,146 @@ public class OrderServiceImpl implements OrderService {
 
         return orderList
                 .stream()
-                .map(this::mapToDTO)
+                .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
 
-    public String convertKeyToValue(String key) {
-        for (EnumOrderStatus status : EnumOrderStatus.values()) {
-            if (status.getKey().equals(key)) {
-                return status.getValue();
-            }
+    @Override
+    public CheckOutDTO getDataFromUserInfor(Principal principal) {
+        String username = principal.getName();
+
+        // retrieve the data from username
+        User currentUser = getUserByUsername(username);
+        Cart userCart = getCartByUsername(username);
+
+        BigDecimal cartTotal = userCart.getTotalPrice();
+
+        // set values
+        CheckOutDTO data = new CheckOutDTO();
+
+        List<AddressDTO> addresses = convertAddressesToAddressesDTO(currentUser.getAddresses());
+        data.setSubtotal(cartTotal);
+        data.setAddresses(addresses);
+
+        return data;
+    }
+
+    private List<AddressDTO> convertAddressesToAddressesDTO(List<Address> addresses) {
+        return addresses
+                .stream()
+                .map((element) -> modelMapper.map(element, AddressDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OrderResponse> getListOrderByCurrentUser(Principal principal) {
+        String username = principal.getName();
+
+        List<Order> orderList = orderRepository.findAllByUser_UsernameOrderByCreatedDateDesc(username);
+
+        return orderList
+                .stream()
+                .map((element) -> mapEntityToResponse(element))
+                .collect(Collectors.toList());
+    }
+
+    private void clearItems(Cart cart) {
+        cartItemRepository.deleteAll(cart.getCartItems());
+        cart.getCartItems().clear();
+    }
+
+    private Cart getCartByUsername(String username) {
+        return cartRepository.findByUser_Username(username)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
+    }
+
+    private Address getAddressById(Long addressId) {
+        return addressRepository.findById(addressId)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("no-delivery-address-found")));
+    }
+
+    private User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
+    }
+
+    private void checkCartItems(Cart cart) {
+        if (cart.getCartItems().isEmpty()) {
+            throw new APIException(getMessage("cart-is-empty"));
         }
-        return null;
     }
 
-
-    private Order mapToEntity(OrderDTO orderDTO) {
-        return modelMapper.map(orderDTO, Order.class);
+    public Order buildOrder(OrderDTO orderDTO, User user, Address address) {
+        Order order = new Order();
+        order.setStatus(EnumOrderStatus.ORDERED);
+        order.setIsPaidBefore(false);
+        order.setNote(orderDTO.getNote());
+        order.setPaymentType(orderDTO.getPaymentType());
+        order.setTotal(orderDTO.getTotal());
+        order.setUser(user);
+        order.setAddress(address);
+        return order;
     }
 
-    private OrderDTO mapToDTO(Order order) {
-        return modelMapper.map(order, OrderDTO.class);
+    private void saveOrder(Order order, List<OrderItem> orderItems) {
+        order.setOrderItems(orderItems);
+        order.setTotalItems(orderItems.size());
+
+        orderItems.forEach(orderItem -> orderItem.setOrder(order));
+
+        orderRepository.save(order);
+    }
+
+    private List<OrderItem> convertCartToOrderItems(Cart cart) {
+        return cart.getCartItems()
+                .stream()
+                .map(cartItem -> {
+                    OrderItem orderItem = modelMapper.map(cartItem, OrderItem.class);
+                    orderItem.setId(null);
+
+                    // Thiết lập SKU & Product cho orderItem
+                    orderItem.setSku(cartItem.getSku());
+                    orderItem.setProduct(cartItem.getProduct());
+
+                    return orderItem;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private List<OrderItem> convertCartItemIdsToOrderItems(List<Long> cartItemIds) {
+        return cartItemIds
+                .stream()
+                .map(idCartItem -> {
+                    CartItem cartItem = cartItemRepository.findById(idCartItem)
+                            .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-item-not-found")));
+
+                    OrderItem orderItem = modelMapper.map(cartItem, OrderItem.class);
+                    orderItem.setId(null);
+
+                    // Thiết lập SKU & Product cho orderItem
+                    orderItem.setSku(cartItem.getSku());
+                    orderItem.setProduct(cartItem.getProduct());
+
+                    return orderItem;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private OrderDTO mapEntityToDTO(Order order) {
+        OrderDTO dto = modelMapper.map(order, OrderDTO.class);
+        dto.setStatus(order.getStatus().getValue());
+        return dto;
+    }
+
+    private OrderResponse mapEntityToResponse(Order order) {
+        OrderResponse response = modelMapper.map(order, OrderResponse.class);
+        response.setStatus(order.getStatus().getValue());
+        return response;
+    }
+
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 }
+
+

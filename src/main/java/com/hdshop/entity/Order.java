@@ -1,5 +1,6 @@
 package com.hdshop.entity;
 
+import com.hdshop.utils.EnumOrderStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,7 +27,10 @@ public class Order extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private EnumOrderStatus status;
+
+    private Integer totalItems;
 
     private BigDecimal total;
 
@@ -54,6 +58,9 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<Review> reviews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(
+            mappedBy = "order",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE, CascadeType.DETACH}
+    )
     private List<OrderItem> orderItems = new ArrayList<>();
 }

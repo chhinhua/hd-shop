@@ -4,11 +4,14 @@ import com.hdshop.entity.OptionValue;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
 import com.hdshop.exception.ResourceNotFoundException;
+import com.hdshop.repository.OptionValueRepository;
 import com.hdshop.repository.ProductRepository;
 import com.hdshop.repository.ProductSkuRepository;
 import com.hdshop.service.product.OptionValueService;
 import com.hdshop.service.product.ProductSkuService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +25,8 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     private final ProductSkuRepository productSkuRepository;
     private final OptionValueService optionValueService;
     private final ProductRepository productRepository;
+    private final MessageSource messageSource;
+    private final OptionValueRepository optionValueRepository;
 
     /**
      * Save or update list productSku information
@@ -66,6 +71,13 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         }
 
         return savedSkus.stream().toList();
+    }
+
+    @Override
+    public ProductSku findByProductIdAndValueNames(Long productId, List<String> valueNames) {
+        return productSkuRepository
+                .findByProductIdAndValueNames(productId, valueNames, valueNames.size())
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("sku-not-found")));
     }
 
     private List<OptionValue> getOptionValuesForSku(ProductSku sku, Product product) {
@@ -126,4 +138,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
                 .orElseThrow(() -> new ResourceNotFoundException("OptionValue", "valueName and productId", valueName));
     }
 
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+    }
 }

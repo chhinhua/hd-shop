@@ -1,5 +1,6 @@
 package com.hdshop.dto.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,6 +9,7 @@ import lombok.Setter;
 @Setter
 @Hidden
 public class OptionValueDTO {
+    @JsonIgnore
     private Long valueId;
     private String valueName;
     private String imageUrl;
