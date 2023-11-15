@@ -55,6 +55,11 @@ paging:
         page-number: 1
         page-size: 20
 
+vppay:
+    tmn-code: ZCZAPALE
+    hash-secret: EJWBFDLNDPPPGNODNZRFXZDEJPTAELNT
+    return-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    cacel-url:
 
 
 

@@ -52,7 +52,7 @@ public class CartServiceImpl implements CartService {
     public CartResponse getCartById(Long cartId) {
         Cart cart = cartRepository
                 .findById(cartId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
 
         return mapToResponse(cart);
     }
@@ -142,7 +142,7 @@ public class CartServiceImpl implements CartService {
                 .orElseGet(() -> {
                     User user = userRepository
                             .findByUsernameOrEmail(username, username)
-                            .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+                            .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
 
                     Cart newCart = new Cart();
                     newCart.setTotalPrice(BigDecimal.valueOf(0));
@@ -291,7 +291,7 @@ public class CartServiceImpl implements CartService {
 
     private Product getExistingProductById(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("product-not-found")));
     }
 
     private String getMessage(String code) {

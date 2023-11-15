@@ -9,6 +9,8 @@ import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
     private final UniqueSlugGenerator slugGenerator;
+    private final MessageSource messageSource;
 
     /**
      * Query all categories
@@ -52,10 +55,10 @@ public class CategoryServiceImpl implements CategoryService {
         try {
             Long id = Long.parseLong(identifier.trim());
             category = categoryRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+                    .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
         } catch (NumberFormatException e) {
             category = categoryRepository.findBySlug(identifier.trim())
-                    .orElseThrow(() -> new ResourceNotFoundException("Category", "slug", identifier));
+                    .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
         }
 
         return mapToDTO(category);
@@ -72,7 +75,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDTO createCategory(CategoryDTO categoryDTO) {
         // check category name exists in database
         if (categoryRepository.existsCategoryByName(categoryDTO.getName())) {
-            throw new APIException(HttpStatus.BAD_REQUEST, "Category name is already exists");
+            throw new APIException(HttpStatus.BAD_REQUEST, getMessage("category-name-already-exists"));
         }
 
         Category category = mapToEntity(categoryDTO);
@@ -96,11 +99,11 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
         // check existing category by id
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
 
         // validate existing categoryDTO name
         if (!category.getName().equals(categoryDTO.getName()) && categoryRepository.existsCategoryByName(categoryDTO.getName())) {
-            throw new APIException(HttpStatus.BAD_REQUEST, "Category name already exists");
+            throw new APIException(HttpStatus.BAD_REQUEST, getMessage("category-name-already-exists"));
         }
 
         category.setName(categoryDTO.getName());
@@ -123,7 +126,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
 
         if (category.getChildren() != null) {
             for (Category child : category.getChildren()) {
@@ -198,5 +201,9 @@ public class CategoryServiceImpl implements CategoryService {
      */
     private CategoryDTO mapToDTO(Category category) {
         return modelMapper.map(category, CategoryDTO.class);
+    }
+
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 }

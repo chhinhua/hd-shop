@@ -7,6 +7,8 @@ import com.hdshop.repository.*;
 import com.hdshop.service.cart.CartItemService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class CartItemServiceImpl implements CartItemService {
     private final CartItemRepository cartItemRepository;
+    private final MessageSource messageSource;
     private final ModelMapper modelMapper;
 
     /**
@@ -31,7 +34,7 @@ public class CartItemServiceImpl implements CartItemService {
     public CartItemResponse changeQuantity(Long cartItemId, int quantity) {
         // check existing CartItem by id
         CartItem existingItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(()-> new ResourceNotFoundException("CartItem", "id", cartItemId));
+                .orElseThrow(()-> new ResourceNotFoundException(getMessage("cart-item-not-found")));
 
         existingItem.setQuantity(quantity);
         existingItem.setSubTotal(existingItem.getPrice().multiply(BigDecimal.valueOf(quantity)));
@@ -44,11 +47,15 @@ public class CartItemServiceImpl implements CartItemService {
     @Override
     public void deleteOneCartItem(Long cartItemId) {
         CartItem item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "id", cartItemId));
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-item-not-found")));
         cartItemRepository.delete(item);
     }
 
     private CartItemResponse mapToItemResponse(CartItem entity) {
         return modelMapper.map(entity, CartItemResponse.class);
+    }
+
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 }
