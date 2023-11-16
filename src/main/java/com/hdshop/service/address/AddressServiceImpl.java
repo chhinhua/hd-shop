@@ -2,10 +2,13 @@ package com.hdshop.service.address;
 
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.entity.Address;
+import com.hdshop.entity.Category;
 import com.hdshop.entity.User;
+import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.AddressRepository;
 import com.hdshop.repository.UserRepository;
+import com.hdshop.utils.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
@@ -35,6 +38,8 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public AddressDTO addAddress(AddressDTO addressDTO, Principal principal) {
+        validateAddress(addressDTO);
+
         String username = principal.getName();
 
         User user = getUserByUsername(username);
@@ -46,6 +51,27 @@ public class AddressServiceImpl implements AddressService {
         Address newAddress = addressRepository.save(address);
 
         return mapEntityToDTO(newAddress);
+    }
+
+    private void validateAddress(AddressDTO address) {
+        if (address.getFullName().isBlank()) {
+            throw new InvalidException(getMessage("fullname-must-not-be-empty"));
+        }
+        if (address.getPhoneNumber().isBlank()) {
+            throw new InvalidException(getMessage("phone-number-must-not-be-empty"));
+        }
+        if (!PhoneNumberUtils.isValidPhoneNumber(address.getPhoneNumber())) {
+            throw new InvalidException(getMessage("invalid-phone-number"));
+        }
+        if (address.getCity().isBlank()) {
+            throw new InvalidException(getMessage("city-must-not-be-empty"));
+        }
+        if (address.getDistrict().isBlank()) {
+            throw new InvalidException(getMessage("district-must-not-be-empty"));
+        }
+        if (address.getWard().isBlank()) {
+            throw new InvalidException(getMessage("ward-must-not-be-empty"));
+        }
     }
 
     @Override
@@ -100,6 +126,15 @@ public class AddressServiceImpl implements AddressService {
                 .stream()
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public String deleteAddress(Long addressId, Principal principal) {
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("address-not-found")));
+        addressRepository.delete(address);
+
+        return getMessage("deleted-successfully");
     }
 
     private Address getAddressById(Long addressId) {

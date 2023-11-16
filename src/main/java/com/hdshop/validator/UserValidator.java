@@ -6,6 +6,8 @@ import com.hdshop.entity.User;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.repository.UserRepository;
+import com.hdshop.utils.EmailUtils;
+import com.hdshop.utils.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -85,7 +87,7 @@ public class UserValidator {
     }
 
     private boolean isValidEmail(String email) {
-        return email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+        return EmailUtils.isValidEmail(email);
     }
 
     private boolean isValidUsername(String username) {
@@ -93,10 +95,10 @@ public class UserValidator {
     }
 
     private boolean isValidPhoneNumber(String phoneNumber) {
-        return phoneNumber.matches("^[0-9]{10,11}$");
+        return PhoneNumberUtils.isValidPhoneNumber(phoneNumber);
     }
 
-    private boolean isValidPassword(String password) {
+    public static boolean isValidPassword(String password) {
         return password.matches("^(?=.*[A-Za-z])(?=.*\\d).{8,}$");
     }
 

@@ -54,4 +54,11 @@ public class AddressController {
     public ResponseEntity<List<AddressDTO>> setDefault(@PathVariable(value = "id") Long addressId, Principal principal) {
         return ResponseEntity.ok(addressService.setDefaultAddress(addressId, principal));
     }
+
+    @Operation(summary = "Delete address", description = "Role user")
+    @PreAuthorize("hasRole('USER')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteAddress(@PathVariable(value = "id") Long addressId, Principal principal) {
+        return ResponseEntity.ok(addressService.deleteAddress(addressId, principal));
+    }
 }

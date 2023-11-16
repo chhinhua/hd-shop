@@ -1,5 +1,6 @@
 package com.hdshop.service.user;
 
+import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
 
@@ -8,7 +9,7 @@ import java.security.Principal;
 public interface UserService {
     UserDTO getUserById(final Long id);
 
-    String changePasswordOfCurrentUser(final String newPassword, final Principal pricipal);
+    String changePasswordOfCurrentUser(final ChangePassReq request, final Principal pricipal);
 
     String changePasswordByUserEmail(final String email, final String newPassword);
 
