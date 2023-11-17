@@ -3,9 +3,9 @@ package com.hdshop.controller;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
+import com.hdshop.dto.order.PageOrderResponse;
 import com.hdshop.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,6 @@ import java.security.Principal;
 import java.util.List;
 
 @Tag(name = "Order")
-@SecurityRequirement(name = "Bear Authentication")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -27,6 +26,7 @@ public class OrderController {
 
     @Operation(summary = "Create new order by list cartItem")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    //@SecurityRequirement(name = "Bear Authentication")
     @PostMapping("/create")
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
         OrderResponse newOrder = orderService.addOrder(orderDTO, principal);
@@ -91,5 +91,20 @@ public class OrderController {
     @GetMapping("/checkout-data")
     public ResponseEntity<CheckOutDTO> getCheckoutData(Principal principal) {
         return ResponseEntity.ok(orderService.getDataFromUserInfor(principal));
+    }
+
+    @Operation(
+            summary = "Get all orders",
+            description = "Get all orders via REST API with pagination"
+    )
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public ResponseEntity<PageOrderResponse> getAllOrders(
+            @RequestParam(value = "pageNo", required = false,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${paging.default.page-size}") int pageSize
+    ) {
+        return ResponseEntity.ok(orderService.getAllOrders(pageNo, pageSize));
     }
 }

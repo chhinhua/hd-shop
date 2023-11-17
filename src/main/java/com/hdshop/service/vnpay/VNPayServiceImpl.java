@@ -6,9 +6,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -27,8 +28,15 @@ public class VNPayServiceImpl implements VNPayService {
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
         vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
-        //vnp_Params.put("vnp_Amount", String.valueOf(total*100));
-        vnp_Params.put("vnp_Amount", String.valueOf(total.multiply(BigDecimal.valueOf(100))));
+        //np_Params.put("vnp_Amount", String.valueOf(total*100));
+
+        BigDecimal totalAmount = total.multiply(BigDecimal.valueOf(100)); // Nhân giá trị tiền với 100
+        BigInteger amountAsInteger = totalAmount
+                .setScale(0, RoundingMode.DOWN)
+                .toBigIntegerExact(); // Loại bỏ phần thập phân và chuyển thành số nguyên
+        String amount = amountAsInteger.toString(); // Chuyển đổi thành chuỗi
+
+        vnp_Params.put("vnp_Amount", amount);
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", orderInfor);

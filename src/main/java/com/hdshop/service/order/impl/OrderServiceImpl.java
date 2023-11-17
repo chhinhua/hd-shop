@@ -4,6 +4,9 @@ import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
+import com.hdshop.dto.order.PageOrderResponse;
+import com.hdshop.dto.user.UserDTO;
+import com.hdshop.dto.user.UserResponse;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
@@ -17,6 +20,9 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,9 +88,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderResponse createOrderWithVNPay(OrderDTO orderDTO, Principal principal, String vnp_TxnRef) {
-        String username = principal.getName();
-
+    public OrderResponse createOrderWithVNPay(OrderDTO orderDTO, String username, String vnp_TxnRef) {
         // retrieve data
         User user = getUserByUsername(username);
         Cart cart = getCartByUsername(username);
@@ -255,10 +259,40 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.delete(order);
     }
 
+    @Override
+    public PageOrderResponse getAllOrders(int pageNo, int pageSize) {
+        // create Pageable instances
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        Page<Order> oderPage = orderRepository.findAll(pageable);
+
+        // get content for page object
+        List<Order> orderList = oderPage.getContent();
+
+        List<OrderResponse> content = orderList.stream()
+                .map(this::mapEntityToResponse)
+                .collect(Collectors.toList());
+
+        // set data to the category response
+        PageOrderResponse orderResponse = new PageOrderResponse();
+        orderResponse.setContent(content);
+        orderResponse.setPageNo(oderPage.getNumber() + 1);
+        orderResponse.setPageSize(oderPage.getSize());
+        orderResponse.setTotalPages(oderPage.getTotalPages());
+        orderResponse.setTotalElements(oderPage.getTotalElements());
+        orderResponse.setLast(oderPage.isLast());
+
+        return orderResponse;
+    }
+
     @Transactional
     protected void clearItems(Cart cart) {
         try {
-            cartItemRepository.deleteAllByCart_Id(cart.getId());
+            cart.getCartItems().forEach(
+                    (item) -> {
+                        cartItemRepository.deleteById(item.getId());
+                    }
+            );
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(e.toString());
