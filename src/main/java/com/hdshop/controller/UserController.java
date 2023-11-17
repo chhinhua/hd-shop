@@ -1,8 +1,10 @@
 package com.hdshop.controller;
 
+import com.hdshop.dto.category.CategoryResponse;
 import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
+import com.hdshop.dto.user.UserResponse;
 import com.hdshop.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -67,5 +69,20 @@ public class UserController {
     @PutMapping("/{userId}/status")
     public ResponseEntity<UserDTO> changeLockedStatus(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.changeLockedStatus(userId));
+    }
+
+    @Operation(
+            summary = "Get All Users",
+            description = "Get all Users via REST API with pagination"
+    )
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public ResponseEntity<UserResponse> getAllUsers(
+            @RequestParam(value = "pageNo", required = false,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${paging.default.page-size}") int pageSize
+    ) {
+        return ResponseEntity.ok(userService.getAllUsers(pageNo, pageSize));
     }
 }

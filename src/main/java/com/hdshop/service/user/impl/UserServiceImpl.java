@@ -1,8 +1,12 @@
 package com.hdshop.service.user.impl;
 
+import com.hdshop.dto.category.CategoryDTO;
+import com.hdshop.dto.category.CategoryResponse;
 import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
+import com.hdshop.dto.user.UserResponse;
+import com.hdshop.entity.Category;
 import com.hdshop.entity.User;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
@@ -13,11 +17,16 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -99,6 +108,34 @@ public class UserServiceImpl implements UserService {
         user.setLocked(!user.isLocked());
 
         return mapToDTO(userRepository.save(user));
+    }
+
+    @Override
+    public UserResponse getAllUsers(int pageNo, int pageSize) {
+        // create Pageable instances
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        // get all users with role is user
+        String roleName = "ROLE_USER";
+        Page<User> userPage = userRepository.findAllByRoleName(roleName, pageable);
+
+        // get content for page object
+        List<User> userList = userPage.getContent();
+
+        List<UserDTO> content = userList.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+
+        // set data to the category response
+        UserResponse userResponse = new UserResponse();
+        userResponse.setContent(content);
+        userResponse.setPageNo(userPage.getNumber() + 1);
+        userResponse.setPageSize(userPage.getSize());
+        userResponse.setTotalPages(userPage.getTotalPages());
+        userResponse.setTotalElements(userPage.getTotalElements());
+        userResponse.setLast(userPage.isLast());
+
+        return userResponse;
     }
 
     @Override
