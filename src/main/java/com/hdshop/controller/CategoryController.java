@@ -3,11 +3,12 @@ package com.hdshop.controller;
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;
 import com.hdshop.service.category.CategoryService;
-import com.hdshop.utils.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,9 +19,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/categories")
 public class CategoryController {
     private final CategoryService categoryService;
+    private final MessageSource messageSource;
 
-    public CategoryController(CategoryService categoryService) {
+    public CategoryController(CategoryService categoryService, MessageSource messageSource) {
         this.categoryService = categoryService;
+        this.messageSource = messageSource;
     }
 
     @Operation(
@@ -30,9 +33,9 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<CategoryResponse> getAllCategories(
             @RequestParam(value = "pageNo", required = false,
-                    defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int pageNo,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false,
-                    defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int pageSize
+                    defaultValue = "${paging.default.page-size}") int pageSize
     ) {
         return ResponseEntity.ok(categoryService.getAllCategories(pageNo, pageSize));
     }
@@ -67,6 +70,7 @@ public class CategoryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
-        return ResponseEntity.ok("Category deleted successfully");
+        String successMessage = messageSource.getMessage("deleted-successfully", null, LocaleContextHolder.getLocale());
+        return ResponseEntity.ok(successMessage);
     }
 }

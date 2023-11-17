@@ -10,7 +10,9 @@ import java.util.List;
 public interface OrderService {
     OrderResponse addOrder(final OrderDTO order, final Principal principal);
 
-    OrderResponse addOrderFromUserCart(final OrderDTO order, final Principal principal);
+    OrderResponse createOrderFromUserCart(final OrderDTO order, final Principal principal);
+
+    OrderResponse createOrderWithVNPay(final OrderDTO order, final Principal principal, final String vnp_TxnRef);
 
     void deleteOrderById(final Long orderId);
 
@@ -25,4 +27,8 @@ public interface OrderService {
     CheckOutDTO getDataFromUserInfor(final Principal principal);
 
     List<OrderResponse> getListOrderByCurrentUser(Principal principal);
+
+    void paymentCompleted(String vnp_TxnRef);
+
+    void paymentFailed(String vnp_TxnRef);
 }

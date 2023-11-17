@@ -1,5 +1,6 @@
 package com.hdshop.controller;
 
+import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
 import com.hdshop.service.user.UserService;
@@ -35,8 +36,8 @@ public class UserController {
     @Operation(summary = "Change password for current user")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PutMapping("/password/change")
-    public ResponseEntity<String> changePasswordOfCurrentUser(@RequestParam String newPassword, Principal principal) {
-        String result = userService.changePasswordOfCurrentUser(newPassword, principal);
+    public ResponseEntity<String> changePasswordOfCurrentUser(@RequestBody ChangePassReq request, Principal principal) {
+        String result = userService.changePasswordOfCurrentUser(request, principal);
         return ResponseEntity.ok(result);
     }
 
@@ -44,7 +45,7 @@ public class UserController {
     @PutMapping("/password/forgot")
     public ResponseEntity<String> changePasswordByUserEmail(@RequestParam String email,
                                                             @RequestParam String newPassword) {
-        String result = userService.changePasswordByUserEmail(email, newPassword);
+        String result = userService.forgotPassword(email, newPassword);
         return ResponseEntity.ok(result);
     }
 

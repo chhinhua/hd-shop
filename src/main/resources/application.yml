@@ -55,6 +55,12 @@ paging:
         page-number: 1
         page-size: 20
 
+vnpay:
+    tmn-code: ZCZAPALE
+    hash-secret: EJWBFDLNDPPPGNODNZRFXZDEJPTAELNT
+    pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    api-url: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
+    return-url: /vnpay-payment
 
 
 

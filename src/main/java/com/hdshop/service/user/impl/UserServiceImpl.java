@@ -1,5 +1,6 @@
 package com.hdshop.service.user.impl;
 
+import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
 import com.hdshop.entity.User;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -100,24 +102,57 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String changePasswordOfCurrentUser(String newPassword, Principal principal) {
-        User user = userRepository.findByUsernameOrEmail(principal.getName(), principal.getName())
+    public String changePasswordOfCurrentUser(ChangePassReq request, Principal principal) {
+        validateChangePassRequest(request);
+
+        User user = userRepository
+                .findByUsernameOrEmail(principal.getName(), principal.getName())
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
 
-        userValidator.validatePassword(newPassword);
+        // check old password
+        String oldPassword = request.getOldPassword();
+        String savedEncodedPassword = user.getPassword();
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        if (!encoder.matches(oldPassword, savedEncodedPassword)) {
+            throw new InvalidException(getMessage("old-password-incorrect"));
+        }
 
-        return tryToChangeNewPassword(newPassword, user);
+        // change password
+        String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+        user.setPassword(encodedNewPassword);
+        userRepository.save(user);
+
+        return getMessage("password-changed-successfully");
+    }
+
+    private void validateChangePassRequest(ChangePassReq request) {
+        if (request.getOldPassword().isBlank()) {
+            throw new InvalidException(getMessage("old-password-must-not-be-empty"));
+        }
+        if (request.getOldPassword().isBlank()) {
+            throw new InvalidException(getMessage("new-password-must-not-be-empty"));
+        }
+        if (!UserValidator.isValidPassword(request.getNewPassword())) {
+            throw new InvalidException(String.format("%s (%s)",
+                    getMessage("invalid-new-password"),
+                    String.format(getMessage("cannot-be-less-than-n-characters"), 8))
+            );
+        }
     }
 
     @Override
-    public String changePasswordByUserEmail(String email, String newPassword) {
+    public String forgotPassword(String email, String newPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("%s %s",
                         getMessage("user-not-found-with-email-is"), email)));
 
         userValidator.validatePassword(newPassword);
 
-        return tryToChangeNewPassword(newPassword, user);
+        // change password
+        String encodedNewPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedNewPassword);
+
+        return getMessage("password-changed-successfully");
     }
 
     private void setFieldValues(UserProfile profile, User updateUserProfile) {

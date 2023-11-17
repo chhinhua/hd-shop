@@ -21,11 +21,6 @@ public class OptionServiceImpl implements OptionService {
     private final OptionValueService optionValueService;
     private final OptionValueRepository optionValueRepository;
 
-    @Override
-    public List<Option> addOptions(Long productId, List<Option> options) {
-        return null;
-    }
-
     /**
      * Lưu danh sách option ứng vs product vào database
      * @param productId
@@ -63,34 +58,6 @@ public class OptionServiceImpl implements OptionService {
             savedOptions.add(optionRepository.save(existingOption));
         }
 
-        return savedOptions.stream().toList();
-    }
-
-    @Override
-    public List<Option> saveOptionsFromProduct(Product product) {
-        List<Option> savedOptions = new ArrayList<>();
-        for (Option option : product.getOptions()) {
-
-            //check existing option
-            Option existingOption = optionRepository
-                    .findByOptionNameAndProduct_ProductId(option.getOptionName(), product.getProductId())
-                    .orElse(option);
-
-            List<OptionValue> newOptionValues = new ArrayList<>();
-            for (OptionValue value : existingOption.getValues()) {
-                Optional<OptionValue> newOptionValue = optionValueService
-                        .getByValueNameAndProductId(value.getValueName(), product.getProductId());
-
-                if (newOptionValue.isPresent()) {
-                    newOptionValues.add(newOptionValue.get());
-                } else {
-                    newOptionValues.add(optionValueRepository.save(value));
-                }
-            }
-
-            existingOption.setValues(newOptionValues);
-            savedOptions.add(optionRepository.save(existingOption));
-        }
         return savedOptions.stream().toList();
     }
 }

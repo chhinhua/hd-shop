@@ -37,7 +37,7 @@ public class OrderController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping
     public ResponseEntity<OrderResponse> createOrderFromCart(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
-        OrderResponse newOrder = orderService.addOrderFromUserCart(orderDTO, principal);
+        OrderResponse newOrder = orderService.createOrderFromUserCart(orderDTO, principal);
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 

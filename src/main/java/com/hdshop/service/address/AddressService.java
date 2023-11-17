@@ -15,4 +15,6 @@ public interface AddressService {
     AddressDTO getOneAddress(final Long addressId);
 
     List<AddressDTO> setDefaultAddress(final Long addressId, final Principal principal);
+
+    String deleteAddress(final Long addressId, final Principal principal);
 }

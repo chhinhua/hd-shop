@@ -37,7 +37,14 @@ import org.springframework.web.cors.CorsConfigurationSource;
         scheme = "bearer"
 )
 public class SecurityConfig {
+    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
+    private final JwtAuthenticationFilter authenticationFilter;
+    private final CorsConfigurationSource configurationSource;
     private static final String[] WHITE_LIST_URL = {
+            "/api/v1/vnpay/**",
+            "/vnpay/**",
+            "/vnpay-payment",
+            "/submitOrdert",
             "/api/v1/auth/**",
             "/api/v1/users/password/forgot",
             "/swagger-ui/**",
@@ -51,10 +58,6 @@ public class SecurityConfig {
             "/webjars/**",
             "/swagger-ui.html"
     };
-
-    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
-    private final JwtAuthenticationFilter authenticationFilter;
-    private final CorsConfigurationSource configurationSource;
 
     @Bean
     public static PasswordEncoder passwordEncoder() {

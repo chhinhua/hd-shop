@@ -1,6 +1,7 @@
 package com.hdshop.entity;
 
 import com.hdshop.utils.EnumOrderStatus;
+import com.hdshop.utils.EnumPaymentType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,9 +27,15 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String vnpTxnRef;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private EnumOrderStatus status;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private EnumPaymentType paymentType;
 
     private Integer totalItems;
 
@@ -39,7 +46,6 @@ public class Order extends BaseEntity {
     private Boolean isPaidBefore;
 
     // TODO thiết lập nullable
-    private String paymentType;
 
     @CreatedBy
     private String createdBy;

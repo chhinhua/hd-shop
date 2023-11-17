@@ -12,4 +12,13 @@ public class PhoneNumberUtils {
         }
         return phoneNumber;
     }
+
+    /**
+     * Validate the phone number
+     * @param phoneNumber
+     * @return
+     */
+    public static boolean isValidPhoneNumber(String phoneNumber) {
+        return phoneNumber.matches("^[0-9]{10,11}$");
+    }
 }

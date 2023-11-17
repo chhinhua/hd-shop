@@ -21,4 +21,6 @@ public interface CartService {
     CartResponse removeListItems(final String username, final List<Long> itemIds);
 
     Integer getTotalItems(final Principal principal);
+
+    Cart updateCartTotals(final Cart cart);
 }

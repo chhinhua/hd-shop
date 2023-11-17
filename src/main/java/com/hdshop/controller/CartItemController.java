@@ -5,6 +5,8 @@ import com.hdshop.service.cart.CartItemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,8 +16,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/cart/items")
 public class CartItemController {
     private final CartItemService cartItemService;
+    private final MessageSource messageSource;
 
-    public CartItemController(CartItemService cartItemService) {
+    public CartItemController(MessageSource messageSource, CartItemService cartItemService) {
+        this.messageSource = messageSource;
         this.cartItemService = cartItemService;
     }
 
@@ -32,7 +36,8 @@ public class CartItemController {
     @DeleteMapping("/{itemId}")
     public ResponseEntity<String> deteleOneCartItem(@PathVariable(value = "itemId") Long cartItemId) {
         cartItemService.deleteOneCartItem(cartItemId);
-        return ResponseEntity.ok("Cart item deleted successfully");
+        String successMessage = messageSource.getMessage("deleted-successfully", null, LocaleContextHolder.getLocale());
+        return ResponseEntity.ok(successMessage);
     }
 }
 
