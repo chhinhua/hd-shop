@@ -48,7 +48,7 @@ spring:
 
 app:
     jwt-secret: 38a0963a6364b09ad867aa9a66c6d009673c21e182015461da236ec361877f77
-    jwt-expiration-milliseconds: 86400000
+    jwt-expiration-milliseconds: 604800000 #1week
 
 paging:
     default:

@@ -30,9 +30,9 @@ public class ProductController {
         return new ResponseEntity<>(saveProduct, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Get All Products", description = "Get all Products via REST API with pagination")
+    @Operation(summary = "Get All Products", description = "Get all Products via REST API with pagination (active product)")
     @GetMapping
-    public ResponseEntity<ProductResponse> getAllProduct(
+    public ResponseEntity<ProductResponse> getAllActiveProduct(
             @RequestParam(value = "pageNo", required = false,
                     defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false,

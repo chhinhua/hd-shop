@@ -284,6 +284,14 @@ public class CartServiceImpl implements CartService {
         return cartRepository.save(cart);
     }
 
+    @Override
+    public String getTotalPriceForYourCart(Principal principal) {
+        String username = principal.getName();
+        Cart cart = getExistingCartByUsername(username);
+        BigDecimal totalPrice = cart.getTotalPrice();
+        return totalPrice != null ? totalPrice.toString() : "0";
+    }
+
 
     private Product getExistingProductById(Long productId) {
         return productRepository.findById(productId)

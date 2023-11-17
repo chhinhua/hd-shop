@@ -87,7 +87,7 @@ public class ProductServiceImpl implements ProductService {
         // create Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        Page<Product> productPage = productRepository.findAllByIsActiveIsTrue(pageable);
+        Page<Product> productPage = productRepository.findAllByIsActiveIsTrueaAndOrderByProductIdDesc(pageable);
 
         // get content for page object
         List<Product> productList = productPage.getContent();

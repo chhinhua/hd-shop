@@ -77,7 +77,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     public ProductSku findByProductIdAndValueNames(Long productId, List<String> valueNames) {
         return productSkuRepository
                 .findByProductIdAndValueNames(productId, valueNames, valueNames.size())
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("sku-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("sku-not-found-please-choose-anorther-style")));
     }
 
     private List<OptionValue> getOptionValuesForSku(ProductSku sku, Product product) {
