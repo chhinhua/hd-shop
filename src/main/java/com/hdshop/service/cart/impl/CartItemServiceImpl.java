@@ -1,10 +1,12 @@
 package com.hdshop.service.cart.impl;
 
 import com.hdshop.dto.cart.CartItemResponse;
+import com.hdshop.entity.Cart;
 import com.hdshop.entity.CartItem;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
 import com.hdshop.service.cart.CartItemService;
+import com.hdshop.service.cart.CartService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
@@ -18,6 +20,7 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class CartItemServiceImpl implements CartItemService {
     private final CartItemRepository cartItemRepository;
+    private final CartService cartService;
     private final MessageSource messageSource;
     private final ModelMapper modelMapper;
 
@@ -41,6 +44,10 @@ public class CartItemServiceImpl implements CartItemService {
 
         CartItem changeItemQuantity =  cartItemRepository.save(existingItem);
 
+        // update cart totals
+        Cart cart = changeItemQuantity.getCart();
+        cartService.updateCartTotals(cart);
+
         return mapToItemResponse(changeItemQuantity);
     }
 
@@ -49,6 +56,10 @@ public class CartItemServiceImpl implements CartItemService {
         CartItem item = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-item-not-found")));
         cartItemRepository.delete(item);
+
+        // update cart totals
+        Cart cart = item.getCart();
+        cartService.updateCartTotals(cart);
     }
 
     private CartItemResponse mapToItemResponse(CartItem entity) {

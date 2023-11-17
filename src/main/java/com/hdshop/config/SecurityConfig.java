@@ -41,7 +41,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter authenticationFilter;
     private final CorsConfigurationSource configurationSource;
     private static final String[] WHITE_LIST_URL = {
-            "/",
+            "/api/v1/vnpay/**",
+            "/vnpay/**",
             "/vnpay-payment",
             "/submitOrdert",
             "/api/v1/auth/**",

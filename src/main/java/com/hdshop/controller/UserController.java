@@ -45,7 +45,7 @@ public class UserController {
     @PutMapping("/password/forgot")
     public ResponseEntity<String> changePasswordByUserEmail(@RequestParam String email,
                                                             @RequestParam String newPassword) {
-        String result = userService.changePasswordByUserEmail(email, newPassword);
+        String result = userService.forgotPassword(email, newPassword);
         return ResponseEntity.ok(result);
     }
 

@@ -11,7 +11,7 @@ public interface UserService {
 
     String changePasswordOfCurrentUser(final ChangePassReq request, final Principal pricipal);
 
-    String changePasswordByUserEmail(final String email, final String newPassword);
+    String forgotPassword(final String email, final String newPassword);
 
     UserDTO getUserByUsername(final String username);
 

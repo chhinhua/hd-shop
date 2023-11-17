@@ -62,7 +62,7 @@ public class CartServiceImpl implements CartService {
      * If the item has a SKU, it processes it with SKU, otherwise without SKU.
      *
      * @param username The username of current user
-     * @param itemDTO The item to be added to the cart.
+     * @param itemDTO  The item to be added to the cart.
      * @return The updated CartItemDTO.
      */
     @Override
@@ -92,10 +92,8 @@ public class CartServiceImpl implements CartService {
         // clear items
         cart.getCartItems().clear();
 
-        updateCartTotals(cart);
-
         // save change
-        Cart cartWithClearedItems = cartRepository.save(cart);
+        Cart cartWithClearedItems = updateCartTotals(cart);
 
         return mapToResponse(cartWithClearedItems);
     }
@@ -113,10 +111,8 @@ public class CartServiceImpl implements CartService {
         // clear items
         cart.getCartItems().removeAll(items);
 
-        updateCartTotals(cart);
-
         // save change
-        Cart cartWithRemovedItems = cartRepository.save(cart);
+        Cart cartWithRemovedItems = updateCartTotals(cart);
 
         return mapToResponse(cartWithRemovedItems);
     }
@@ -138,7 +134,7 @@ public class CartServiceImpl implements CartService {
     }
 
     private Cart getCartByUsernameOrElseCreateNew(String username) {
-        Cart cart =  cartRepository.findByUser_Username(username)
+        Cart cart = cartRepository.findByUser_Username(username)
                 .orElseGet(() -> {
                     User user = userRepository
                             .findByUsernameOrEmail(username, username)
@@ -172,14 +168,14 @@ public class CartServiceImpl implements CartService {
             updateExistingCartItem(existingCartItem, sku, itemDTO.getQuantity());
 
             // update cart totals
-            updateCartTotalsAndSaveChanged(cart);
+            updateCartTotals(cart);
 
             return mapToItemResponse(cartItemRepository.save(existingCartItem));
         } else {
             CartItem newCartItem = createNewCartItemWithSku(cart, product, sku, itemDTO);
 
             // update cart totals
-            updateCartTotalsAndSaveChanged(cart);
+            updateCartTotals(cart);
 
             return mapToItemResponse(cartItemRepository.save(newCartItem));
         }
@@ -201,22 +197,17 @@ public class CartServiceImpl implements CartService {
             updateExistingCartItem(existingCartItem, product, itemDTO.getQuantity());
 
             // update cart totals
-            updateCartTotalsAndSaveChanged(cart);
+            updateCartTotals(cart);
 
             return mapToItemResponse(cartItemRepository.save(existingCartItem));
         } else {
             CartItem newCartItem = createNewCartItemWithoutSku(cart, product, itemDTO);
 
             // update cart totals
-            updateCartTotalsAndSaveChanged(cart);
+            updateCartTotals(cart);
 
             return mapToItemResponse(cartItemRepository.save(newCartItem));
         }
-    }
-
-    private void updateCartTotalsAndSaveChanged(Cart cart) {
-        updateCartTotals(cart);
-        cartRepository.save(cart);
     }
 
     private Optional<CartItem> getCartItemByCartAndProduct(Cart cart, Product product) {
@@ -283,9 +274,14 @@ public class CartServiceImpl implements CartService {
                 );
     }
 
-    private void updateCartTotals(Cart cart) {
+    @Override
+    public Cart updateCartTotals(Cart cart) {
         cart.setTotalItems(cart.getCartItems().size());
-        cart.setTotalPrice(cart.getCartItems().stream().map(CartItem::getSubTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
+        cart.setTotalPrice(cart.getCartItems().stream()
+                .map(CartItem::getSubTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+        );
+        return cartRepository.save(cart);
     }
 
 

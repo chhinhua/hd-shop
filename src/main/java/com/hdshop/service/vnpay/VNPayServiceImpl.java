@@ -5,15 +5,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
 public class VNPayServiceImpl implements VNPayService {
-
-    public String createOrder(int total, String orderInfor, String urlReturn){
+    @Override
+    public String createOrder(BigDecimal total, String orderInfor, String urlReturn){
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String vnp_TxnRef = VNPayConfig.getRandomNumber(8);
@@ -25,9 +27,9 @@ public class VNPayServiceImpl implements VNPayService {
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
         vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
-        vnp_Params.put("vnp_Amount", String.valueOf(total*100));
+        //vnp_Params.put("vnp_Amount", String.valueOf(total*100));
+        vnp_Params.put("vnp_Amount", String.valueOf(total.multiply(BigDecimal.valueOf(100))));
         vnp_Params.put("vnp_CurrCode", "VND");
-
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", orderInfor);
         vnp_Params.put("vnp_OrderType", orderType);
@@ -40,7 +42,7 @@ public class VNPayServiceImpl implements VNPayService {
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
         Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy-HH:mm:ss");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
@@ -69,6 +71,7 @@ public class VNPayServiceImpl implements VNPayService {
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
+
                 if (itr.hasNext()) {
                     query.append('&');
                     hashData.append('&');
@@ -82,6 +85,7 @@ public class VNPayServiceImpl implements VNPayService {
         return paymentUrl;
     }
 
+    @Override
     public int orderReturn(HttpServletRequest request){
         Map fields = new HashMap();
         for (Enumeration params = request.getParameterNames(); params.hasMoreElements();) {

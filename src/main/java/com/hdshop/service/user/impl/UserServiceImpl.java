@@ -141,7 +141,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String changePasswordByUserEmail(String email, String newPassword) {
+    public String forgotPassword(String email, String newPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("%s %s",
                         getMessage("user-not-found-with-email-is"), email)));

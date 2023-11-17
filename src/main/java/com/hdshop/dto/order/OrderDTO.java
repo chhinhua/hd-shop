@@ -1,8 +1,5 @@
 package com.hdshop.dto.order;
 
-import com.hdshop.dto.address.AddressDTO;
-import com.hdshop.utils.EnumOrderStatus;
-import com.hdshop.utils.EnumPaymentType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -11,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 

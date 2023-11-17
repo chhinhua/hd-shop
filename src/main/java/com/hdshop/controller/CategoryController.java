@@ -3,7 +3,6 @@ package com.hdshop.controller;
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;
 import com.hdshop.service.category.CategoryService;
-import com.hdshop.utils.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,9 +33,9 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<CategoryResponse> getAllCategories(
             @RequestParam(value = "pageNo", required = false,
-                    defaultValue = AppConstants.DEFAULT_PAGE_NUMBER) int pageNo,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false,
-                    defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int pageSize
+                    defaultValue = "${paging.default.page-size}") int pageSize
     ) {
         return ResponseEntity.ok(categoryService.getAllCategories(pageNo, pageSize));
     }
