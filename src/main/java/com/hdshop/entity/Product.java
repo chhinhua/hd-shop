@@ -89,18 +89,4 @@ public class Product extends BaseEntity {
             mappedBy = "product",
             cascade = {CascadeType.MERGE, CascadeType.REMOVE})
     private List<ProductSku> skus;
-
-    @PrePersist
-    @PreUpdate
-    public void prePersist() {
-        // Set this product for options
-        for (Option option : options) {
-            option.setProduct(this);
-        }
-
-        // Set this product for skus
-        for (ProductSku sku : skus) {
-            sku.setProduct(this);
-        }
-    }
 }

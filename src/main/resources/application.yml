@@ -43,7 +43,6 @@ spring:
         basename: message
         encoding: UTF-8
         use-code-as-default-message: true
-
     web:
         locale: vi
         locale-resolver: fixed
@@ -55,14 +54,14 @@ app:
 paging:
     default:
         page-number: 1
-        page-size: 20
+        page-size: 24
 
 vnpay:
     tmn-code: ZCZAPALE
     hash-secret: EJWBFDLNDPPPGNODNZRFXZDEJPTAELNT
     pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
     api-url: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
-    return-url: /vnpay-payment
+    return-url: /api/v1/vnpay/vnpay-payment
 
 
 

@@ -4,16 +4,26 @@ import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Product;
 
-public interface ProductService {
-    ProductDTO createProduct(final Product product);
+import java.util.List;
 
-    ProductResponse getAllProducts(final int pageNo, final int pageSize);
+public interface ProductService {
+    ProductDTO create(final Product product);
+
+    ProductResponse getAllIsActive(final int pageNo, final int pageSize);
 
     ProductDTO getOne(final Long productId);
 
-    ProductDTO updateProduct(final ProductDTO productDTO, final Long productId);
+    ProductDTO update(final ProductDTO productDTO, final Long productId);
 
-    ProductDTO toggleProductActiveStatus(final Long productId);
+    ProductDTO toggleActiveStatus(final Long productId);
 
-    ProductDTO toggleProductSellingStatus(final Long productId);
+    ProductDTO toggleSellingStatus(final Long productId);
+
+    ProductResponse searchSortAndFilterProducts(
+            String searchTerm,
+            List<String> cateName,
+            List<String> sortCriteria,
+            int pageNo,
+            int pageSize
+    );
 }

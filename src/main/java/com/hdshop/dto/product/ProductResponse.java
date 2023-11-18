@@ -31,4 +31,7 @@ public class ProductResponse {
 
     @Schema(description = "Is it the last page?")
     private boolean last;
+
+    @Schema(description = "Is it the total element in last page?")
+    private long lastPageSize;
 }

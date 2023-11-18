@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Product")
 @RequiredArgsConstructor
 @RestController
@@ -26,7 +28,7 @@ public class ProductController {
     @SecurityRequirement(name = "Bear Authentication")
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody Product product) {
-        ProductDTO saveProduct = productService.createProduct(product);
+        ProductDTO saveProduct = productService.create(product);
         return new ResponseEntity<>(saveProduct, HttpStatus.CREATED);
     }
 
@@ -38,7 +40,7 @@ public class ProductController {
             @RequestParam(value = "pageSize", required = false,
                     defaultValue = "${paging.default.page-size}") int pageSize
     ) {
-        return ResponseEntity.ok(productService.getAllProducts(pageNo, pageSize));
+        return ResponseEntity.ok(productService.getAllIsActive(pageNo, pageSize));
     }
 
     @Operation(summary = "Get a Single Product")
@@ -54,7 +56,7 @@ public class ProductController {
     public ResponseEntity<ProductDTO> updateProduct(
             @RequestBody ProductDTO product,
             @PathVariable(value = "id") Long productId) {
-        return ResponseEntity.ok(productService.updateProduct(product, productId));
+        return ResponseEntity.ok(productService.update(product, productId));
     }
 
     @Operation(summary = "Toggle Active Status of a Product")
@@ -62,7 +64,7 @@ public class ProductController {
     @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("/{id}/active")
     public ResponseEntity<ProductDTO> toggleActiveProduct(@PathVariable(value = "id") Long productId) {
-        return ResponseEntity.ok(productService.toggleProductActiveStatus(productId));
+        return ResponseEntity.ok(productService.toggleActiveStatus(productId));
     }
 
     @Operation(summary = "Toggle Selling Status of a Product")
@@ -70,6 +72,25 @@ public class ProductController {
     @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("/{id}/selling")
     public ResponseEntity<ProductDTO> toggleSellingProduct(@PathVariable(value = "id") Long productId) {
-        return ResponseEntity.ok(productService.toggleProductSellingStatus(productId));
+        return ResponseEntity.ok(productService.toggleSellingStatus(productId));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ProductResponse> searchProducts(
+            @RequestParam(name = "key", required = false) String key,
+            @RequestParam(name = "cate", required = false) List<String> cateNames,
+            @RequestParam(name = "sort", required = false) List<String> sortCriteria,
+            @RequestParam(value = "pageNo", required = false,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${paging.default.page-size}") int pageSize
+    ) {
+        ProductResponse searchResponse = productService.searchSortAndFilterProducts(
+                key, cateNames, sortCriteria, pageNo, pageSize
+        );
+
+        System.out.println(key);
+
+        return ResponseEntity.ok(searchResponse);
     }
 }
