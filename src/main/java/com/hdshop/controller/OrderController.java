@@ -113,4 +113,19 @@ public class OrderController {
     ) {
         return ResponseEntity.ok(orderService.getAllOrders(pageNo, pageSize));
     }
+
+    @Operation(summary = "Search order by status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/search")
+    public ResponseEntity<List<OrderResponse>> searchOrder(@RequestParam(value = "status", required = false) String statusValue) {
+        return ResponseEntity.ok(orderService.findByStatus(statusValue));
+    }
+
+    @Operation(summary = "Search user order by status")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/search")
+    public ResponseEntity<List<OrderResponse>> searchYourOrder(
+            @RequestParam(value = "status", required = false) String statusValue, Principal principal) {
+        return ResponseEntity.ok(orderService.findForUserByStatus(statusValue, principal));
+    }
 }

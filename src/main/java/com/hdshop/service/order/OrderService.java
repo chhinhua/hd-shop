@@ -36,4 +36,8 @@ public interface OrderService {
     void paymentFailed(final String vnp_TxnRef);
 
     PageOrderResponse getAllOrders(final int pageNo, final int pageSize);
+
+    List<OrderResponse> findForUserByStatus(final String value, final Principal principal);
+
+    List<OrderResponse> findByStatus(final String value);
 }

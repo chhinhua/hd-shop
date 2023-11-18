@@ -299,17 +299,49 @@ public class OrderServiceImpl implements OrderService {
         return orderResponse;
     }
 
+    @Override
+    public List<OrderResponse> findForUserByStatus(String value, Principal principal) {
+        String username = principal.getName();
+        List<Order> orderList;
+
+        if (value == null) {
+            orderList = orderRepository
+                    .getOrdersByUser_UsernameOrderByCreatedDateDesc(username);
+        } else {
+            EnumOrderStatus status = appUtils.getOrderStatus(value);
+            orderList = orderRepository
+                    .findAllByStatusAndUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(status, username);
+        }
+
+        return orderList.stream()
+                .map(this::mapEntityToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OrderResponse> findByStatus(String value) {
+        List<Order> orderList;
+
+        if (value == null) {
+            orderList = orderRepository.findAll();
+        } else {
+            EnumOrderStatus status = appUtils.getOrderStatus(value);
+            orderList = orderRepository.findByStatusOrderByCreatedDate(status);
+        }
+
+        return orderList.stream()
+                .map(this::mapEntityToResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     protected void clearItems(Cart cart) {
         try {
             cart.getCartItems().forEach(
-                    (item) -> {
-                        cartItemRepository.deleteById(item.getId());
-                    }
+                    (item) -> cartItemRepository.deleteById(item.getId())
             );
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(e.toString());
         }
 
         cart.getCartItems().clear();

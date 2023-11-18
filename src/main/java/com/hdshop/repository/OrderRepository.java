@@ -1,8 +1,7 @@
 package com.hdshop.repository;
 
 import com.hdshop.entity.Order;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.hdshop.utils.EnumOrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -19,5 +18,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findByVnpTxnRef(String vnp_TxnRef);
 
-    Page<Order> findByIsDeletedIsTrue(Pageable pageable);
+    List<Order> findByStatusOrderByCreatedDate(EnumOrderStatus status);
+
+    List<Order> findAllByStatusAndUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(EnumOrderStatus status, String username);
 }
