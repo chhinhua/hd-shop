@@ -5,8 +5,6 @@ import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.dto.order.PageOrderResponse;
-import com.hdshop.dto.user.UserDTO;
-import com.hdshop.dto.user.UserResponse;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
@@ -113,15 +111,31 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * Delete Order by orderId
+     * Set true isDeleted Order by orderId (for customers deleted them order)
      *
      * @param orderId
+     * @return
      */
     @Override
-    public void deleteOrderById(Long orderId) {
+    public String isDeletedOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
+        order.setIsDeleted(true);
+        orderRepository.save(order);
+        return getMessage("deleted-successfully");
+    }
+
+    /**
+     * Admin delete order by orderId
+     * @param orderId
+     * @return result message
+     */
+    @Override
+    public String deleteOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
         orderRepository.delete(order);
+        return getMessage("deleted-successfully");
     }
 
     /**
@@ -227,7 +241,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponse> getListOrderByCurrentUser(Principal principal) {
         String username = principal.getName();
 
-        List<Order> orderList = orderRepository.findAllByUser_UsernameOrderByCreatedDateDesc(username);
+        List<Order> orderList = orderRepository.findAllByUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(username);
 
         return orderList
                 .stream()
@@ -326,6 +340,7 @@ public class OrderServiceImpl implements OrderService {
     public Order buildOrder(OrderDTO orderDTO, User user, Address address) {
         Order order = new Order();
         order.setStatus(EnumOrderStatus.ORDERED);
+        order.setIsDeleted(false);
         order.setIsPaidBefore(false);
         order.setNote(orderDTO.getNote());
         order.setTotal(orderDTO.getTotal());
@@ -342,6 +357,7 @@ public class OrderServiceImpl implements OrderService {
     public Order buildOrderForVNPayPayment(OrderDTO orderDTO, User user, Address address) {
         Order order = new Order();
         order.setStatus(EnumOrderStatus.WAIT_FOR_PAY);
+        order.setIsDeleted(false);
         order.setIsPaidBefore(false);
         order.setNote(orderDTO.getNote());
         order.setTotal(orderDTO.getTotal());

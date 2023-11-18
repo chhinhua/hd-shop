@@ -4,7 +4,6 @@ import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.dto.order.PageOrderResponse;
-import org.springframework.data.domain.Page;
 
 import java.security.Principal;
 import java.util.List;
@@ -16,7 +15,9 @@ public interface OrderService {
 
     OrderResponse createOrderWithVNPay(final OrderDTO order, final String username, final String vnp_TxnRef);
 
-    void deleteOrderById(final Long orderId);
+    String isDeletedOrderById(final Long orderId);
+
+    String deleteOrderById(final Long orderId);
 
     OrderDTO getOrderById(final Long orderId);
 

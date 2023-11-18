@@ -12,5 +12,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Boolean existsProductBySlug(String generatedSlug);
 
-    Page<Product> findAllByIsActiveIsTrueaAndOrderByProductIdDesc(Pageable pageable);
+    Page<Product> findAllByIsActiveIsTrueOrderByProductIdDesc(Pageable pageable);
 }

@@ -45,7 +45,7 @@ public class Order extends BaseEntity {
 
     private Boolean isPaidBefore;
 
-    // TODO thiết lập nullable
+    private Boolean isDeleted;
 
     @CreatedBy
     private String createdBy;

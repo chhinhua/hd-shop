@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,12 +42,18 @@ public class OrderController {
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Delete order by id")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "User delete order by orderId")
+    @PreAuthorize("hasRole('USER')")
+    @DeleteMapping("/isdeleted/{id}")
+    public ResponseEntity<String> isDeletedOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.isDeletedOrderById(id));
+    }
+
+    @Operation(summary = "Admin delete order by orderId")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteOrder(@PathVariable Long id) {
-        orderService.deleteOrderById(id);
-        return ResponseEntity.ok("Order deleted successfully");
+        return ResponseEntity.ok(orderService.deleteOrderById(id));
     }
 
     @Operation(summary = "Get single order by id")
@@ -84,7 +91,6 @@ public class OrderController {
     public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
-    // TODO trước mắt chỉ cho thanh toán online (vnpay)
 
     @Operation(summary = "Get checkout data for page", description = "From user information (adderss, total price of cart)")
     @PreAuthorize("hasRole('USER')")
