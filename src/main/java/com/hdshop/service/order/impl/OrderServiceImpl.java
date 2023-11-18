@@ -4,6 +4,7 @@ import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
+import com.hdshop.dto.order.PageOrderResponse;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
@@ -17,6 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,9 +86,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderResponse createOrderWithVNPay(OrderDTO orderDTO, Principal principal, String vnp_TxnRef) {
-        String username = principal.getName();
-
+    public OrderResponse createOrderWithVNPay(OrderDTO orderDTO, String username, String vnp_TxnRef) {
         // retrieve data
         User user = getUserByUsername(username);
         Cart cart = getCartByUsername(username);
@@ -109,15 +111,31 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * Delete Order by orderId
+     * Set true isDeleted Order by orderId (for customers deleted them order)
      *
      * @param orderId
+     * @return
      */
     @Override
-    public void deleteOrderById(Long orderId) {
+    public String isDeletedOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
+        order.setIsDeleted(true);
+        orderRepository.save(order);
+        return getMessage("deleted-successfully");
+    }
+
+    /**
+     * Admin delete order by orderId
+     * @param orderId
+     * @return result message
+     */
+    @Override
+    public String deleteOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
         orderRepository.delete(order);
+        return getMessage("deleted-successfully");
     }
 
     /**
@@ -223,7 +241,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponse> getListOrderByCurrentUser(Principal principal) {
         String username = principal.getName();
 
-        List<Order> orderList = orderRepository.findAllByUser_UsernameOrderByCreatedDateDesc(username);
+        List<Order> orderList = orderRepository.findAllByUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(username);
 
         return orderList
                 .stream()
@@ -255,13 +273,75 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.delete(order);
     }
 
+    @Override
+    public PageOrderResponse getAllOrders(int pageNo, int pageSize) {
+        // create Pageable instances
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        Page<Order> oderPage = orderRepository.findAll(pageable);
+
+        // get content for page object
+        List<Order> orderList = oderPage.getContent();
+
+        List<OrderResponse> content = orderList.stream()
+                .map(this::mapEntityToResponse)
+                .collect(Collectors.toList());
+
+        // set data to the category response
+        PageOrderResponse orderResponse = new PageOrderResponse();
+        orderResponse.setContent(content);
+        orderResponse.setPageNo(oderPage.getNumber() + 1);
+        orderResponse.setPageSize(oderPage.getSize());
+        orderResponse.setTotalPages(oderPage.getTotalPages());
+        orderResponse.setTotalElements(oderPage.getTotalElements());
+        orderResponse.setLast(oderPage.isLast());
+
+        return orderResponse;
+    }
+
+    @Override
+    public List<OrderResponse> findForUserByStatus(String value, Principal principal) {
+        String username = principal.getName();
+        List<Order> orderList;
+
+        if (value == null) {
+            orderList = orderRepository
+                    .getOrdersByUser_UsernameOrderByCreatedDateDesc(username);
+        } else {
+            EnumOrderStatus status = appUtils.getOrderStatus(value);
+            orderList = orderRepository
+                    .findAllByStatusAndUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(status, username);
+        }
+
+        return orderList.stream()
+                .map(this::mapEntityToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OrderResponse> findByStatus(String value) {
+        List<Order> orderList;
+
+        if (value == null) {
+            orderList = orderRepository.findAll();
+        } else {
+            EnumOrderStatus status = appUtils.getOrderStatus(value);
+            orderList = orderRepository.findByStatusOrderByCreatedDate(status);
+        }
+
+        return orderList.stream()
+                .map(this::mapEntityToResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     protected void clearItems(Cart cart) {
         try {
-            cartItemRepository.deleteAllByCart_Id(cart.getId());
+            cart.getCartItems().forEach(
+                    (item) -> cartItemRepository.deleteById(item.getId())
+            );
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(e.toString());
         }
 
         cart.getCartItems().clear();
@@ -292,6 +372,7 @@ public class OrderServiceImpl implements OrderService {
     public Order buildOrder(OrderDTO orderDTO, User user, Address address) {
         Order order = new Order();
         order.setStatus(EnumOrderStatus.ORDERED);
+        order.setIsDeleted(false);
         order.setIsPaidBefore(false);
         order.setNote(orderDTO.getNote());
         order.setTotal(orderDTO.getTotal());
@@ -308,6 +389,7 @@ public class OrderServiceImpl implements OrderService {
     public Order buildOrderForVNPayPayment(OrderDTO orderDTO, User user, Address address) {
         Order order = new Order();
         order.setStatus(EnumOrderStatus.WAIT_FOR_PAY);
+        order.setIsDeleted(false);
         order.setIsPaidBefore(false);
         order.setNote(orderDTO.getNote());
         order.setTotal(orderDTO.getTotal());

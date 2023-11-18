@@ -48,6 +48,9 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		Address adminAddress = createAdminAddress(admin);
 		Address userAddress = createUserAddress(user);
 
+		admin.getAddresses().add(adminAddress);
+		user.getAddresses().add(userAddress);
+
 		// save
 		userRepository.save(admin);
 		userRepository.save(user);

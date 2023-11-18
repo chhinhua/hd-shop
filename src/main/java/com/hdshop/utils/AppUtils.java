@@ -22,6 +22,24 @@ public class AppUtils {
         }
     }
 
+    public EnumOrderStatus getOrderStatus(String value) {
+        if ("Chờ thanh toán".equals(value)) {
+            return EnumOrderStatus.WAIT_FOR_PAY;
+        } else if ("Đã đặt hàng".equals(value)) {
+            return EnumOrderStatus.ORDERED;
+        } else if ("Đang xử lý".equals(value)) {
+            return EnumOrderStatus.PROCESSING;
+        } else if ("Đang giao".equals(value)) {
+            return EnumOrderStatus.SHIPPING;
+        } else if ("Đã giao".equals(value)) {
+            return EnumOrderStatus.DELIVERED;
+        }else if ("Đã hủy".equals(value)) {
+            return EnumOrderStatus.CANCELED;
+        } else {
+            throw new InvalidException(getMessage("error-fetching-order-status-information"));
+        }
+    }
+
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }

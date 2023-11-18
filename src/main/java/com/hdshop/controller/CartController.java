@@ -19,7 +19,6 @@ import java.util.List;
 @Tag(name = "Cart")
 @RestController
 @SecurityRequirement(name = "Bear Authentication")
-@PreAuthorize("hasRole('USER')")
 @RequestMapping("/api/v1/cart")
 public class CartController {
     private final CartService cartService;
@@ -29,6 +28,7 @@ public class CartController {
     }
 
     @Operation(summary = "Add to cart of current user")
+    @PreAuthorize("hasRole('USER')")
     @PostMapping
     public ResponseEntity<CartItemResponse> addItemToCart(@Valid @RequestBody CartItemDTO cartItemDTO, Principal principal) {
         String username = principal.getName();
@@ -56,6 +56,7 @@ public class CartController {
     }
 
     @Operation(summary = "Clear cart items")
+    @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/remove")
     public ResponseEntity<CartResponse> removeListItems(@RequestBody List<Long> itemIds, Principal principal) {
         String username = principal.getName();
@@ -68,5 +69,12 @@ public class CartController {
     @GetMapping("/items/count")
     public ResponseEntity<Integer> getCountItems(Principal principal) {
         return ResponseEntity.ok(cartService.getTotalItems(principal));
+    }
+
+    @Operation(summary = "Get the total price for your cart")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/total-price")
+    public ResponseEntity<?> getTotalPriceForYourCart(Principal principal) {
+        return ResponseEntity.ok(cartService.getTotalPriceForYourCart(principal));
     }
 }

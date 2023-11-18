@@ -50,7 +50,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     @Transactional
-    public ProductDTO createProduct(Product product) {
+    public ProductDTO create(Product product) {
         // find the product category based on its ID
         Category category = categoryRepository.findById(product.getCategory().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", product.getCategory().getId()));
@@ -59,11 +59,13 @@ public class ProductServiceImpl implements ProductService {
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
         product.setSlug(uniqueSlug);
 
-        // assign the category to the product
+        // set fields
         product.setCategory(category);
+        setProductForChildEntity(product);
 
         // normalize product information
         Product normalizedProduct = normalizeProduct(product);
+
 
         // save the product to the database
         Product newProduct = productRepository.save(normalizedProduct);
@@ -83,11 +85,11 @@ public class ProductServiceImpl implements ProductService {
      * @return List of paginated products.
      */
     @Override
-    public ProductResponse getAllProducts(int pageNo, int pageSize) {
+    public ProductResponse getAllIsActive(int pageNo, int pageSize) {
         // create Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        Page<Product> productPage = productRepository.findAllByIsActiveIsTrue(pageable);
+        Page<Product> productPage = productRepository.findAllByIsActiveIsTrueOrderByProductIdDesc(pageable);
 
         // get content for page object
         List<Product> productList = productPage.getContent();
@@ -98,12 +100,19 @@ public class ProductServiceImpl implements ProductService {
 
         // set data to the product response
         ProductResponse productResponse = new ProductResponse();
+        Long totalElements = productPage.getTotalElements();
+
         productResponse.setContent(content);
         productResponse.setPageNo(productPage.getNumber() + 1);
         productResponse.setPageSize(productPage.getSize());
         productResponse.setTotalPages(productPage.getTotalPages());
         productResponse.setTotalElements(productPage.getTotalElements());
         productResponse.setLast(productPage.isLast());
+
+        Long lastPageSize = totalElements % pageSize != 0 ?
+                totalElements % pageSize : totalElements != 0 ?
+                pageSize : 0;
+        productResponse.setLastPageSize(lastPageSize);
 
         return productResponse;
     }
@@ -131,7 +140,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     @Transactional
-    public ProductDTO updateProduct(ProductDTO productDTO, Long productId) {
+    public ProductDTO update(ProductDTO productDTO, Long productId) {
         // check if product already exists
         Product existingProduct = getExistingProductById(productId);
 
@@ -168,7 +177,7 @@ public class ProductServiceImpl implements ProductService {
      * @date 01-11-2023
      */
     @Override
-    public ProductDTO toggleProductActiveStatus(Long productId) {
+    public ProductDTO toggleActiveStatus(Long productId) {
         Product existingProduct = getExistingProductById(productId);
 
         existingProduct.setIsActive(!existingProduct.getIsActive());
@@ -187,7 +196,7 @@ public class ProductServiceImpl implements ProductService {
      * @date 01-11-2023
      */
     @Override
-    public ProductDTO toggleProductSellingStatus(Long productId) {
+    public ProductDTO toggleSellingStatus(Long productId) {
         Product existingProduct = getExistingProductById(productId);
 
         existingProduct.setIsSelling(!existingProduct.getIsSelling());
@@ -195,6 +204,49 @@ public class ProductServiceImpl implements ProductService {
         Product updateIsAcitve = productRepository.save(existingProduct);
 
         return mapToDTO(updateIsAcitve);
+    }
+
+    @Override
+    public ProductResponse searchSortAndFilterProducts(String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
+        // create Pageable instances
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        Page<Product> productPage = productRepository.searchSortAndFilterProducts(
+                        key, cateNames, sortCriteria, pageable
+                );
+
+        // get content for page object
+        List<Product> productList = productPage.getContent();
+
+        List<ProductDTO> content = productList.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+
+        // set data to the product response
+        ProductResponse productResponse = new ProductResponse();
+        Long totalElements = productPage.getTotalElements();
+        productResponse.setContent(content);
+        productResponse.setPageNo(productPage.getNumber() + 1);
+        productResponse.setPageSize(productPage.getSize());
+        productResponse.setTotalPages(productPage.getTotalPages());
+        productResponse.setTotalElements(productPage.getTotalElements());
+        productResponse.setLast(productPage.isLast());
+
+        Long lastPageSize = totalElements % pageSize != 0 ?
+                totalElements % pageSize : totalElements != 0 ?
+                pageSize : 0;
+        productResponse.setLastPageSize(lastPageSize);
+
+        return productResponse;
+    }
+
+    @Transactional
+    protected List<Option> saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
+        List<Option> optionListFromDTO = optionDTOList.stream()
+                .map(optionDTO -> modelMapper.map(optionDTO, Option.class))
+                .collect(Collectors.toList());
+
+        return optionService.saveOrUpdateOptionsByProductId(existingProduct.getProductId(), optionListFromDTO);
     }
 
     /**
@@ -223,15 +275,6 @@ public class ProductServiceImpl implements ProductService {
         existingProduct.setSlug(uniqueSlug);
     }
 
-    @Transactional
-    protected List<Option> saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
-        List<Option> optionListFromDTO = optionDTOList.stream()
-                .map(optionDTO -> modelMapper.map(optionDTO, Option.class))
-                .collect(Collectors.toList());
-
-        return optionService.saveOrUpdateOptionsByProductId(existingProduct.getProductId(), optionListFromDTO);
-    }
-
     protected List<ProductSku> saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
         List<ProductSku> skuListFromDTO = skuDTOList.stream()
                 .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
@@ -244,6 +287,18 @@ public class ProductServiceImpl implements ProductService {
         Product existingProduct = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
         return existingProduct;
+    }
+
+    public void setProductForChildEntity(Product product) {
+        // Set this product for options
+        for (Option option : product.getOptions()) {
+            option.setProduct(product);
+        }
+
+        // Set this product for skus
+        for (ProductSku sku : product.getSkus()) {
+            sku.setProduct(product);
+        }
     }
 
     private Product normalizeProduct(Product product) {

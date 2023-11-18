@@ -102,6 +102,18 @@ public class JwtTokenProvider {
         // TODO chưa handle được jwt ra message
     }
 
+    public boolean checkExpiredToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(key())
+                    .build()
+                    .parse(token);
+            return true;
+        } catch (ExpiredJwtException exception) {
+           return false;
+        }
+    }
+
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }

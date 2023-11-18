@@ -3,8 +3,10 @@ package com.hdshop.service.user;
 import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
+import com.hdshop.dto.user.UserResponse;
 
 import java.security.Principal;
+import java.util.List;
 
 public interface UserService {
     UserDTO getUserById(final Long id);
@@ -22,4 +24,6 @@ public interface UserService {
     UserDTO updateProfileByUserId(final UserProfile profile, final Long userId);
 
     UserDTO changeLockedStatus(final Long userId);
+
+    UserResponse getAllUsers(final int pageNo, final int pageSize);
 }

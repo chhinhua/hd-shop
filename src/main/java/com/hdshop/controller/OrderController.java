@@ -3,12 +3,13 @@ package com.hdshop.controller;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
+import com.hdshop.dto.order.PageOrderResponse;
 import com.hdshop.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,7 +19,6 @@ import java.security.Principal;
 import java.util.List;
 
 @Tag(name = "Order")
-@SecurityRequirement(name = "Bear Authentication")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -27,6 +27,7 @@ public class OrderController {
 
     @Operation(summary = "Create new order by list cartItem")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    //@SecurityRequirement(name = "Bear Authentication")
     @PostMapping("/create")
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
         OrderResponse newOrder = orderService.addOrder(orderDTO, principal);
@@ -41,12 +42,18 @@ public class OrderController {
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Delete order by id")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "User delete order by orderId")
+    @PreAuthorize("hasRole('USER')")
+    @DeleteMapping("/isdeleted/{id}")
+    public ResponseEntity<String> isDeletedOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.isDeletedOrderById(id));
+    }
+
+    @Operation(summary = "Admin delete order by orderId")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteOrder(@PathVariable Long id) {
-        orderService.deleteOrderById(id);
-        return ResponseEntity.ok("Order deleted successfully");
+        return ResponseEntity.ok(orderService.deleteOrderById(id));
     }
 
     @Operation(summary = "Get single order by id")
@@ -84,12 +91,41 @@ public class OrderController {
     public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
-    // TODO trước mắt chỉ cho thanh toán online (vnpay)
 
     @Operation(summary = "Get checkout data for page", description = "From user information (adderss, total price of cart)")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/checkout-data")
     public ResponseEntity<CheckOutDTO> getCheckoutData(Principal principal) {
         return ResponseEntity.ok(orderService.getDataFromUserInfor(principal));
+    }
+
+    @Operation(
+            summary = "Get all orders",
+            description = "Get all orders via REST API with pagination"
+    )
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public ResponseEntity<PageOrderResponse> getAllOrders(
+            @RequestParam(value = "pageNo", required = false,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${paging.default.page-size}") int pageSize
+    ) {
+        return ResponseEntity.ok(orderService.getAllOrders(pageNo, pageSize));
+    }
+
+    @Operation(summary = "Search order by status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/search")
+    public ResponseEntity<List<OrderResponse>> searchOrder(@RequestParam(value = "status", required = false) String statusValue) {
+        return ResponseEntity.ok(orderService.findByStatus(statusValue));
+    }
+
+    @Operation(summary = "Search user order by status")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/search")
+    public ResponseEntity<List<OrderResponse>> searchYourOrder(
+            @RequestParam(value = "status", required = false) String statusValue, Principal principal) {
+        return ResponseEntity.ok(orderService.findForUserByStatus(statusValue, principal));
     }
 }

@@ -4,6 +4,7 @@ import com.hdshop.dto.auth.LoginDTO;
 import com.hdshop.dto.auth.LoginResponse;
 import com.hdshop.dto.auth.RegisterDTO;
 import com.hdshop.dto.auth.VerifyOtpRequest;
+import com.hdshop.security.JwtTokenProvider;
 import com.hdshop.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,9 +18,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
     private final AuthService authService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, JwtTokenProvider jwtTokenProvider) {
         this.authService = authService;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Operation(summary = "Sinup new account")
@@ -51,5 +54,10 @@ public class AuthController {
     @PostMapping("/otp/verify")
     public ResponseEntity<String> sendOtp(@RequestBody VerifyOtpRequest otpRequest) {
         return ResponseEntity.ok(authService.verifyOTP_ByEmail(otpRequest));
+    }
+
+    @GetMapping("/check-token")
+    public ResponseEntity<?> checkTokenExpire(@RequestParam("token") String token) {
+        return ResponseEntity.ok(jwtTokenProvider.checkExpiredToken(token));
     }
 }

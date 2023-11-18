@@ -1,9 +1,7 @@
 package com.hdshop.entity;
 
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
+import com.hdshop.config.DateTimeConfig;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -25,4 +23,15 @@ public class BaseEntity implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     @LastModifiedDate
     private Date lastModifiedDate;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdDate = DateTimeConfig.getCurrentDateTimeInTimeZone();
+        this.lastModifiedDate = this.createdDate;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.lastModifiedDate = DateTimeConfig.getCurrentDateTimeInTimeZone();
+    }
 }

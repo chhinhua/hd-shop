@@ -31,9 +31,11 @@ public class OrderResponse {
 
     private Boolean isPaidBefore;
 
-    private Date createdDate;
+    private Boolean isDeleted;
 
-    private Date lastModifiedDate;
+    private String createdDate;
+
+    private String lastModifiedDate;
 
     private Long userId;
 

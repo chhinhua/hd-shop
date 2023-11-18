@@ -1,5 +1,6 @@
-package com.hdshop.dto.product;
+package com.hdshop.dto.order;
 
+import com.hdshop.dto.user.UserDTO;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -12,10 +13,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Hidden
-@Schema(description = "Product Response Information")
-public class ProductResponse {
-    @Schema(description = "Product Content")
-    private List<ProductDTO> content;
+@Schema(description = "Order Response Information")
+public class PageOrderResponse {
+    @Schema(description = "Category Content")
+    private List<OrderResponse> content;
 
     @Schema(description = "Page Number")
     private int pageNo;
@@ -23,7 +24,7 @@ public class ProductResponse {
     @Schema(description = "Page Size")
     private int pageSize;
 
-    @Schema(description = "Total Product")
+    @Schema(description = "Total oder")
     private long totalElements;
 
     @Schema(description = "Total Pages")
@@ -31,7 +32,4 @@ public class ProductResponse {
 
     @Schema(description = "Is it the last page?")
     private boolean last;
-
-    @Schema(description = "Is it the total element in last page?")
-    private long lastPageSize;
 }

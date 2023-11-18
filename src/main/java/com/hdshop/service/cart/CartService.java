@@ -23,4 +23,6 @@ public interface CartService {
     Integer getTotalItems(final Principal principal);
 
     Cart updateCartTotals(final Cart cart);
+
+    String getTotalPriceForYourCart(final Principal principal);
 }

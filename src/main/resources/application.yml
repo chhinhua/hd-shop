@@ -13,6 +13,8 @@ spring:
         properties:
             hibernate:
                 dialect: org.hibernate.dialect.MySQLDialect
+                jdbc:
+                    time_zone: Asia/Ho_Chi_Minh
         show-sql: true
     profiles:
         active: dev
@@ -41,26 +43,25 @@ spring:
         basename: message
         encoding: UTF-8
         use-code-as-default-message: true
-
     web:
         locale: vi
         locale-resolver: fixed
 
 app:
     jwt-secret: 38a0963a6364b09ad867aa9a66c6d009673c21e182015461da236ec361877f77
-    jwt-expiration-milliseconds: 86400000
+    jwt-expiration-milliseconds: 604800000 #1week
 
 paging:
     default:
         page-number: 1
-        page-size: 20
+        page-size: 24
 
 vnpay:
     tmn-code: ZCZAPALE
     hash-secret: EJWBFDLNDPPPGNODNZRFXZDEJPTAELNT
     pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
     api-url: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
-    return-url: /vnpay-payment
+    return-url: /api/v1/vnpay/vnpay-payment
 
 
 
