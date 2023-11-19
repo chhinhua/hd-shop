@@ -2,8 +2,11 @@ package com.hdshop.controller;
 
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
+import com.hdshop.dto.product.RequestSku;
 import com.hdshop.entity.Product;
+import com.hdshop.entity.ProductSku;
 import com.hdshop.service.product.ProductService;
+import com.hdshop.service.product.ProductSkuService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +25,7 @@ import java.util.List;
 @RequestMapping("/api/v1/products")
 public class ProductController {
     private final ProductService productService;
+    private final ProductSkuService skuService;
 
     @Operation(summary = "Create Product")
     @PreAuthorize("hasRole('ADMIN')")
@@ -88,9 +92,14 @@ public class ProductController {
         ProductResponse searchResponse = productService.searchSortAndFilterProducts(
                 key, cateNames, sortCriteria, pageNo, pageSize
         );
-
-        System.out.println(key);
-
         return ResponseEntity.ok(searchResponse);
+    }
+
+    @GetMapping("/sku")
+    public ResponseEntity<?> getSkuPrice(@RequestBody RequestSku reqSku) {
+        ProductSku sku = skuService.findByProductIdAndValueNames(
+                reqSku.getProductId(), reqSku.getValueNames()
+        );
+        return ResponseEntity.ok(sku.getPrice());
     }
 }
