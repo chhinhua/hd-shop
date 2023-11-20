@@ -145,14 +145,14 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
-    public OrderDTO getOrderById(Long orderId) {
+    public OrderResponse getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
         OrderDTO orderDTO = mapEntityToDTO(order);
         orderDTO.setStatus(order.getStatus().getValue());
 
-        return orderDTO;
+        return mapEntityToResponse(order);
     }
 
     /**

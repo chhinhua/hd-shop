@@ -19,7 +19,7 @@ public interface OrderService {
 
     String deleteOrderById(final Long orderId);
 
-    OrderDTO getOrderById(final Long orderId);
+    OrderResponse getOrderById(final Long orderId);
 
     OrderDTO updateStatus(final Long orderId, final String status);
 

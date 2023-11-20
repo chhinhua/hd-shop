@@ -12,14 +12,18 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    Boolean existsProductByName(String name);
-
     Boolean existsProductBySlug(String generatedSlug);
 
-    Page<Product> findAllByIsActiveIsTrueOrderByProductIdDesc(Pageable pageable);
+    Page<Product> findAllByIsActiveIsTrue(Pageable pageable);
+
+    @Query(value = "SELECT * FROM products WHERE is_active = true ORDER BY RAND()", nativeQuery = true)
+    Page<Product> findRandomProducts(Pageable pageable);
+
 
     @Query("SELECT p FROM Product p WHERE " +
-            "(:key IS NULL OR LOWER(p.name) LIKE %:key%) " +
+            "p.isActive = true " +
+            "AND p.isSelling = true " +
+            "AND (:key IS NULL OR LOWER(p.name) LIKE %:key%) " +
             "AND (:cateNames IS NULL OR p.category.name IN :cateNames) " +
             "ORDER BY " +
             "CASE WHEN 'price:asc' IN :sortCriteria THEN p.price END ASC, " +
@@ -29,8 +33,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "CASE WHEN 'review:asc' IN :sortCriteria THEN p.numberOfRatings END ASC, " +
             "CASE WHEN 'review:desc' IN :sortCriteria THEN p.numberOfRatings END DESC, " +
             "CASE WHEN 'rating:asc' IN :sortCriteria THEN p.rating END ASC, " +
-            "CASE WHEN 'rating:desc' IN :sortCriteria THEN p.rating END DESC, " +
-            "p.productId DESC") // Sắp xếp theo id giảm dần làm mặc định
+            "CASE WHEN 'rating:desc' IN :sortCriteria THEN p.rating END DESC")
     Page<Product> searchSortAndFilterProducts(
             @Param("key") String key,
             @Param("cateNames") List<String> cateNames,

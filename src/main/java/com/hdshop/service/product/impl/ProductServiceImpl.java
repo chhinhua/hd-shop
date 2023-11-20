@@ -55,12 +55,12 @@ public class ProductServiceImpl implements ProductService {
         Category category = categoryRepository.findById(product.getCategory().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", product.getCategory().getId()));
 
+        // set fields
         // generate a unique slug for the product
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
         product.setSlug(uniqueSlug);
-
-        // set fields
         product.setCategory(category);
+        product.setIsSelling(true); //TODO lúc có admin thêm thì mặt định là false, nào set true thì cho hiện thị cho người dùng
         setProductForChildEntity(product);
 
         // normalize product information
@@ -89,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
         // create Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        Page<Product> productPage = productRepository.findAllByIsActiveIsTrueOrderByProductIdDesc(pageable);
+        Page<Product> productPage = productRepository.findRandomProducts(pageable);
 
         // get content for page object
         List<Product> productList = productPage.getContent();
