@@ -159,18 +159,18 @@ public class OrderServiceImpl implements OrderService {
      * Update status for the order
      *
      * @param orderId
-     * @param statusKey
+     * @param statusValue
      * @return OrderDTO
      */
     @Override
-    public OrderDTO updateStatus(Long orderId, String statusKey) {
+    public OrderDTO updateStatus(Long orderId, String statusValue) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
         // thay đổi nếu trạng thái khác trạng thái hiện tại
-        String orderStatusKey = order.getStatus().getKey();
-        if (!orderStatusKey.equals(statusKey)) {
-            EnumOrderStatus newStatus = EnumOrderStatus.valueOf(statusKey.toUpperCase());
+        String orderStatusKey = order.getStatus().getValue();
+        if (!orderStatusKey.equals(statusValue)) {
+            EnumOrderStatus newStatus = appUtils.getOrderStatus(statusValue);
             order.setStatus(newStatus);
             orderRepository.save(order);
         }
