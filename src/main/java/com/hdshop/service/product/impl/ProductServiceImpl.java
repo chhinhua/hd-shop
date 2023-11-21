@@ -44,7 +44,7 @@ public class ProductServiceImpl implements ProductService {
     /**
      * Create a new product.
      *
-     * @param product The product object to create.
+     * @param product The product object to follow.
      * @return ProductDTO representing the created product.
      * @throws ResourceNotFoundException if the corresponding category is not found.
      */
@@ -86,7 +86,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductResponse getAllIsActive(int pageNo, int pageSize) {
-        // create Pageable instances
+        // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
         Page<Product> productPage = productRepository.findRandomProducts(pageable);
@@ -208,7 +208,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponse searchSortAndFilterProducts(String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
-        // create Pageable instances
+        // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
         Page<Product> productPage = productRepository.searchSortAndFilterProducts(

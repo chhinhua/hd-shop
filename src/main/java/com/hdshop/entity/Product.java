@@ -77,7 +77,7 @@ public class Product extends BaseEntity {
     private List<CartItem> cartItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "product")
-    private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
+    private List<Follow> userFollowProducts = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "product",

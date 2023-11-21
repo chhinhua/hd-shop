@@ -81,5 +81,5 @@ public class User extends BaseEntity {
     private Set<Role> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
+    private List<Follow> userFollowProducts = new ArrayList<>();
 }

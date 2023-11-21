@@ -146,7 +146,7 @@ public class CategoryServiceImpl implements CategoryService {
      */
     @Override
     public CategoryResponse getAllCategories(int pageNo, int pageSize) {
-        // create Pageable instances
+        // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
         Page<Category> categoryPage = categoryRepository.findAll(pageable);

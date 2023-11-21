@@ -1,4 +1,4 @@
-package com.hdshop.dto.order;
+package com.hdshop.dto.follow;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,10 +12,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Hidden
-@Schema(description = "Order Response Information")
-public class OrderPageResponse {
-    @Schema(description = "Category Content")
-    private List<OrderResponse> content;
+@Schema(description = "Wishlist Response Information")
+public class FollowPageResponse {
+    @Schema(description = "Follow Content")
+    private List<FollowDTO> content;
 
     @Schema(description = "Page Number")
     private int pageNo;
@@ -23,7 +23,7 @@ public class OrderPageResponse {
     @Schema(description = "Page Size")
     private int pageSize;
 
-    @Schema(description = "Total oder")
+    @Schema(description = "Total products available")
     private long totalElements;
 
     @Schema(description = "Total Pages")

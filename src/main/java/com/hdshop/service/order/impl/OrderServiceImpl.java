@@ -4,7 +4,7 @@ import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
-import com.hdshop.dto.order.PageOrderResponse;
+import com.hdshop.dto.order.OrderPageResponse;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
@@ -73,7 +73,7 @@ public class OrderServiceImpl implements OrderService {
         // set all fields
         Order order = buildOrder(orderDTO, user, address);
 
-        // create list order items from cart
+        // follow list order items from cart
         List<OrderItem> orderItems = convertCartToOrderItems(cart);
 
         saveOrder(order, orderItems);
@@ -99,13 +99,13 @@ public class OrderServiceImpl implements OrderService {
         Order order = buildOrderForVNPayPayment(orderDTO, user, address);
         order.setVnpTxnRef(vnp_TxnRef);
 
-        // create list order items from cart
+        // follow list order items from cart
         List<OrderItem> orderItems = convertCartToOrderItems(cart);
 
         saveOrder(order, orderItems);
 
         // delete all items of this cart after order has been created
-        //clearItems(cart);
+        clearItems(cart);
 
         return mapEntityToResponse(order);
     }
@@ -163,7 +163,7 @@ public class OrderServiceImpl implements OrderService {
      * @return OrderDTO
      */
     @Override
-    public OrderDTO updateStatus(Long orderId, String statusValue) {
+    public OrderResponse updateStatus(Long orderId, String statusValue) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
@@ -175,7 +175,7 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(order);
         }
 
-        return mapEntityToDTO(order);
+        return mapEntityToResponse(order);
     }
 
     /**
@@ -185,12 +185,12 @@ public class OrderServiceImpl implements OrderService {
      * @return list orderDTO
      */
     @Override
-    public List<OrderDTO> getOrdersByUsername(String username) {
+    public List<OrderResponse> getOrdersByUsername(String username) {
         List<Order> orderList = orderRepository.getOrdersByUser_UsernameOrderByCreatedDateDesc(username);
 
         return orderList
                 .stream()
-                .map(this::mapEntityToDTO)
+                .map(this::mapEntityToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -201,12 +201,12 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
-    public List<OrderDTO> getOrdersByUserId(Long userId) {
+    public List<OrderResponse> getOrdersByUserId(Long userId) {
         List<Order> orderList = orderRepository.getOrdersByUserIdOrderByCreatedDateDesc(userId);
 
         return orderList
                 .stream()
-                .map(this::mapEntityToDTO)
+                .map(this::mapEntityToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -274,8 +274,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public PageOrderResponse getAllOrders(int pageNo, int pageSize) {
-        // create Pageable instances
+    public OrderPageResponse getAllOrders(int pageNo, int pageSize) {
+        // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
         Page<Order> oderPage = orderRepository.findAll(pageable);
@@ -287,8 +287,8 @@ public class OrderServiceImpl implements OrderService {
                 .map(this::mapEntityToResponse)
                 .collect(Collectors.toList());
 
-        // set data to the category response
-        PageOrderResponse orderResponse = new PageOrderResponse();
+        // set data to the order response
+        OrderPageResponse orderResponse = new OrderPageResponse();
         orderResponse.setContent(content);
         orderResponse.setPageNo(oderPage.getNumber() + 1);
         orderResponse.setPageSize(oderPage.getSize());

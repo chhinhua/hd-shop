@@ -3,13 +3,12 @@ package com.hdshop.controller;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
-import com.hdshop.dto.order.PageOrderResponse;
+import com.hdshop.dto.order.OrderPageResponse;
 import com.hdshop.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,7 +33,7 @@ public class OrderController {
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Create create order from user cart")
+    @Operation(summary = "Create follow order from user cart")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping
     public ResponseEntity<OrderResponse> createOrderFromCart(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
@@ -68,14 +67,14 @@ public class OrderController {
     )
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PutMapping("{id}/status")
-    public ResponseEntity<OrderDTO> updateStatus(@PathVariable Long id,
+    public ResponseEntity<?> updateStatus(@PathVariable Long id,
                                                  @RequestParam String status) {
         return ResponseEntity.ok(orderService.updateStatus(id, status));
     }
 
     @Operation(summary = "Get list order of user by username")
     @GetMapping("/user")
-    public ResponseEntity<List<OrderDTO>> getOrdersByUsername(@RequestParam String username) {
+    public ResponseEntity<List<?>> getOrdersByUsername(@RequestParam String username) {
         return ResponseEntity.ok(orderService.getOrdersByUsername(username));
     }
 
@@ -87,7 +86,7 @@ public class OrderController {
 
     @Operation(summary = "Get list order of user by userId")
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<?>> getOrdersByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
 
@@ -104,7 +103,7 @@ public class OrderController {
     )
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<PageOrderResponse> getAllOrders(
+    public ResponseEntity<OrderPageResponse> getAllOrders(
             @RequestParam(value = "pageNo", required = false,
                     defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false,

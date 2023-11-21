@@ -1,4 +1,4 @@
-package com.hdshop.service.user.impl;
+package com.hdshop.service.user;
 
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;

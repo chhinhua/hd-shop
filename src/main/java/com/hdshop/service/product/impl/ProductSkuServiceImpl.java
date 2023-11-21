@@ -103,7 +103,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         Optional<OptionValue> newOptionValue = optionValueService
                 .getByValueNameAndProductId(value.getValueName(), product.getProductId());
 
-        return newOptionValue.orElse(value); // Return existing or create new
+        return newOptionValue.orElse(value); // Return existing or follow new
     }
 
     private Product getProductById(Long productId) {

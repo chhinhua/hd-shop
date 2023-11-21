@@ -1,11 +1,11 @@
 package com.hdshop.controller;
 
-import com.hdshop.dto.user.FollowProductDTO;
-import com.hdshop.service.user.UserFollowProductService;
+import com.hdshop.dto.follow.FollowDTO;
+import com.hdshop.dto.follow.FollowPageResponse;
+import com.hdshop.service.follow.FollowService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +16,9 @@ import java.security.Principal;
 @Tag(name = "Folowing")
 @RequestMapping("/api/v1/follows")
 public class FollowController {
-    private final UserFollowProductService followService;
+    private final FollowService followService;
 
-    public FollowController(UserFollowProductService followService) {
+    public FollowController(FollowService followService) {
         this.followService = followService;
     }
 
@@ -26,8 +26,28 @@ public class FollowController {
     @PreAuthorize("hasRole('USER')")
     @SecurityRequirement(name = "Bear Authentication")
     @PutMapping
-    public ResponseEntity<?> create(@RequestParam(value = "productId") Long productId, Principal principal) {
-        FollowProductDTO follow = followService.create(productId, principal);
-        return new ResponseEntity<>(follow, HttpStatus.CREATED);
+    public ResponseEntity<?> follow(@RequestParam(value = "productId") Long productId, Principal principal) {
+        FollowDTO follow = followService.follow(productId, principal);
+        return ResponseEntity.ok(follow);
+    }
+
+    @Operation(summary = "Get your wishlist")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/wishlist")
+    public ResponseEntity<FollowPageResponse> getYourWishlist(
+            @RequestParam(value = "pageNo", required = false,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${paging.default.page-size}") int pageSize,
+            Principal principal
+    ) {
+        return ResponseEntity.ok(followService.getYourFollow(pageNo, pageSize, principal));
+    }
+
+    @Operation(summary = "Get list productID of your wishlist")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/wishlist/product-ids")
+    public ResponseEntity<?> getProductIdsOfYourWishlist(Principal principal) {
+        return ResponseEntity.ok(followService.findProductIdsFollowedByUser(principal));
     }
 }
