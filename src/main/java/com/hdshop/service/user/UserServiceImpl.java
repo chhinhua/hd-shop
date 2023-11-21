@@ -112,7 +112,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getAllUsers(int pageNo, int pageSize) {
-        // create Pageable instances
+        // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
         // get all users with role is user

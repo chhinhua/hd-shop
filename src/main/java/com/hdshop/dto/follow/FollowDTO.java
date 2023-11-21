@@ -1,4 +1,4 @@
-package com.hdshop.dto.user;
+package com.hdshop.dto.wishlist;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,9 +7,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class FollowProductDTO {
+public class WishlistDTO {
     private Long id;
-    private Long productId;
     private Long userId;
     private boolean isDeleted;
+    private ProductWishlist product;
 }

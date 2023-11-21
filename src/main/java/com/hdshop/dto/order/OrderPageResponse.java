@@ -1,6 +1,5 @@
 package com.hdshop.dto.order;
 
-import com.hdshop.dto.user.UserDTO;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
