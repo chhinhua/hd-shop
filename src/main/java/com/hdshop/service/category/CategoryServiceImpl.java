@@ -7,6 +7,7 @@ import com.hdshop.entity.Category;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
+import com.hdshop.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
@@ -27,21 +28,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final ModelMapper modelMapper;
     private final UniqueSlugGenerator slugGenerator;
     private final MessageSource messageSource;
-
-    /**
-     * Query all categories
-     *
-     * @param
-     * @return list CategoryDTO
-     */
-    @Override
-    public List<CategoryDTO> getAllCategories() {
-        List<Category> categories = categoryRepository.findAll();
-        return categories
-                .stream()
-                .map((category) -> modelMapper.map(category, CategoryDTO.class))
-                .collect(Collectors.toList());
-    }
+    private final ProductRepository productRepository;
 
     /**
      * Get a single category by id or slug
@@ -88,6 +75,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setDescription(dto.getDescription());
         String uniqueSlug = slugGenerator.generateUniqueSlug(category, category.getName());
         category.setSlug(uniqueSlug);
+        category.setIsDeleted(false);
 
         Category newCategory = categoryRepository.save(category);
 
@@ -138,46 +126,50 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
 
+        // set null for child cates
         if (category.getChildren() != null) {
-            for (Category child : category.getChildren()) {
+            category.getChildren().forEach((child) -> {
                 child.setParent(null);
                 categoryRepository.save(child);
-            }
+            });
         }
-        categoryRepository.delete(category);
+
+        // delete products by set isdelete product
+        if (category.getProducts().size() > 0) {
+            category.getProducts().forEach((product) -> {
+                product.setIsActive(false);
+                productRepository.save(product);
+            });
+        }
+
+        category.setIsDeleted(true);
+        categoryRepository.save(category);
     }
 
-    /**
-     * Retrieves a paginated list of categories.
-     *
-     * @param pageNo   The page number (1-based).
-     * @param pageSize The number of items per page.
-     * @return A CategoryResponse object containing the paginated category data.
-     */
     @Override
-    public CategoryResponse getAllCategories(int pageNo, int pageSize) {
+    public CategoryResponse filter(String key, List<String> sortCriteria, int pageNo, int pageSize) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        Page<Category> categoryPage = categoryRepository.findAll(pageable);
+        Page<Category> catePage = categoryRepository.filter(key, sortCriteria, pageable);
 
         // get content for page object
-        List<Category> categoryList = categoryPage.getContent();
+        List<Category> cateList = catePage.getContent();
 
-        List<CategoryDTO> content = categoryList.stream()
+        List<CategoryDTO> content = cateList.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
 
-        // set data to the category response
-        CategoryResponse categoryResponse = new CategoryResponse();
-        categoryResponse.setContent(content);
-        categoryResponse.setPageNo(categoryPage.getNumber() + 1);
-        categoryResponse.setPageSize(categoryPage.getSize());
-        categoryResponse.setTotalPages(categoryPage.getTotalPages());
-        categoryResponse.setTotalElements(categoryPage.getTotalElements());
-        categoryResponse.setLast(categoryPage.isLast());
+        // set data to the product response
+        CategoryResponse cateResponse = new CategoryResponse();
+        cateResponse.setContent(content);
+        cateResponse.setPageNo(catePage.getNumber() + 1);
+        cateResponse.setPageSize(catePage.getSize());
+        cateResponse.setTotalPages(catePage.getTotalPages());
+        cateResponse.setTotalElements(catePage.getTotalElements());
+        cateResponse.setLast(catePage.isLast());
 
-        return categoryResponse;
+        return cateResponse;
     }
 
     /**

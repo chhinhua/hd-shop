@@ -16,16 +16,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findAllByIsActiveIsTrue(Pageable pageable);
 
-    @Query(value = "SELECT * FROM products WHERE is_active = true ORDER BY RAND()", nativeQuery = true)
+    @Query(value = "SELECT * FROM products WHERE is_active = true AND is_selling = true ORDER BY RAND()", nativeQuery = true)
     Page<Product> findRandomProducts(Pageable pageable);
-
 
     @Query("SELECT DISTINCT p FROM Product p WHERE " +
             "p.isActive = true " +
-            "AND p.isSelling = true " +
+            "AND (:sell IS NULL OR p.isSelling = :sell) " +
             "AND (:key IS NULL OR LOWER(p.name) LIKE %:key%) " +
             "AND (:cateNames IS NULL OR p.category.name IN :cateNames) " +
             "ORDER BY " +
+            "CASE WHEN 'id:asc' IN :sortCriteria THEN p.productId END ASC, " +
+            "CASE WHEN 'id:desc' IN :sortCriteria THEN p.productId END DESC, " +
             "CASE WHEN 'price:asc' IN :sortCriteria THEN p.price END ASC, " +
             "CASE WHEN 'price:desc' IN :sortCriteria THEN p.price END DESC, " +
             "CASE WHEN 'favorite:asc' IN :sortCriteria THEN p.favoriteCount END ASC, " +
@@ -35,6 +36,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "CASE WHEN 'rating:asc' IN :sortCriteria THEN p.rating END ASC, " +
             "CASE WHEN 'rating:desc' IN :sortCriteria THEN p.rating END DESC")
     Page<Product> searchSortAndFilterProducts(
+            @Param("sell") Boolean sell,
             @Param("key") String key,
             @Param("cateNames") List<String> cateNames,
             @Param("sortCriteria") List<String> sortCriteria,

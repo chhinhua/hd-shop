@@ -11,9 +11,7 @@ import com.hdshop.entity.Option;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
 import com.hdshop.exception.ResourceNotFoundException;
-import com.hdshop.repository.CategoryRepository;
-import com.hdshop.repository.ProductRepository;
-import com.hdshop.repository.ProductSkuRepository;
+import com.hdshop.repository.*;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
@@ -28,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -37,6 +36,7 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final FollowRepository followRepository;
     private final ProductSkuService productSkuService;
     private final OptionService optionService;
     private final UniqueSlugGenerator slugGenerator;
@@ -64,7 +64,7 @@ public class ProductServiceImpl implements ProductService {
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
         product.setSlug(uniqueSlug);
         product.setCategory(category);
-        product.setIsSelling(true);
+        product.setIsSelling(false);
         product.setIsActive(true);
         product.setSold(0);
         product.setRating(0f);
@@ -138,6 +138,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO getOne(Long productId) {
         Product product = getExistingProductById(productId);
         return mapToDTO(product);
+        // TODO check liked
     }
 
     @Override
@@ -222,13 +223,19 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse searchSortAndFilterProducts(String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
+    public void delete(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("product-not-found")));
+    }
+
+    @Override
+    public ProductResponse searchSortAndFilterProducts(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
         Page<Product> productPage = productRepository.searchSortAndFilterProducts(
-                        key, cateNames, sortCriteria, pageable
-                );
+                sell, key, cateNames, sortCriteria, pageable
+        );
 
         // get content for page object
         List<Product> productList = productPage.getContent();
@@ -253,6 +260,22 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setLastPageSize(lastPageSize);
 
         return productResponse;
+    }
+
+    @Override
+    public ProductResponse filter(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) {
+        ProductResponse response = searchSortAndFilterProducts(
+                sell, searchTerm, cateNames, sortCriteria, pageNo, pageSize
+        );
+        if (username == null) {
+            return response;
+        }
+        response.getContent().forEach((item) -> {
+                    boolean isLiked = followRepository.existsByProduct_ProductIdAndUser_Username(item.getId(), username);
+                    item.setLiked(isLiked);
+                }
+        );
+        return response;
     }
 
     @Transactional
@@ -321,9 +344,17 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductDTO mapToDTO(Product product) {
-        ProductDTO dto =  modelMapper.map(product, ProductDTO.class);
+        ProductDTO dto = modelMapper.map(product, ProductDTO.class);
         dto.setCategoryName(product.getCategory().getName());
         return dto;
+    }
+
+    private boolean checkLiked(Long productId, String username) {
+        boolean liked = false;
+        if (username != null) {
+            liked = followRepository.existsByProduct_ProductIdAndUser_Username(productId, username);
+        }
+        return liked;
     }
 
     private String getMessage(String code) {

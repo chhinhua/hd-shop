@@ -21,11 +21,23 @@ public interface ProductService {
 
     ProductDTO toggleSellingStatus(final Long productId);
 
+    void delete(final Long id);
+
     ProductResponse searchSortAndFilterProducts(
+            Boolean sell,
             String searchTerm,
             List<String> cateName,
             List<String> sortCriteria,
             int pageNo,
             int pageSize
     );
+
+    ProductResponse filter(
+            Boolean sell,
+            String searchTerm,
+            List<String> cateName,
+            List<String> sortCriteria,
+            int pageNo,
+            int pageSize,
+            String username);
 }

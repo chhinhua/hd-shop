@@ -19,4 +19,6 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
     @Query("SELECT f.product.productId FROM Follow f WHERE f.user.username = :username AND f.isDeleted = false")
     List<Long> findProductIdsFollowedByUser(@Param("username") String username);
+
+    boolean existsByProduct_ProductIdAndUser_Username(Long productId, String username);
 }

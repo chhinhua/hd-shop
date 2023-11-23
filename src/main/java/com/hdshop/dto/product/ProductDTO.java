@@ -49,6 +49,8 @@ public class ProductDTO {
 
     private int favoriteCount;
 
+    private boolean liked;
+
     private Boolean isActive;
 
     private Boolean isSelling;

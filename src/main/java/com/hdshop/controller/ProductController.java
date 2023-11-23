@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @Tag(name = "Product")
@@ -80,17 +81,23 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ProductResponse> searchProducts(
+    public ResponseEntity<ProductResponse> search(
             @RequestParam(name = "key", required = false) String key,
             @RequestParam(name = "cate", required = false) List<String> cateNames,
             @RequestParam(name = "sort", required = false) List<String> sortCriteria,
             @RequestParam(value = "pageNo", required = false,
                     defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false,
-                    defaultValue = "${paging.default.page-size}") int pageSize
+                    defaultValue = "${paging.default.page-size}") int pageSize,
+            @RequestParam(name = "sell", required = false) Boolean sell,
+            Principal principal
     ) {
-        ProductResponse searchResponse = productService.searchSortAndFilterProducts(
-                key, cateNames, sortCriteria, pageNo, pageSize
+        String username = null;
+        if (principal != null) {
+            username = principal.getName();
+        }
+        ProductResponse searchResponse = productService.filter(
+                sell, key, cateNames, sortCriteria, pageNo, pageSize, username
         );
         return ResponseEntity.ok(searchResponse);
     }

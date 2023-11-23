@@ -2,6 +2,7 @@ package com.hdshop.controller;
 
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;
+import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.service.category.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -14,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Category")
 @RestController
 @RequestMapping("/api/v1/categories")
@@ -24,20 +27,6 @@ public class CategoryController {
     public CategoryController(CategoryService categoryService, MessageSource messageSource) {
         this.categoryService = categoryService;
         this.messageSource = messageSource;
-    }
-
-    @Operation(
-            summary = "Get All Categories",
-            description = "Get all Categories via REST API with pagination"
-    )
-    @GetMapping
-    public ResponseEntity<CategoryResponse> getAllCategories(
-            @RequestParam(value = "pageNo", required = false,
-                    defaultValue = "${paging.default.page-number}") int pageNo,
-            @RequestParam(value = "pageSize", required = false,
-                    defaultValue = "${paging.default.page-size}") int pageSize
-    ) {
-        return ResponseEntity.ok(categoryService.getAllCategories(pageNo, pageSize));
     }
 
     @Operation(summary = "Get single categories")
@@ -72,5 +61,22 @@ public class CategoryController {
         categoryService.deleteCategory(id);
         String successMessage = messageSource.getMessage("deleted-successfully", null, LocaleContextHolder.getLocale());
         return ResponseEntity.ok(successMessage);
+    }
+
+    @Operation(summary = "Filter categories")
+    @GetMapping("/search")
+    public ResponseEntity<CategoryResponse> filter(
+            @RequestParam(name = "key", required = false) String key,
+            @RequestParam(name = "sort", required = false) List<String> sortCriteria,
+            @RequestParam(value = "pageNo", required = false,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${paging.default.page-size}") int pageSize
+
+    ) {
+        CategoryResponse filterCategories = categoryService.filter(
+               key, sortCriteria, pageNo, pageSize
+        );
+        return ResponseEntity.ok(filterCategories);
     }
 }

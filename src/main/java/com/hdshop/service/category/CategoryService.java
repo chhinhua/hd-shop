@@ -7,8 +7,6 @@ import com.hdshop.dto.product.ProductResponse;
 import java.util.List;
 
 public interface CategoryService {
-    List<CategoryDTO> getAllCategories();
-
     CategoryDTO getCategoryByIdOrSlug(final String identifier);
 
     CategoryDTO createCategory(final CategoryDTO categoryDTO);
@@ -17,5 +15,10 @@ public interface CategoryService {
 
     void deleteCategory(final Long id);
 
-    CategoryResponse getAllCategories(final int pageNo, final int pageSize);
+    CategoryResponse filter(
+            String searchTerm,
+            List<String> sortCriteria,
+            int pageNo,
+            int pageSize
+    );
 }
