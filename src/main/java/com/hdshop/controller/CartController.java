@@ -30,7 +30,7 @@ public class CartController {
     @Operation(summary = "Add to cart of current user")
     @PreAuthorize("hasRole('USER')")
     @PostMapping
-    public ResponseEntity<CartItemResponse> addItemToCart(@Valid @RequestBody CartItemDTO cartItemDTO, Principal principal) {
+    public ResponseEntity<CartItemResponse> addToCart(@Valid @RequestBody CartItemDTO cartItemDTO, Principal principal) {
         String username = principal.getName();
 
         CartItemResponse addedItem = cartService.addToCart(username, cartItemDTO);

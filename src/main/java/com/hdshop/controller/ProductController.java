@@ -56,7 +56,7 @@ public class ProductController {
     @Operation(summary = "Update a Product")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bear Authentication")
-    @PutMapping("{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(
             @RequestBody ProductDTO product,
             @PathVariable(value = "id") Long productId) {

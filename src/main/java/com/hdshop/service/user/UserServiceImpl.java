@@ -45,12 +45,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm tấy tài khoản người dùng với tên tài khoản là " + username)
-                );
-        return mapToDTO(user);
+    public User getUserByUsername(String username) {
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
     }
 
     @Override

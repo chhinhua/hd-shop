@@ -6,6 +6,7 @@ import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.dto.order.OrderPageResponse;
 import com.hdshop.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.List;
 public class OrderController {
     private final OrderService orderService;
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Create new order by list cartItem")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     //@SecurityRequirement(name = "Bear Authentication")
@@ -33,6 +35,7 @@ public class OrderController {
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Create follow order from user cart")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping
@@ -41,6 +44,7 @@ public class OrderController {
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "User delete order by orderId")
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/isdeleted/{id}")
@@ -48,6 +52,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.isDeletedOrderById(id));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Admin delete order by orderId")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
@@ -55,6 +60,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.deleteOrderById(id));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Get single order by id")
     @GetMapping("/{id}")
     public ResponseEntity<?> getOrderById(@PathVariable Long id) {
@@ -65,6 +71,7 @@ public class OrderController {
             summary = "Update order status by id",
             description = "Update order status by one of values {CANCELED, DELIVERED, ,CANCELED, PROCESSING, ORDERED}"
     )
+    @SecurityRequirement(name = "Bear Authentication")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PutMapping("{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Long id,
@@ -90,6 +97,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Get checkout data for page", description = "From user information (adderss, total price of cart)")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/checkout-data")
@@ -97,6 +105,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getDataFromUserInfor(principal));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(
             summary = "Get all orders",
             description = "Get all orders via REST API with pagination"
@@ -112,6 +121,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAllOrders(pageNo, pageSize));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Search order by status")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/search")
@@ -119,7 +129,8 @@ public class OrderController {
         return ResponseEntity.ok(orderService.findByStatus(statusValue));
     }
 
-    @Operation(summary = "Search user order by status")
+    @SecurityRequirement(name = "Bear Authentication")
+    @Operation(summary = "Search your order by status")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/search")
     public ResponseEntity<List<OrderResponse>> searchYourOrder(

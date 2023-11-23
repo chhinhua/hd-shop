@@ -155,6 +155,13 @@ public class OrderServiceImpl implements OrderService {
         return mapEntityToResponse(order);
     }
 
+    @Override
+    public Order findById(Long orderId) {
+        return orderRepository
+                .findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
+    }
+
     /**
      * Update status for the order
      *

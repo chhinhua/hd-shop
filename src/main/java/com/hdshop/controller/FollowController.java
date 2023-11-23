@@ -31,6 +31,7 @@ public class FollowController {
         return ResponseEntity.ok(follow);
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Get your wishlist")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/wishlist")
@@ -44,6 +45,7 @@ public class FollowController {
         return ResponseEntity.ok(followService.getYourFollow(pageNo, pageSize, principal));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Get list productID of your wishlist")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/wishlist/product-ids")

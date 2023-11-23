@@ -4,6 +4,7 @@ import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
 import com.hdshop.dto.user.UserResponse;
+import com.hdshop.entity.User;
 
 import java.security.Principal;
 import java.util.List;
@@ -15,7 +16,7 @@ public interface UserService {
 
     String forgotPassword(final String email, final String newPassword);
 
-    UserDTO getUserByUsername(final String username);
+    User getUserByUsername(final String username);
 
     UserDTO getUserByUsernameOrEmail(final String usernameOrEmail);
 

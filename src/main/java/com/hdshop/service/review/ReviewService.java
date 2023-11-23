@@ -1,7 +1,9 @@
 package com.hdshop.service.review;
 
-import com.hdshop.dto.ReviewDTO;
+import com.hdshop.dto.review.ReviewDTO;
+
+import java.security.Principal;
 
 public interface ReviewService {
-    ReviewDTO createReview(final ReviewDTO reviewDTO);
+    ReviewDTO create(final ReviewDTO reviewDTO, Principal principal);
 }

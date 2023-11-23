@@ -4,6 +4,7 @@ import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.dto.order.OrderPageResponse;
+import com.hdshop.entity.Order;
 
 import java.security.Principal;
 import java.util.List;
@@ -16,6 +17,8 @@ public interface OrderService {
     OrderResponse createOrderWithVNPay(final OrderDTO order, final String username, final String vnp_TxnRef);
 
     OrderResponse getOrderById(final Long orderId);
+
+    Order findById(final Long orderId);
 
     String isDeletedOrderById(final Long orderId);
 

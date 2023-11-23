@@ -1,5 +1,6 @@
 package com.hdshop.dto.category;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
@@ -22,6 +23,8 @@ public class CategoryDTO {
 
     private String description;
 
+    private Long productNumber;
+
     private String createdBy;
 
     private String lastModifiedBy;
@@ -31,4 +34,6 @@ public class CategoryDTO {
     private Date lastModifiedDate;
 
     private Long parentId;
+
+    private String parentName;
 }

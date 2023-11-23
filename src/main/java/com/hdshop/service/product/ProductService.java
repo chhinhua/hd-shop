@@ -13,6 +13,8 @@ public interface ProductService {
 
     ProductDTO getOne(final Long productId);
 
+    Product findById(final Long productId);
+
     ProductDTO update(final ProductDTO productDTO, final Long productId);
 
     ProductDTO toggleActiveStatus(final Long productId);

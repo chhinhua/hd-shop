@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,6 +45,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Get a single category by id or slug
+     *
      * @param identifier (id or slug)
      * @return CategoryDTO instance
      */
@@ -68,21 +68,26 @@ public class CategoryServiceImpl implements CategoryService {
     /**
      * Create new category
      *
-     * @param categoryDTO
+     * @param dto
      * @return categoryDTO instance
      */
     @Override
-    public CategoryDTO createCategory(CategoryDTO categoryDTO) {
+    public CategoryDTO createCategory(CategoryDTO dto) {
         // check category name exists in database
-        if (categoryRepository.existsCategoryByName(categoryDTO.getName())) {
+        if (categoryRepository.existsCategoryByName(dto.getName())) {
             throw new APIException(HttpStatus.BAD_REQUEST, getMessage("category-name-already-exists"));
         }
 
-        Category category = mapToEntity(categoryDTO);
+        // retrieve parent category from parentName
+        Category parentCategory = categoryRepository.findByName(dto.getParentName()).orElse(null);
 
+        // build category
+        Category category = new Category();
+        category.setParent(parentCategory);
+        category.setName(dto.getName());
+        category.setDescription(dto.getDescription());
         String uniqueSlug = slugGenerator.generateUniqueSlug(category, category.getName());
         category.setSlug(uniqueSlug);
-        setParentById(categoryDTO.getParentId(), category);
 
         Category newCategory = categoryRepository.save(category);
 
@@ -91,28 +96,32 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Update a category
+     *
      * @param id
-     * @param categoryDTO
+     * @param dto Category DTO
      * @return categoryDTO instance have been updated
      */
     @Override
-    public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
+    public CategoryDTO updateCategory(Long id, CategoryDTO dto) {
         // check existing category by id
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
 
-        // validate existing categoryDTO name
-        if (!category.getName().equals(categoryDTO.getName()) && categoryRepository.existsCategoryByName(categoryDTO.getName())) {
-            throw new APIException(HttpStatus.BAD_REQUEST, getMessage("category-name-already-exists"));
+        // validate existing dto name
+        if (!category.getName().equals(dto.getName()) &&
+                categoryRepository.existsCategoryByName(dto.getName())
+        ) {
+            throw new APIException(HttpStatus.BAD_REQUEST,
+                    getMessage("category-name-already-exists")
+            );
         }
 
-        category.setName(categoryDTO.getName());
-        category.setDescription(categoryDTO.getDescription());
-
+        Category parentCategory = categoryRepository.findByName(dto.getParentName()).orElse(null);
+        category.setName(dto.getName());
+        category.setDescription(dto.getDescription());
         String uniqueSlug = slugGenerator.generateUniqueSlug(category, category.getName());
         category.setSlug(uniqueSlug);
-
-        setParentById(categoryDTO.getParentId(), category);
+        category.setParent(parentCategory);
 
         Category updateCategory = categoryRepository.save(category);
 
@@ -121,6 +130,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /**
      * Delete category by id
+     *
      * @param id
      */
     @Override
@@ -171,36 +181,18 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     /**
-     * Set the category parent for category from the categoryDTO_id
-     * @param id
-     * @param category
-     */
-    private void setParentById(Long id, Category category) {
-        Optional<Category> parentCategory = id != null
-                ? categoryRepository.findById(id)
-                : Optional.empty();
-
-        category.setParent(parentCategory.orElse(null));
-    }
-
-    /**
-     * Convert Category DTO to  Category entity class
-     *
-     * @param categoryDTO
-     * @return Category entity object
-     */
-    private Category mapToEntity(CategoryDTO categoryDTO) {
-        return modelMapper.map(categoryDTO, Category.class);
-    }
-
-    /**
      * Convert Category DTO to  Category entity class
      *
      * @param category
      * @return CategoryDTO object
      */
     private CategoryDTO mapToDTO(Category category) {
-        return modelMapper.map(category, CategoryDTO.class);
+        CategoryDTO dto = modelMapper.map(category, CategoryDTO.class);
+        dto.setProductNumber((long) category.getProducts().size());
+        if (category.getParent() != null) {
+            dto.setParentName(category.getParent().getName());
+        }
+        return dto;
     }
 
     private String getMessage(String code) {

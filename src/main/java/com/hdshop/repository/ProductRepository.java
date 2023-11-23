@@ -20,7 +20,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findRandomProducts(Pageable pageable);
 
 
-    @Query("SELECT p FROM Product p WHERE " +
+    @Query("SELECT DISTINCT p FROM Product p WHERE " +
             "p.isActive = true " +
             "AND p.isSelling = true " +
             "AND (:key IS NULL OR LOWER(p.name) LIKE %:key%) " +

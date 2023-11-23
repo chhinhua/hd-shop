@@ -12,9 +12,7 @@ public class ModelMapperConfig {
     @Bean
     public ModelMapper modelMapper() {
         ModelMapper modelMapper = new ModelMapper();
-
         modelMapper.addConverter(dateToStringConverter());
-
         return modelMapper;
     }
 

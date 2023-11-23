@@ -3,6 +3,7 @@ package com.hdshop.controller;
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.service.address.AddressService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ public class AddressController {
     @Autowired
     private AddressService addressService;
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Get list addresses of current user", description = "Role user")
     @PreAuthorize("hasRole('USER')")
     @GetMapping
@@ -26,6 +28,7 @@ public class AddressController {
         return ResponseEntity.ok(addressService.getAllAddressForUser(principal));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Get addresses by addressId", description = "Role user")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
@@ -33,13 +36,15 @@ public class AddressController {
         return ResponseEntity.ok(addressService.getOneAddress(addressId));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Add a new address", description = "Role user")
     @PreAuthorize("hasRole('USER')")
     @PostMapping
-    public ResponseEntity<AddressDTO> addAddress(@RequestBody AddressDTO addressDTO, Principal principal) {
+    public ResponseEntity<AddressDTO> create(@RequestBody AddressDTO addressDTO, Principal principal) {
         return ResponseEntity.ok(addressService.addAddress(addressDTO, principal));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Update address", description = "Role user")
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}")
@@ -48,6 +53,7 @@ public class AddressController {
         return ResponseEntity.ok(addressService.updateAddress(addressDTO, addressId));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Set isDefault for address", description = "Role user")
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}/default")
@@ -55,6 +61,7 @@ public class AddressController {
         return ResponseEntity.ok(addressService.setDefaultAddress(addressId, principal));
     }
 
+    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Delete address", description = "Role user")
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{id}")

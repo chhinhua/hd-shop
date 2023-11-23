@@ -13,12 +13,15 @@ import com.hdshop.entity.ProductSku;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
 import com.hdshop.repository.ProductRepository;
+import com.hdshop.repository.ProductSkuRepository;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
 import com.hdshop.validator.ProductValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,12 +37,14 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final ModelMapper modelMapper;
-    private final UniqueSlugGenerator slugGenerator;
-    private final ProductValidator productValidator;
     private final ProductSkuService productSkuService;
     private final OptionService optionService;
+    private final UniqueSlugGenerator slugGenerator;
+    private final ProductValidator productValidator;
+    private final MessageSource messageSource;
+    private final ModelMapper modelMapper;
     private final Slugify slugify;
+    private final ProductSkuRepository productSkuRepository;
 
     /**
      * Create a new product.
@@ -52,15 +57,20 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDTO create(Product product) {
         // find the product category based on its ID
-        Category category = categoryRepository.findById(product.getCategory().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", product.getCategory().getId()));
+        Category category = categoryRepository.findByName(product.getCategory().getName())
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
 
-        // set fields
-        // generate a unique slug for the product
+        // build product
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
         product.setSlug(uniqueSlug);
         product.setCategory(category);
-        product.setIsSelling(true); //TODO lúc có admin thêm thì mặt định là false, nào set true thì cho hiện thị cho người dùng
+        product.setIsSelling(true);
+        product.setIsActive(true);
+        product.setSold(0);
+        product.setRating(0f);
+        product.setFavoriteCount(0);
+        product.setNumberOfRatings(0);
+        product.setQuantityAvailable(product.getQuantity());
         setProductForChildEntity(product);
 
         // normalize product information
@@ -130,6 +140,11 @@ public class ProductServiceImpl implements ProductService {
         return mapToDTO(product);
     }
 
+    @Override
+    public Product findById(Long productId) {
+        return getExistingProductById(productId);
+    }
+
     /**
      * Update a product.
      *
@@ -145,8 +160,8 @@ public class ProductServiceImpl implements ProductService {
         Product existingProduct = getExistingProductById(productId);
 
         // check if category already exists
-        Category category = categoryRepository.findById(productDTO.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", productDTO.getCategoryId()));
+        Category category = categoryRepository.findByName(productDTO.getCategory().getName())
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
 
         // set changes fields
         setProductFields(productDTO, existingProduct, category);
@@ -284,9 +299,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Product getExistingProductById(Long productId) {
-        Product existingProduct = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
-        return existingProduct;
+        return productRepository
+                .findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("product-not-found")));
     }
 
     public void setProductForChildEntity(Product product) {
@@ -306,6 +321,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductDTO mapToDTO(Product product) {
-        return modelMapper.map(product, ProductDTO.class);
+        ProductDTO dto =  modelMapper.map(product, ProductDTO.class);
+        dto.setCategoryName(product.getCategory().getName());
+        return dto;
+    }
+
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 }

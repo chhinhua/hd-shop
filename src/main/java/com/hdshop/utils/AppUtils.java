@@ -40,6 +40,10 @@ public class AppUtils {
         }
     }
 
+    public static boolean isValidRating(Integer stars) {
+        return stars != null && stars >= 1 && stars <= 5;
+    }
+
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }

@@ -20,11 +20,9 @@ public class Review extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false,
-            columnDefinition = "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+    @Column(columnDefinition = "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String content;
 
-    @Range(min = 0, max = 5, message = "Giá trị stars phải nằm trong khoảng từ 0 đến 5")
     private Integer stars;
 
     @ManyToOne(fetch = FetchType.LAZY)
