@@ -82,6 +82,7 @@ public class ProductController {
 
     @GetMapping("/search")
     public ResponseEntity<ProductResponse> search(
+            @RequestParam(name = "sell", required = false) Boolean sell,
             @RequestParam(name = "key", required = false) String key,
             @RequestParam(name = "cate", required = false) List<String> cateNames,
             @RequestParam(name = "sort", required = false) List<String> sortCriteria,
@@ -89,7 +90,6 @@ public class ProductController {
                     defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false,
                     defaultValue = "${paging.default.page-size}") int pageSize,
-            @RequestParam(name = "sell", required = false) Boolean sell,
             Principal principal
     ) {
         String username = null;
@@ -103,10 +103,9 @@ public class ProductController {
     }
 
     @GetMapping("/sku")
-    public ResponseEntity<?> getSkuPrice(@RequestBody RequestSku reqSku) {
-        ProductSku sku = skuService.findByProductIdAndValueNames(
-                reqSku.getProductId(), reqSku.getValueNames()
-        );
+    public ResponseEntity<?> getSkuPrice(@RequestParam(value = "product_id") Long product_id,
+                                         @RequestParam(value = "value_names") List<String> value_names) {
+        ProductSku sku = skuService.findByProductIdAndValueNames(product_id, value_names);
         return ResponseEntity.ok(sku.getPrice());
     }
 }

@@ -5,6 +5,7 @@ import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.dto.order.OrderPageResponse;
 import com.hdshop.entity.Order;
+import com.hdshop.utils.EnumOrderStatus;
 
 import java.security.Principal;
 import java.util.List;
@@ -43,4 +44,13 @@ public interface OrderService {
     void paymentCompleted(final String vnp_TxnRef);
 
     void paymentFailed(final String vnp_TxnRef);
+
+    // TODO search theo nhìu cái, như tên sản phẩm, theo tên người mua dành cho admin
+    OrderPageResponse filter(
+            String statusValue,
+            String key,
+            List<String> sortCriteria,
+            int pageNo,
+            int pageSize
+    );
 }

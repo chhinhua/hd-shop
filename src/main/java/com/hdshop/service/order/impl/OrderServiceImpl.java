@@ -3,8 +3,8 @@ package com.hdshop.service.order.impl;
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
-import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.dto.order.OrderPageResponse;
+import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
@@ -281,6 +281,37 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public OrderPageResponse filter(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize) {
+        // follow Pageable instances
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        EnumOrderStatus status = null;
+        if (statusValue != null) {
+            status = appUtils.getOrderStatus(statusValue);
+        }
+
+        Page<Order> orderPage = orderRepository.filter(status, key, sortCriteria, pageable);
+
+        // get content for page object
+        List<Order> orderList = orderPage.getContent();
+
+        List<OrderResponse> content = orderList.stream()
+                .map(this::mapEntityToResponse)
+                .collect(Collectors.toList());
+
+        // set data to the product response
+        OrderPageResponse pageResponse = new OrderPageResponse();
+        pageResponse.setContent(content);
+        pageResponse.setPageNo(orderPage.getNumber() + 1);
+        pageResponse.setPageSize(orderPage.getSize());
+        pageResponse.setTotalPages(orderPage.getTotalPages());
+        pageResponse.setTotalElements(orderPage.getTotalElements());
+        pageResponse.setLast(orderPage.isLast());
+
+        return pageResponse;
+    }
+
+    @Override
     public OrderPageResponse getAllOrders(int pageNo, int pageSize) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
@@ -356,24 +387,21 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private Cart getCartByUsername(String username) {
-        return cartRepository.findByUser_Username(username)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
+        return cartRepository.findByUser_Username(username).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("cart-not-found"))
+        );
     }
 
     private Address getAddressById(Long addressId) {
-        return addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("no-delivery-address-found")));
+        return addressRepository.findById(addressId).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("no-delivery-address-found"))
+        );
     }
 
     private User getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
-    }
-
-    private void checkCartItems(Cart cart) {
-        if (cart.getCartItems().isEmpty()) {
-            throw new APIException(getMessage("cart-is-empty"));
-        }
+        return userRepository.findByUsername(username).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("user-not-found"))
+        );
     }
 
     public Order buildOrder(OrderDTO orderDTO, User user, Address address) {
@@ -417,6 +445,12 @@ public class OrderServiceImpl implements OrderService {
         orderItems.forEach(orderItem -> orderItem.setOrder(order));
 
         orderRepository.save(order);
+    }
+
+    private void checkCartItems(Cart cart) {
+        if (cart.getCartItems().isEmpty()) {
+            throw new APIException(getMessage("cart-is-empty"));
+        }
     }
 
     private List<OrderItem> convertCartToOrderItems(Cart cart) {

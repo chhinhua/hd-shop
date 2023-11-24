@@ -15,6 +15,8 @@ public interface CategoryService {
 
     void deleteCategory(final Long id);
 
+    CategoryResponse getAll(int pageNo, int pageSize);
+
     CategoryResponse filter(
             String searchTerm,
             List<String> sortCriteria,

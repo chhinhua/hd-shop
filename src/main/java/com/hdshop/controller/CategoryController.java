@@ -79,4 +79,16 @@ public class CategoryController {
         );
         return ResponseEntity.ok(filterCategories);
     }
+
+    @GetMapping
+    public ResponseEntity<CategoryResponse> getAll(
+            @RequestParam(value = "pageNo", required = false,
+                    defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false,
+                    defaultValue = "${paging.default.page-size}") int pageSize
+
+    ) {
+        CategoryResponse filterCategories = categoryService.getAll(pageNo, pageSize);
+        return ResponseEntity.ok(filterCategories);
+    }
 }

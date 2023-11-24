@@ -2,8 +2,8 @@ package com.hdshop.controller;
 
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
-import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.dto.order.OrderPageResponse;
+import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -122,19 +122,28 @@ public class OrderController {
     }
 
     @SecurityRequirement(name = "Bear Authentication")
-    @Operation(summary = "Search order by status")
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/search")
-    public ResponseEntity<List<OrderResponse>> searchOrder(@RequestParam(value = "status", required = false) String statusValue) {
-        return ResponseEntity.ok(orderService.findByStatus(statusValue));
-    }
-
-    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Search your order by status")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/search")
     public ResponseEntity<List<OrderResponse>> searchYourOrder(
             @RequestParam(value = "status", required = false) String statusValue, Principal principal) {
         return ResponseEntity.ok(orderService.findForUserByStatus(statusValue, principal));
+    }
+
+    @SecurityRequirement(name = "Bear Authentication")
+    @Operation(summary = "Search, sort, filter orders for admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/search")
+    public ResponseEntity<OrderPageResponse> search(
+            @RequestParam(name = "status", required = false) String statusValue,
+            @RequestParam(name = "key", required = false) String key,
+            @RequestParam(name = "sort", required = false) List<String> sortCriteria,
+            @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize
+    ) {
+        OrderPageResponse searchResponse = orderService.filter(
+                statusValue, key, sortCriteria, pageNo, pageSize
+        );
+        return ResponseEntity.ok(searchResponse);
     }
 }

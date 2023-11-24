@@ -39,6 +39,8 @@ public class OrderResponse {
 
     private Long userId;
 
+    private UserOrderDTO user;
+
     private AddressDTO address;
 
     private List<OrderItemResponse> orderItems;

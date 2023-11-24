@@ -147,6 +147,31 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public CategoryResponse getAll(int pageNo, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        Page<Category> catePage = categoryRepository.findAll(pageable);
+
+        // get content for page object
+        List<Category> cateList = catePage.getContent();
+
+        List<CategoryDTO> content = cateList.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+
+        // set data to the product response
+        CategoryResponse cateResponse = new CategoryResponse();
+        cateResponse.setContent(content);
+        cateResponse.setPageNo(catePage.getNumber() + 1);
+        cateResponse.setPageSize(catePage.getSize());
+        cateResponse.setTotalPages(catePage.getTotalPages());
+        cateResponse.setTotalElements(catePage.getTotalElements());
+        cateResponse.setLast(catePage.isLast());
+
+        return cateResponse;
+    }
+
+    @Override
     public CategoryResponse filter(String key, List<String> sortCriteria, int pageNo, int pageSize) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
