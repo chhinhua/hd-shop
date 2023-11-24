@@ -12,4 +12,6 @@ public interface FollowService {
     FollowPageResponse getYourFollow(final int pageNo, final int pageSize, final Principal principal);
 
     List<Long> findProductIdsFollowedByUser(Principal principal);
+
+    Long countYourFollow(final Principal principal);
 }

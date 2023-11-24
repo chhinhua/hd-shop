@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,4 +43,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("key") String key,
             @Param("sortCriteria") List<String> sortCriteria,
             Pageable pageable);
+
+    Long countByStatus(EnumOrderStatus status);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status AND DATE(o.createdDate) = :date")
+    Long countByDate(
+            @Param("date") LocalDate date,
+            @Param("status") EnumOrderStatus status);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status AND MONTH(o.createdDate) = :month AND YEAR(o.createdDate) = :year")
+    Long countByMonthAndYear(
+            @Param("month") int month,
+            @Param("year") int year,
+            @Param("status") EnumOrderStatus status);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status AND YEAR(o.createdDate) = :year")
+    Long countByYear(
+            @Param("year") int year,
+            @Param("status") EnumOrderStatus status);
 }

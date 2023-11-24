@@ -5,6 +5,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.ZonedDateTime;
 import java.util.Date;
 
 @Configuration
@@ -16,10 +17,10 @@ public class ModelMapperConfig {
         return modelMapper;
     }
 
-    private AbstractConverter<Date, String> dateToStringConverter() {
-        return new AbstractConverter<Date, String>() {
+    private AbstractConverter<ZonedDateTime, String> dateToStringConverter() {
+        return new AbstractConverter<ZonedDateTime, String>() {
             @Override
-            protected String convert(Date source) {
+            protected String convert(ZonedDateTime source) {
                 return DateTimeConfig.formatDateTime(source);
             }
         };

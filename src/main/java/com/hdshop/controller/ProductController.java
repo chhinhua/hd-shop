@@ -50,8 +50,8 @@ public class ProductController {
 
     @Operation(summary = "Get a Single Product")
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDTO> getOne(@PathVariable(value = "id") Long productId) {
-        return ResponseEntity.ok(productService.getOne(productId));
+    public ResponseEntity<ProductDTO> getOne(@PathVariable(value = "id") Long productId, Principal principal) {
+        return ResponseEntity.ok(productService.getOne(productId, principal));
     }
 
     @Operation(summary = "Update a Product")

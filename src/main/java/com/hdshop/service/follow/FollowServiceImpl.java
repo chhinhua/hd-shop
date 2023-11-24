@@ -71,7 +71,7 @@ public class FollowServiceImpl implements FollowService {
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
         Page<Follow> followPage = followRepository
-                .findAllByUser_UsernameOrderByLastModifiedDateDesc(username, pageable);
+                .findAllByUser_UsernameAndIsDeletedIsFalseOrderByLastModifiedDateDesc(username, pageable);
 
         // get content for page object
         List<Follow> followListList = followPage.getContent();
@@ -96,6 +96,15 @@ public class FollowServiceImpl implements FollowService {
     public List<Long> findProductIdsFollowedByUser(Principal principal) {
         String username = principal.getName();
         return followRepository.findProductIdsFollowedByUser(username);
+    }
+
+    @Override
+    public Long countYourFollow(Principal principal) {
+        if (principal == null) {
+            return 0L;
+        }
+        String username = principal.getName();
+        return followRepository.countYourFollow(username);
     }
 
     private FollowDTO mapEntityToDTO(Follow follow) {

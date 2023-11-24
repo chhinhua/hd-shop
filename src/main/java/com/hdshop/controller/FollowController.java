@@ -52,4 +52,11 @@ public class FollowController {
     public ResponseEntity<?> getProductIdsOfYourWishlist(Principal principal) {
         return ResponseEntity.ok(followService.findProductIdsFollowedByUser(principal));
     }
+
+    @SecurityRequirement(name = "Bear Authentication")
+    @Operation(summary = "Number of follow of current user")
+    @GetMapping("/wishlist/count")
+    public ResponseEntity<?> countYourFollow(Principal principal) {
+        return ResponseEntity.ok(followService.countYourFollow(principal));
+    }
 }

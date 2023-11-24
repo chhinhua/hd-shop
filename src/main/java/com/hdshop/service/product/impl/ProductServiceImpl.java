@@ -135,10 +135,17 @@ public class ProductServiceImpl implements ProductService {
      * @throws ResourceNotFoundException if the product is not found.
      */
     @Override
-    public ProductDTO getOne(Long productId) {
+    public ProductDTO getOne(Long productId, Principal principal) {
         Product product = getExistingProductById(productId);
-        return mapToDTO(product);
-        // TODO check liked
+        ProductDTO dto = mapToDTO(product);
+
+        if (principal == null) {
+            return dto;
+        }
+        boolean isLiked = followRepository
+                .existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(dto.getId(), principal.getName());
+        dto.setLiked(isLiked);
+        return dto;
     }
 
     @Override
@@ -271,7 +278,10 @@ public class ProductServiceImpl implements ProductService {
             return response;
         }
         response.getContent().forEach((item) -> {
-                    boolean isLiked = followRepository.existsByProduct_ProductIdAndUser_Username(item.getId(), username);
+                    boolean isLiked = followRepository
+                            .existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(
+                                    item.getId(), username
+                            );
                     item.setLiked(isLiked);
                 }
         );
@@ -352,7 +362,7 @@ public class ProductServiceImpl implements ProductService {
     private boolean checkLiked(Long productId, String username) {
         boolean liked = false;
         if (username != null) {
-            liked = followRepository.existsByProduct_ProductIdAndUser_Username(productId, username);
+            liked = followRepository.existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(productId, username);
         }
         return liked;
     }

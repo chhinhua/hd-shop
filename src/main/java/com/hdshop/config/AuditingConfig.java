@@ -13,7 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Optional;
 
 @Configuration
-@EnableJpaAuditing
+@EnableJpaAuditing(dateTimeProviderRef = "dateTimeProvider")
 public class AuditingConfig implements AuditorAware<String> {
     @Override
     public Optional<String> getCurrentAuditor() {
