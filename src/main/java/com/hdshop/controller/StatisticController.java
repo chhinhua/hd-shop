@@ -22,23 +22,27 @@ public class StatisticController {
     }
 
     @GetMapping("/order/daily")
-    public ResponseEntity<?> getDailyStatistics(@RequestParam String date) {
+    public ResponseEntity<?> getDailyOrderStatistics(@RequestParam String date) {
         return ResponseEntity.ok(statisticService.getDailyOrder(date));
     }
 
     @GetMapping("/order/monthly")
-    public ResponseEntity<?> getMonthlyStatistics(@RequestParam int month,
-                                               @RequestParam int year) {
+    public ResponseEntity<?> getMonthlyOrderStatistics(@RequestParam int month, @RequestParam int year) {
         return ResponseEntity.ok(statisticService.getMonthlyOrder(month, year));
     }
 
     @GetMapping("/order/yearly")
-    public ResponseEntity<?> getYearlyStatistics(@RequestParam int year) {
+    public ResponseEntity<?> getYearlyOrderStatistics(@RequestParam int year) {
         return ResponseEntity.ok(statisticService.getYearlyOrder(year));
     }
 
     @GetMapping("/account/yearly")
     public ResponseEntity<?> getYearlyAccountStatistic(@RequestParam int year) {
-        return ResponseEntity.ok(statisticService.getYearlyAccount(year));
+        return ResponseEntity.ok(statisticService.getYearlyCompleteAccount(year));
+    }
+
+    @GetMapping("/order_complete/yearly")
+    public ResponseEntity<?> getYearlyOrderComplete(@RequestParam int year) {
+        return ResponseEntity.ok(statisticService.getYearlyOrderComplete(year));
     }
 }

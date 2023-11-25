@@ -11,6 +11,7 @@ import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
 import com.hdshop.service.cart.CartService;
 import com.hdshop.service.order.OrderService;
+import com.hdshop.service.product.ProductService;
 import com.hdshop.utils.AppUtils;
 import com.hdshop.utils.EnumOrderStatus;
 import com.hdshop.utils.EnumPaymentType;
@@ -40,7 +41,9 @@ public class OrderServiceImpl implements OrderService {
     private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
     private final CartService cartService;
+    private final ProductService productService;
     private final AppUtils appUtils;
+    private final ProductRepository productRepository;
 
     @Override
     public OrderResponse addOrder(OrderDTO orderDTO, Principal principal) {
@@ -75,6 +78,7 @@ public class OrderServiceImpl implements OrderService {
 
         // follow list order items from cart
         List<OrderItem> orderItems = convertCartToOrderItems(cart);
+        changeProductNumber(orderItems);
 
         saveOrder(order, orderItems);
 
@@ -82,6 +86,19 @@ public class OrderServiceImpl implements OrderService {
         clearItems(cart);
 
         return mapEntityToResponse(order);
+    }
+
+    private void changeProductNumber(List<OrderItem> orderItems) {
+        orderItems.forEach((item) -> {
+            Product product = productService.findById(item.getProduct().getProductId());
+            int newSold = item.getQuantity();
+//            if (product.getQuantityAvailable() - newSold < 0) {
+//                // TODO tạo thông báo lấy thêm hàng cho sản phẩm
+//            }
+            product.setSold(product.getSold() + newSold);
+            product.setQuantityAvailable(product.getQuantityAvailable() - newSold);
+            productRepository.save(product);
+        });
     }
 
     @Transactional

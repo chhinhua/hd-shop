@@ -61,4 +61,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Long countByYear(
             @Param("year") int year,
             @Param("status") EnumOrderStatus status);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE YEAR(o.createdDate) = :year AND MONTH(o.createdDate) = :month AND o.status = 'DELIVERED'")
+    Long getMonthlyOrderComplete(@Param("month") int month, @Param("year") int year);
 }

@@ -1,17 +1,13 @@
 package com.hdshop.service.user;
 
-import com.hdshop.dto.category.CategoryDTO;
-import com.hdshop.dto.category.CategoryResponse;
 import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
 import com.hdshop.dto.user.UserResponse;
-import com.hdshop.entity.Category;
 import com.hdshop.entity.User;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.UserRepository;
-import com.hdshop.service.user.UserService;
 import com.hdshop.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -137,6 +133,32 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse filter(String key, List<String> sortCriteria, int pageNo, int pageSize) {
+        // follow Pageable instances
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        Page<User> userPage = userRepository.filter(key, sortCriteria, pageable);
+
+        // get content for page object
+        List<User> userList = userPage.getContent();
+
+        List<UserDTO> content = userList.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+
+        // set data to the user response
+        UserResponse pageResponse = new UserResponse();
+        pageResponse.setContent(content);
+        pageResponse.setPageNo(userPage.getNumber() + 1);
+        pageResponse.setPageSize(userPage.getSize());
+        pageResponse.setTotalPages(userPage.getTotalPages());
+        pageResponse.setTotalElements(userPage.getTotalElements());
+        pageResponse.setLast(userPage.isLast());
+
+        return pageResponse;
+    }
+
+    @Override
     public String changePasswordOfCurrentUser(ChangePassReq request, Principal principal) {
         validateChangePassRequest(request);
 
@@ -177,15 +199,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String forgotPassword(String email, String newPassword) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("%s %s",
-                        getMessage("user-not-found-with-email-is"), email)));
+        User user = userRepository.findByEmail(email).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("user-not-found-with-email-is") + " " + email)
+        );
 
         userValidator.validatePassword(newPassword);
 
         // change password
         String encodedNewPassword = passwordEncoder.encode(newPassword);
         user.setPassword(encodedNewPassword);
+        userRepository.save(user);
 
         return getMessage("password-changed-successfully");
     }

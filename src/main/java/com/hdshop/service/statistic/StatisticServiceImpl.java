@@ -2,6 +2,7 @@ package com.hdshop.service.statistic;
 
 import com.hdshop.config.DateTimeConfig;
 import com.hdshop.dto.statistic.AccountStatistic;
+import com.hdshop.dto.statistic.CompleteOrderStatistic;
 import com.hdshop.dto.statistic.CountStatistic;
 import com.hdshop.dto.statistic.OrderStatistic;
 import com.hdshop.repository.OrderRepository;
@@ -12,9 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -111,7 +109,7 @@ public class StatisticServiceImpl implements StatisticService {
         return yearlyStatistic;
     }
     @Override
-    public AccountStatistic getYearlyAccount(int year) {
+    public AccountStatistic getYearlyCompleteAccount(int year) {
         long jan = userRepository.getMonthlyUserCounts(1, year);
         long feb = userRepository.getMonthlyUserCounts(2, year);
         long mar = userRepository.getMonthlyUserCounts(3, year);
@@ -130,5 +128,27 @@ public class StatisticServiceImpl implements StatisticService {
         );
 
         return accountStatistic;
+    }
+
+    @Override
+    public CompleteOrderStatistic getYearlyOrderComplete(int year) {
+        long jan = orderRepository.getMonthlyOrderComplete(1, year);
+        long feb = orderRepository.getMonthlyOrderComplete(2, year);
+        long mar = orderRepository.getMonthlyOrderComplete(3, year);
+        long apr = orderRepository.getMonthlyOrderComplete(4, year);
+        long may = orderRepository.getMonthlyOrderComplete(5, year);
+        long jun = orderRepository.getMonthlyOrderComplete(6, year);
+        long jul = orderRepository.getMonthlyOrderComplete(7, year);
+        long aug = orderRepository.getMonthlyOrderComplete(8, year);
+        long sep = orderRepository.getMonthlyOrderComplete(9, year);
+        long oct = orderRepository.getMonthlyOrderComplete(10, year);
+        long nov = orderRepository.getMonthlyOrderComplete(11, year);
+        long dec = orderRepository.getMonthlyOrderComplete(12, year);
+
+        CompleteOrderStatistic completeOrderStatistic = new CompleteOrderStatistic(
+                jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec
+        );
+
+        return completeOrderStatistic;
     }
 }

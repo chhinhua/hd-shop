@@ -45,7 +45,6 @@ public interface OrderService {
 
     void paymentFailed(final String vnp_TxnRef);
 
-    // TODO search theo nhìu cái, như tên sản phẩm, theo tên người mua dành cho admin
     OrderPageResponse filter(
             String statusValue,
             String key,

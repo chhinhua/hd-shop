@@ -44,7 +44,7 @@ public class UserDTO {
 
     private String lastModifiedBy;
 
-    private Date createdDate;
+    private String createdDate;
 
-    private Date lastModifiedDate;
+    private String lastModifiedDate;
 }

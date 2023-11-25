@@ -28,7 +28,7 @@ public class OrderController {
     @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Create new order by list cartItem")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    //@SecurityRequirement(name = "Bear Authentication")
+    @SecurityRequirement(name = "Bear Authentication")
     @PostMapping("/create")
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
         OrderResponse newOrder = orderService.addOrder(orderDTO, principal);

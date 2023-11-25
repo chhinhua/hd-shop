@@ -1,5 +1,6 @@
 package com.hdshop.dto.statistic;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -7,19 +8,18 @@ import lombok.NoArgsConstructor;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class CompleteOrderStatistic {
-    private Integer day;
-    private Integer month;
-    private Integer year;
-    private Long jan;
-    private Long feb;
-    private Long mar;
-    private Long apr;
-    private Long may;
-    private Long jun;
-    private Long aug;
-    private Long sep;
-    private Long oct;
-    private Long nov;
-    private Long dec;
+    private long jan;
+    private long feb;
+    private long mar;
+    private long apr;
+    private long may;
+    private long jun;
+    private long jul;
+    private long aug;
+    private long sep;
+    private long oct;
+    private long nov;
+    private long dec;
 }

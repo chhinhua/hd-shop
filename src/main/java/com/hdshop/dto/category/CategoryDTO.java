@@ -29,9 +29,9 @@ public class CategoryDTO {
 
     private String lastModifiedBy;
 
-    private Date createdDate;
+    private String createdDate;
 
-    private Date lastModifiedDate;
+    private String lastModifiedDate;
 
     private Long parentId;
 

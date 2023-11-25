@@ -1,6 +1,5 @@
 package com.hdshop.controller;
 
-import com.hdshop.dto.category.CategoryResponse;
 import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
@@ -16,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @Tag(name = "User")
 @RequiredArgsConstructor
@@ -51,8 +51,8 @@ public class UserController {
     @Operation(summary = "Change password for Forgot password")
     @PutMapping("/password/forgot")
     public ResponseEntity<String> changePasswordByUserEmail(@RequestParam String email,
-                                                            @RequestParam String newPassword) {
-        String result = userService.forgotPassword(email, newPassword);
+                                                            @RequestParam String new_pass) {
+        String result = userService.forgotPassword(email, new_pass);
         return ResponseEntity.ok(result);
     }
 
@@ -92,5 +92,18 @@ public class UserController {
                     defaultValue = "${paging.default.page-size}") int pageSize
     ) {
         return ResponseEntity.ok(userService.getAllUsers(pageNo, pageSize));
+    }
+
+    @SecurityRequirement(name = "Bear Authentication")
+    @Operation(summary = "Filter users")
+//    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/search")
+    public ResponseEntity<UserResponse> filter(
+            @RequestParam(name = "key", required = false) String key,
+            @RequestParam(name = "sort", required = false) List<String> sortCriteria,
+            @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize
+    ) {
+        return ResponseEntity.ok(userService.filter(key, sortCriteria, pageNo, pageSize));
     }
 }

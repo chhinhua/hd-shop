@@ -55,11 +55,12 @@ public class ProductDTO {
 
     private Boolean isSelling;
 
-    private Date createdDate;
+    private String createdDate;
+
+    private String lastModifiedDate;
 
     private CategoryDTO category;
 
-    private Date lastModifiedDate;
 
     private String createdBy;
 

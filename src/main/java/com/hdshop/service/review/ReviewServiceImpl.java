@@ -55,7 +55,6 @@ public class ReviewServiceImpl implements ReviewService {
         Review newReview = reviewRepository.save(review);
 
         // update product rating
-        System.out.println("1: " + product.getNumberOfRatings());
         updateRating(product);
 
         return mapEntityToDTO(newReview);

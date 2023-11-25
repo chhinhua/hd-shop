@@ -19,7 +19,7 @@ public class ReviewDTO {
 
     private Integer stars;
 
-    private Date createdDate;
+    private String createdDate;
 
     private UserDTO user;
 

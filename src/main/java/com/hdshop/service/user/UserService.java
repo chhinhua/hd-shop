@@ -27,4 +27,11 @@ public interface UserService {
     UserDTO changeLockedStatus(final Long userId);
 
     UserResponse getAllUsers(final int pageNo, final int pageSize);
+
+    UserResponse filter(
+            String key,
+            List<String> sortCriteria,
+            int pageNo,
+            int pageSize
+    );
 }
