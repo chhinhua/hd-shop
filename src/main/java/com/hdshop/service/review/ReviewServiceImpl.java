@@ -1,6 +1,9 @@
 package com.hdshop.service.review;
 
+import com.hdshop.dto.product.ProductDTO;
+import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.dto.review.ReviewDTO;
+import com.hdshop.dto.review.ReviewResponse;
 import com.hdshop.entity.Order;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.Review;
@@ -16,10 +19,14 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,6 +65,32 @@ public class ReviewServiceImpl implements ReviewService {
         updateRating(product);
 
         return mapEntityToDTO(newReview);
+    }
+
+    @Override
+    public ReviewResponse getProductReviews(Long product_id, int pageNo, int pageSize) {
+        // follow Pageable instances
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        Page<Review> reviewPage = reviewRepository.findAllByProduct_ProductId(product_id, pageable);
+
+        // get content for page object
+        List<Review> reviewList = reviewPage.getContent();
+
+        List<ReviewDTO> content = reviewList.stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+
+        // set data to the review response
+        ReviewResponse reviewResponse = new ReviewResponse();
+        reviewResponse.setContent(content);
+        reviewResponse.setPageNo(reviewPage.getNumber() + 1);
+        reviewResponse.setPageSize(reviewPage.getSize());
+        reviewResponse.setTotalPages(reviewPage.getTotalPages());
+        reviewResponse.setTotalElements(reviewPage.getTotalElements());
+        reviewResponse.setLast(reviewPage.isLast());
+
+        return reviewResponse;
     }
 
     private void validateReview(ReviewDTO dto) {

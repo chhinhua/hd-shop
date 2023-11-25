@@ -1,6 +1,8 @@
 package com.hdshop.controller;
 
+import com.hdshop.dto.order.OrderPageResponse;
 import com.hdshop.dto.review.ReviewDTO;
+import com.hdshop.dto.review.ReviewResponse;
 import com.hdshop.service.review.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -9,12 +11,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @Tag(name = "Review product")
 @RestController
@@ -32,5 +32,17 @@ public class ReviewController {
     @PostMapping
     public ResponseEntity<?> review(@Valid @RequestBody ReviewDTO dto, Principal principal) {
         return new ResponseEntity<>(reviewService.create(dto, principal), HttpStatus.CREATED);
+    }
+
+    @SecurityRequirement(name = "Bear Authentication")
+    @Operation(summary = "Get all reviews for product")
+//    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/{product_id}")
+    public ResponseEntity<ReviewResponse> getProductReviews(
+            @PathVariable(value = "product_id") Long product_id,
+            @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "10") int pageSize
+    ) {
+        return ResponseEntity.ok(reviewService.getProductReviews(product_id, pageNo, pageSize));
     }
 }
