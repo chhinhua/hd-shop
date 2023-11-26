@@ -5,6 +5,7 @@ import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.dto.product.RequestSku;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
+import com.hdshop.service.image.ImageService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.util.List;
@@ -27,6 +29,7 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
     private final ProductSkuService skuService;
+    private final ImageService imageService;
 
     @Operation(summary = "Create Product")
     @PreAuthorize("hasRole('ADMIN')")

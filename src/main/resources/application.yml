@@ -51,6 +51,11 @@ spring:
 app:
     jwt-secret: 38a0963a6364b09ad867aa9a66c6d009673c21e182015461da236ec361877f77
     jwt-expiration-milliseconds: 604800000 #1week
+    cloudinary:
+        cloud_name: dkurral2z
+        api_key: 778991549327989
+        api_secret: L9_wohW70nyFwZtEQu3GscjcouM
+        folder_name: product_images_duck_shop
 
 paging:
     default:
