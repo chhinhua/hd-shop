@@ -26,6 +26,8 @@ public class ReviewDTO {
     private Long productId;
 
     private Long orderId;
+
+    private Long itemId;
 }
 
 

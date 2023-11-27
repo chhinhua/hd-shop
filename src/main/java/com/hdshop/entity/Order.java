@@ -61,7 +61,7 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "address_id")
     private Address address;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order")
     private List<Review> reviews = new ArrayList<>();
 
     @OneToMany(

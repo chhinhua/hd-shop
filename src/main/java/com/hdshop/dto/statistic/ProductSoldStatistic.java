@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class AccountStatistic {
+public class ProductSoldStatistic {
     private long jan;
     private long feb;
     private long mar;

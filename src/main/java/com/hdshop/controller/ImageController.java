@@ -32,8 +32,13 @@ public class ImageController {
 
     @PostMapping("/avatar/upload")
     public ResponseEntity<String> uploadAvatar(@RequestParam("image") MultipartFile file, Principal principal) {
-        imageService.uploadAvatar(file, principal);
-        return ResponseEntity.ok(getMessage("avatar-upload-successfully"));
+        return ResponseEntity.ok(imageService.uploadAvatar(file, principal));
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<String> upload(@RequestParam("image") MultipartFile file) {
+        String image_url = (String) imageService.upload(file).get("secure_url");
+        return ResponseEntity.ok(image_url);
     }
 
     // upload list of sku images

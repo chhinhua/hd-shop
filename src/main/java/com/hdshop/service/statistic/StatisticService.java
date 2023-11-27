@@ -1,9 +1,8 @@
 package com.hdshop.service.statistic;
 
-import com.hdshop.dto.statistic.AccountStatistic;
-import com.hdshop.dto.statistic.CompleteOrderStatistic;
-import com.hdshop.dto.statistic.CountStatistic;
-import com.hdshop.dto.statistic.OrderStatistic;
+import com.hdshop.dto.statistic.*;
+
+import java.security.Principal;
 
 public interface StatisticService {
     CountStatistic getCountStatistic();
@@ -17,4 +16,10 @@ public interface StatisticService {
     AccountStatistic getYearlyCompleteAccount(int year);
 
     CompleteOrderStatistic getYearlyOrderComplete(int year);
+
+    UserProfileStatistic getUserProfileStatistic(final Principal principal);
+
+    ProductSoldStatistic getProductSoldStatistic(int year);
+
+    RevenueStatistic getRevenueStatistic(int year);
 }

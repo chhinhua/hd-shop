@@ -1,16 +1,19 @@
 package com.hdshop.service.statistic;
 
 import com.hdshop.config.DateTimeConfig;
-import com.hdshop.dto.statistic.AccountStatistic;
-import com.hdshop.dto.statistic.CompleteOrderStatistic;
-import com.hdshop.dto.statistic.CountStatistic;
-import com.hdshop.dto.statistic.OrderStatistic;
+import com.hdshop.dto.statistic.*;
+import com.hdshop.entity.User;
 import com.hdshop.repository.OrderRepository;
+import com.hdshop.repository.ProductRepository;
 import com.hdshop.repository.UserRepository;
+import com.hdshop.service.follow.FollowService;
+import com.hdshop.service.user.UserService;
 import com.hdshop.utils.EnumOrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.security.Principal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
@@ -19,6 +22,9 @@ import java.time.ZonedDateTime;
 public class StatisticServiceImpl implements StatisticService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final UserService userService;
+    private final FollowService followService;
+    private final ProductRepository productRepository;
 
     @Override
     public CountStatistic getCountStatistic() {
@@ -108,6 +114,7 @@ public class StatisticServiceImpl implements StatisticService {
 
         return yearlyStatistic;
     }
+
     @Override
     public AccountStatistic getYearlyCompleteAccount(int year) {
         long jan = userRepository.getMonthlyUserCounts(1, year);
@@ -150,5 +157,68 @@ public class StatisticServiceImpl implements StatisticService {
         );
 
         return completeOrderStatistic;
+    }
+
+    @Override
+    public UserProfileStatistic getUserProfileStatistic(Principal principal) {
+        String useranme = principal.getName();
+        int favoriteCount = Math.toIntExact(followService.countYourFollow(principal));
+        int ordered = Math.toIntExact(orderRepository.countByStatusAndUser_Username(EnumOrderStatus.ORDERED, useranme));
+        int shipping = Math.toIntExact(orderRepository.countByStatusAndUser_Username(EnumOrderStatus.SHIPPING, useranme));
+        int delivered = Math.toIntExact(orderRepository.countByStatusAndUser_Username(EnumOrderStatus.DELIVERED, useranme));
+
+        UserProfileStatistic statistic = new UserProfileStatistic(
+                favoriteCount, ordered, shipping, delivered
+        );
+        return statistic;
+    }
+
+    @Override
+    public ProductSoldStatistic getProductSoldStatistic(int year) {
+        long jan = productRepository.countMonthlySold(1, year);
+        long feb = productRepository.countMonthlySold(2, year);
+        long mar = productRepository.countMonthlySold(3, year);
+        long apr = productRepository.countMonthlySold(4, year);
+        long may = productRepository.countMonthlySold(5, year);
+        long jun = productRepository.countMonthlySold(6, year);
+        long jul = productRepository.countMonthlySold(7, year);
+        long aug = productRepository.countMonthlySold(8, year);
+        long sep = productRepository.countMonthlySold(9, year);
+        long oct = productRepository.countMonthlySold(10, year);
+        long nov = productRepository.countMonthlySold(11, year);
+        long dec = productRepository.countMonthlySold(12, year);
+
+        ProductSoldStatistic productSoldStatistic = new ProductSoldStatistic(
+                jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec
+        );
+
+        return productSoldStatistic;
+    }
+
+    @Override
+    public RevenueStatistic getRevenueStatistic(int year) {
+        BigDecimal jan = getMonthlyRevenueOrDefault(1, year);
+        BigDecimal feb = getMonthlyRevenueOrDefault(2, year);
+        BigDecimal mar = getMonthlyRevenueOrDefault(3, year);
+        BigDecimal apr = getMonthlyRevenueOrDefault(4, year);
+        BigDecimal may = getMonthlyRevenueOrDefault(5, year);
+        BigDecimal jun = getMonthlyRevenueOrDefault(6, year);
+        BigDecimal jul = getMonthlyRevenueOrDefault(7, year);
+        BigDecimal aug = getMonthlyRevenueOrDefault(8, year);
+        BigDecimal sep = getMonthlyRevenueOrDefault(9, year);
+        BigDecimal oct = getMonthlyRevenueOrDefault(10, year);
+        BigDecimal nov = getMonthlyRevenueOrDefault(11, year);
+        BigDecimal dec = getMonthlyRevenueOrDefault(12, year);
+
+        RevenueStatistic revenueStatistic = new RevenueStatistic(
+                jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec
+        );
+
+        return revenueStatistic;
+    }
+
+    private BigDecimal getMonthlyRevenueOrDefault(int month, int year) {
+        BigDecimal revenue = orderRepository.getMonthlyTotalRevenue(month, year);
+        return (revenue != null) ? revenue : BigDecimal.ZERO;
     }
 }

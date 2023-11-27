@@ -197,6 +197,13 @@ public class CategoryServiceImpl implements CategoryService {
         return cateResponse;
     }
 
+    @Override
+    public Category findByName(String cateName) {
+        return categoryRepository.findByName(cateName).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("category-not-found"))
+        );
+    }
+
     /**
      * Convert Category DTO to  Category entity class
      *
@@ -205,7 +212,13 @@ public class CategoryServiceImpl implements CategoryService {
      */
     private CategoryDTO mapToDTO(Category category) {
         CategoryDTO dto = modelMapper.map(category, CategoryDTO.class);
-        dto.setProductNumber((long) category.getProducts().size());
+        long productCount = category.getProducts().size();
+
+        if (category.getChildren() != null && category.getChildren().size() > 0) {
+            productCount = category.getChildren().stream().mapToLong(child -> child.getProducts().size()).sum();
+        }
+        dto.setProductNumber(productCount);
+
         if (category.getParent() != null) {
             dto.setParentName(category.getParent().getName());
         }

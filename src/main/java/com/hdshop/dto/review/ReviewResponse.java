@@ -17,6 +17,9 @@ public class ReviewResponse {
     @Schema(description = "Review Content")
     private List<ReviewDTO> content;
 
+    @Schema(description = "Review start number")
+    private ReviewStarNumber starNumber;
+
     @Schema(description = "Page Number")
     private int pageNo;
 

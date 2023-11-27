@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +23,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(String username);
 
     Optional<Order> findByVnpTxnRef(String vnp_TxnRef);
+
+    @Query("SELECT o FROM Order o JOIN o.orderItems oi WHERE oi.id = :itemId")
+    Optional<Order> findByItemId(Long itemId);
 
     List<Order> findByStatusOrderByCreatedDate(EnumOrderStatus status);
 
@@ -64,4 +67,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT COUNT(o) FROM Order o WHERE YEAR(o.createdDate) = :year AND MONTH(o.createdDate) = :month AND o.status = 'DELIVERED'")
     Long getMonthlyOrderComplete(@Param("month") int month, @Param("year") int year);
+
+    Long countByStatusAndUser_Username(EnumOrderStatus status, String username);
+
+    @Query("SELECT SUM(o.total) " +
+            "FROM Order o " +
+            "WHERE o.status = 'DELIVERED' " +
+            "AND YEAR(o.createdDate) = :year " +
+            "AND MONTH(o.createdDate) = :month")
+    BigDecimal getMonthlyTotalRevenue(@Param("month") int month, @Param("year") int year);
 }

@@ -1,6 +1,5 @@
 package com.hdshop.controller;
 
-import com.hdshop.dto.order.OrderPageResponse;
 import com.hdshop.dto.review.ReviewDTO;
 import com.hdshop.dto.review.ReviewResponse;
 import com.hdshop.service.review.ReviewService;
@@ -14,7 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 @Tag(name = "Review product")
 @RestController
@@ -34,15 +32,14 @@ public class ReviewController {
         return new ResponseEntity<>(reviewService.create(dto, principal), HttpStatus.CREATED);
     }
 
-    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Get all reviews for product")
-//    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{product_id}")
     public ResponseEntity<ReviewResponse> getProductReviews(
             @PathVariable(value = "product_id") Long product_id,
+            @RequestParam(name = "star", required = false) Integer star,
             @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
             @RequestParam(value = "pageSize", required = false, defaultValue = "10") int pageSize
     ) {
-        return ResponseEntity.ok(reviewService.getProductReviews(product_id, pageNo, pageSize));
+        return ResponseEntity.ok(reviewService.getProductReviews(product_id, star, pageNo, pageSize));
     }
 }

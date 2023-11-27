@@ -1,6 +1,5 @@
 package com.hdshop.service.image;
 
-import com.hdshop.entity.Product;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
@@ -14,5 +13,5 @@ public interface ImageService {
 
     void deleteByPath(final String image_url);
 
-    void uploadAvatar(final MultipartFile file, final Principal principal);
+    String uploadAvatar(final MultipartFile file, final Principal principal);
 }

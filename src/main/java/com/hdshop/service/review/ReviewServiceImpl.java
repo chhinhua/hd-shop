@@ -1,16 +1,13 @@
 package com.hdshop.service.review;
 
-import com.hdshop.dto.product.ProductDTO;
-import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.dto.review.ReviewDTO;
 import com.hdshop.dto.review.ReviewResponse;
-import com.hdshop.entity.Order;
-import com.hdshop.entity.Product;
-import com.hdshop.entity.Review;
-import com.hdshop.entity.User;
+import com.hdshop.dto.review.ReviewStarNumber;
+import com.hdshop.entity.*;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.repository.ProductRepository;
 import com.hdshop.repository.ReviewRepository;
+import com.hdshop.service.order.OrderItemService;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.user.UserService;
@@ -35,6 +32,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final UserService userService;
     private final ProductService productService;
     private final OrderService orderService;
+    private final OrderItemService orderItemService;
     private final MessageSource messageSource;
     private final ModelMapper modelMapper;
     private final ProductRepository productRepository;
@@ -47,7 +45,8 @@ public class ReviewServiceImpl implements ReviewService {
         // retrieve data
         String username = principal.getName();
         User user = userService.getUserByUsername(username);
-        Order order = orderService.findById(dto.getOrderId());
+        Order order = orderService.findByItemId(dto.getItemId());
+        OrderItem orderItem = orderItemService.findById(dto.getItemId());
         Product product = productService.findById(dto.getProductId());
 
         // build review
@@ -57,6 +56,7 @@ public class ReviewServiceImpl implements ReviewService {
         review.setUser(user);
         review.setProduct(product);
         review.setOrder(order);
+        review.setOrderItem(orderItem);
 
         // save to db
         Review newReview = reviewRepository.save(review);
@@ -68,15 +68,16 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public ReviewResponse getProductReviews(Long product_id, int pageNo, int pageSize) {
+    public ReviewResponse getProductReviews(Long product_id, Integer star, int pageNo, int pageSize) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        Page<Review> reviewPage = reviewRepository.findAllByProduct_ProductId(product_id, pageable);
+        Page<Review> reviewPage = reviewRepository.findByProduct(product_id, star, pageable);
 
         // get content for page object
         List<Review> reviewList = reviewPage.getContent();
 
+        ReviewStarNumber starNumber = buildStarNumber(product_id);
         List<ReviewDTO> content = reviewList.stream()
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
@@ -84,6 +85,7 @@ public class ReviewServiceImpl implements ReviewService {
         // set data to the review response
         ReviewResponse reviewResponse = new ReviewResponse();
         reviewResponse.setContent(content);
+        reviewResponse.setStarNumber(starNumber);
         reviewResponse.setPageNo(reviewPage.getNumber() + 1);
         reviewResponse.setPageSize(reviewPage.getSize());
         reviewResponse.setTotalPages(reviewPage.getTotalPages());
@@ -93,9 +95,26 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewResponse;
     }
 
+    private ReviewStarNumber buildStarNumber(Long product_id) {
+        List<Review> reviewList = reviewRepository.findAllByProduct_ProductId(product_id);
+
+        ReviewStarNumber starNumber = new ReviewStarNumber();
+        starNumber.setAll(reviewList.size());
+        starNumber.setOneStar(countByStar(reviewList, 1));
+        starNumber.setTwoStar(countByStar(reviewList, 2));
+        starNumber.setThreeStar(countByStar(reviewList, 3));
+        starNumber.setFourStar(countByStar(reviewList, 4));
+        starNumber.setFiveStar(countByStar(reviewList, 5));
+        return starNumber;
+    }
+
+    private int countByStar(List<Review> reviewList, int star) {
+        return (int) reviewList.stream().filter(review -> review.getStars() == star).count();
+    }
+
     private void validateReview(ReviewDTO dto) {
-        if (dto.getOrderId() == null) {
-            throw new InvalidException(getMessage("order-id-must-not-be-null"));
+        if (dto.getItemId() == null) {
+            throw new InvalidException(getMessage("item-id-must-not-be-null"));
         }
         if (!AppUtils.isValidRating(dto.getStars())) {
             throw new InvalidException(getMessage("the-number-of-rating-stars-must-be-between-0-and-5"));
@@ -114,8 +133,9 @@ public class ReviewServiceImpl implements ReviewService {
 
         if (product.getNumberOfRatings() > 0) {
             float rating = totalStars / numberOfRatings;
-            product.setRating(rating);
-        }else {
+            float roundedRating = (float) (Math.round(rating * 10.0) / 10.0);
+            product.setRating(roundedRating);
+        } else {
             product.setRating(0f);
         }
         productRepository.save(product);

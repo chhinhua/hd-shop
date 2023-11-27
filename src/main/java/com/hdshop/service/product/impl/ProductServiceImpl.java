@@ -12,6 +12,7 @@ import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
+import com.hdshop.service.category.CategoryService;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -38,13 +40,13 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final FollowRepository followRepository;
     private final ProductSkuService productSkuService;
+    private final CategoryService categoryService;
     private final OptionService optionService;
     private final UniqueSlugGenerator slugGenerator;
     private final ProductValidator productValidator;
     private final MessageSource messageSource;
     private final ModelMapper modelMapper;
     private final Slugify slugify;
-    private final ProductSkuRepository productSkuRepository;
 
     /**
      * Create a new product.
@@ -110,7 +112,7 @@ public class ProductServiceImpl implements ProductService {
 
         // set data to the product response
         ProductResponse productResponse = new ProductResponse();
-        Long totalElements = productPage.getTotalElements();
+        long totalElements = productPage.getTotalElements();
 
         productResponse.setContent(content);
         productResponse.setPageNo(productPage.getNumber() + 1);
@@ -119,7 +121,7 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setTotalElements(productPage.getTotalElements());
         productResponse.setLast(productPage.isLast());
 
-        Long lastPageSize = totalElements % pageSize != 0 ?
+        long lastPageSize = totalElements % pageSize != 0 ?
                 totalElements % pageSize : totalElements != 0 ?
                 pageSize : 0;
         productResponse.setLastPageSize(lastPageSize);
@@ -231,8 +233,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void delete(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("product-not-found")));
+        productRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("product-not-found"))
+        );
     }
 
     @Override
@@ -240,8 +243,14 @@ public class ProductServiceImpl implements ProductService {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
+        // get all name of cate childs for this cate
+        List<String> listCateNames = cateNames;
+        if (cateNames != null && listCateNames.size() > 0) {
+            listCateNames = getOnlyCateChild(cateNames);
+        }
+
         Page<Product> productPage = productRepository.searchSortAndFilterProducts(
-                sell, key, cateNames, sortCriteria, pageable
+                sell, key, listCateNames, sortCriteria, pageable
         );
 
         // get content for page object
@@ -253,7 +262,7 @@ public class ProductServiceImpl implements ProductService {
 
         // set data to the product response
         ProductResponse productResponse = new ProductResponse();
-        Long totalElements = productPage.getTotalElements();
+        long totalElements = productPage.getTotalElements();
         productResponse.setContent(content);
         productResponse.setPageNo(productPage.getNumber() + 1);
         productResponse.setPageSize(productPage.getSize());
@@ -261,12 +270,23 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setTotalElements(productPage.getTotalElements());
         productResponse.setLast(productPage.isLast());
 
-        Long lastPageSize = totalElements % pageSize != 0 ?
+        long lastPageSize = totalElements % pageSize != 0 ?
                 totalElements % pageSize : totalElements != 0 ?
                 pageSize : 0;
         productResponse.setLastPageSize(lastPageSize);
 
         return productResponse;
+    }
+
+    private List<String> getOnlyCateChild(List<String> cateNames) {
+        List<String> allCateNames = new ArrayList<>(cateNames);
+        for (String cateName : cateNames) {
+            Category category = categoryService.findByName(cateName);
+            if (category.getChildren().size() > 0) {
+                category.getChildren().forEach(child -> allCateNames.add(child.getName()));
+            }
+        }
+        return allCateNames;
     }
 
     @Override

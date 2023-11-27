@@ -2,10 +2,9 @@ package com.hdshop.service.order;
 
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
-import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.dto.order.OrderPageResponse;
+import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.entity.Order;
-import com.hdshop.utils.EnumOrderStatus;
 
 import java.security.Principal;
 import java.util.List;
@@ -20,6 +19,8 @@ public interface OrderService {
     OrderResponse getOrderById(final Long orderId);
 
     Order findById(final Long orderId);
+
+    Order findByItemId(final Long itemId);
 
     String isDeletedOrderById(final Long orderId);
 

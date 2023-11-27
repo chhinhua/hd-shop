@@ -1,6 +1,7 @@
 package com.hdshop.repository;
 
 import com.hdshop.entity.Product;
+import com.hdshop.utils.EnumOrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,4 +43,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("sortCriteria") List<String> sortCriteria,
             Pageable pageable
     );
+
+    @Query("SELECT COUNT(oi) FROM OrderItem oi " +
+            "JOIN oi.order o " +
+            "WHERE YEAR(oi.createdDate) = :year " +
+            "AND MONTH(oi.createdDate) = :month " +
+            "AND o.status = 'DELIVERED'")
+    Long countMonthlySold(@Param("month") int month, @Param("year") int year);
 }

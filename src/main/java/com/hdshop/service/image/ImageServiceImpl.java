@@ -59,6 +59,18 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
+    public String uploadAvatar(MultipartFile file, Principal principal) {
+        User user = userService.getUserByUsername(principal.getName());
+        this.deleteByPath(user.getAvatarUrl());
+
+        String imageUrl = (String) this.upload(file).get("secure_url");
+        user.setAvatarUrl(imageUrl);
+        userRepository.save(user);
+
+        return imageUrl;
+    }
+
+    @Override
     public void deleteByPath(String image_url) {
         if (image_url != null) {
             try {
@@ -73,20 +85,8 @@ public class ImageServiceImpl implements ImageService {
         }
     }
 
-    @Override
-    public void uploadAvatar(MultipartFile file, Principal principal) {
-        User user = userService.getUserByUsername(principal.getName());
-        this.deleteByPath(user.getAvatarUrl());
-
-        String imageUrl = (String) this.upload(file).get("secure_url");
-        user.setAvatarUrl(imageUrl);
-        userRepository.save(user);
-    }
-
     public void deleteListImages(List<String> image_urls) {
-        image_urls.forEach(url -> {
-            this.deleteByPath(url);
-        });
+        image_urls.forEach(this::deleteByPath);
     }
 
     private String getMessage(String code) {

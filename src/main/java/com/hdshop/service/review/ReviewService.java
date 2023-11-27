@@ -8,5 +8,5 @@ import java.security.Principal;
 public interface ReviewService {
     ReviewDTO create(final ReviewDTO reviewDTO, Principal principal);
 
-    ReviewResponse getProductReviews(final Long product_id, final int pageNo, final int pageSize);
+    ReviewResponse getProductReviews(final Long product_id, final Integer star, final int pageNo, final int pageSize);
 }

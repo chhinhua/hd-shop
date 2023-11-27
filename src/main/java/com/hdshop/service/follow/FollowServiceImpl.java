@@ -51,6 +51,12 @@ public class FollowServiceImpl implements FollowService {
             Follow changeDeleted = existingFollow.get();
             changeDeleted.setIsDeleted(!changeDeleted.getIsDeleted());
             followProduct = followRepository.save(changeDeleted);
+
+            if (changeDeleted.getIsDeleted()) {
+                product.setFavoriteCount(product.getFavoriteCount() + 1);
+            } else {
+                product.setFavoriteCount(product.getFavoriteCount() - 1);
+            }
         } else {
             // Build follow
             followProduct = new Follow();
@@ -58,6 +64,8 @@ public class FollowServiceImpl implements FollowService {
             followProduct.setUser(user);
             followProduct.setIsDeleted(false);
             followProduct = followRepository.save(followProduct);
+
+            product.setFavoriteCount(product.getFavoriteCount() + 1);
         }
 
         return mapEntityToDTO(followProduct);

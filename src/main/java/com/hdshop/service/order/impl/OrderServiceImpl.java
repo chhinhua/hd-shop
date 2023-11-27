@@ -7,6 +7,7 @@ import com.hdshop.dto.order.OrderPageResponse;
 import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
+import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
 import com.hdshop.service.cart.CartService;
@@ -44,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductService productService;
     private final AppUtils appUtils;
     private final ProductRepository productRepository;
+    private final ReviewRepository reviewRepository;
 
     @Override
     public OrderResponse addOrder(OrderDTO orderDTO, Principal principal) {
@@ -179,6 +181,13 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
     }
 
+    @Override
+    public Order findByItemId(Long itemId) {
+        return orderRepository.findByItemId(itemId).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("order-not-found"))
+        );
+    }
+
     /**
      * Update status for the order
      *
@@ -197,9 +206,26 @@ public class OrderServiceImpl implements OrderService {
             EnumOrderStatus newStatus = appUtils.getOrderStatus(statusValue);
             order.setStatus(newStatus);
             orderRepository.save(order);
+
+            // hoàn trả lại số lượng sản phẩm nếu hủy đơn
+            giveBackProductSoldIfCancle(order, newStatus);
         }
 
         return mapEntityToResponse(order);
+    }
+
+    private void giveBackProductSoldIfCancle(Order order, EnumOrderStatus status) {
+        if (status == EnumOrderStatus.CANCELED) {
+            order.getOrderItems().forEach(item -> {
+                Product product = item.getProduct();
+                int itemQuantity = item.getQuantity();
+                int sold = product.getSold();
+                int quantityAvalable = product.getQuantityAvailable();
+                product.setSold(sold - itemQuantity);
+                product.setQuantityAvailable(quantityAvalable + itemQuantity);
+                productRepository.save(product);
+            });
+        }
     }
 
     /**
@@ -299,33 +325,37 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderPageResponse filter(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize) {
-        // follow Pageable instances
-        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+        try {
+            // follow Pageable instances
+            Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        EnumOrderStatus status = null;
-        if (statusValue != null) {
-            status = appUtils.getOrderStatus(statusValue);
+            EnumOrderStatus status = null;
+            if (statusValue != null) {
+                status = appUtils.getOrderStatus(statusValue);
+            }
+
+            Page<Order> orderPage = orderRepository.filter(status, key, sortCriteria, pageable);
+
+            // get content for page object
+            List<Order> orderList = orderPage.getContent();
+
+            List<OrderResponse> content = orderList.stream()
+                    .map(this::mapEntityToResponse)
+                    .collect(Collectors.toList());
+
+            // set data to the product response
+            OrderPageResponse pageResponse = new OrderPageResponse();
+            pageResponse.setContent(content);
+            pageResponse.setPageNo(orderPage.getNumber() + 1);
+            pageResponse.setPageSize(orderPage.getSize());
+            pageResponse.setTotalPages(orderPage.getTotalPages());
+            pageResponse.setTotalElements(orderPage.getTotalElements());
+            pageResponse.setLast(orderPage.isLast());
+
+            return pageResponse;
+        } catch (Exception e) {
+            throw new InvalidException(getMessage("list-order-is-empty"));
         }
-
-        Page<Order> orderPage = orderRepository.filter(status, key, sortCriteria, pageable);
-
-        // get content for page object
-        List<Order> orderList = orderPage.getContent();
-
-        List<OrderResponse> content = orderList.stream()
-                .map(this::mapEntityToResponse)
-                .collect(Collectors.toList());
-
-        // set data to the product response
-        OrderPageResponse pageResponse = new OrderPageResponse();
-        pageResponse.setContent(content);
-        pageResponse.setPageNo(orderPage.getNumber() + 1);
-        pageResponse.setPageSize(orderPage.getSize());
-        pageResponse.setTotalPages(orderPage.getTotalPages());
-        pageResponse.setTotalElements(orderPage.getTotalElements());
-        pageResponse.setLast(orderPage.isLast());
-
-        return pageResponse;
     }
 
     @Override
@@ -515,6 +545,7 @@ public class OrderServiceImpl implements OrderService {
         OrderResponse response = modelMapper.map(order, OrderResponse.class);
         response.setStatus(order.getStatus().getValue());
         response.setPaymentType(order.getPaymentType().getValue());
+        response.getOrderItems().forEach(item -> item.setHasReview(!reviewRepository.existsByOrderItem_Id(item.getId())));
         return response;
     }
 

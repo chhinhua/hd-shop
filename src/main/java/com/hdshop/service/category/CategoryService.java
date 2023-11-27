@@ -3,6 +3,7 @@ package com.hdshop.service.category;
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;
 import com.hdshop.dto.product.ProductResponse;
+import com.hdshop.entity.Category;
 
 import java.util.List;
 
@@ -23,4 +24,6 @@ public interface CategoryService {
             int pageNo,
             int pageSize
     );
+
+    Category findByName(final String cateName);
 }
