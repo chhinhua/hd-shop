@@ -86,7 +86,7 @@ public class AuthServiceImpl implements AuthService {
                 throw new RuntimeException(getMessage("account-has-been-locked,-please-contact-admin-for-support"));
             }
 
-            // create jwtResponse object
+            // follow jwtResponse object
             JwtAuthResponse jwtResponse = new JwtAuthResponse();
             jwtResponse.setAccessToken(token);
 
@@ -193,7 +193,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void saveRegisterInfo(RegisterDTO registerDTO, String otp) {
-        // create a new User object and populate it with the provided registration data
+        // follow a new User object and populate it with the provided registration data
         User user = new User();
         user.setUsername(registerDTO.getUsername());
         user.setEmail(registerDTO.getEmail());

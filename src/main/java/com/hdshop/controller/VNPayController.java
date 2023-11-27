@@ -60,7 +60,7 @@ public class VNPayController {
         order.setPaymentType("VN_PAY");
         order.setTotal(orderTotal);
 
-        // create order
+        // follow order
         orderService.createOrderWithVNPay(order, username, VNPayConfig.vnp_TxnRef);
 
         return "redirect:" + vnpayUrl;

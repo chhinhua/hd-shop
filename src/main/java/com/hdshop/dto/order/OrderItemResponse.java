@@ -31,4 +31,6 @@ public class OrderItemResponse {
     private ItemProductResponse product;
 
     private ProductSkuDTO sku;
+
+    private boolean hasReview;
 }

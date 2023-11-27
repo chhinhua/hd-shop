@@ -40,11 +40,11 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		Role role_admin = new Role();
 		role_admin.setName("ROLE_ADMIN");
 
-		// create users
+		// follow users
 		User admin = createNewAdmin(role_admin);
 		User user = createNewUser(role_user);
 
-		// create address
+		// follow address
 		Address adminAddress = createAdminAddress(admin);
 		Address userAddress = createUserAddress(user);
 

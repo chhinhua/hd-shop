@@ -29,6 +29,8 @@ public class Category extends BaseEntity {
 
     private String slug;
 
+    private Boolean isDeleted;
+
     @Column(columnDefinition = "LONGTEXT")
     private String description;
 

@@ -3,6 +3,7 @@ package com.hdshop.service.product.impl;
 import com.hdshop.entity.OptionValue;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
+import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.OptionValueRepository;
 import com.hdshop.repository.ProductRepository;
@@ -75,6 +76,12 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     @Override
     public ProductSku findByProductIdAndValueNames(Long productId, List<String> valueNames) {
+        if (productId == null) {
+            throw new InvalidException("product-id-must-not-be-null");
+        }
+        if (valueNames.isEmpty()) {
+            throw new InvalidException("value-names-must-not-be-empty");
+        }
         return productSkuRepository
                 .findByProductIdAndValueNames(productId, valueNames, valueNames.size())
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("sku-not-found-please-choose-anorther-style")));
@@ -96,7 +103,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         Optional<OptionValue> newOptionValue = optionValueService
                 .getByValueNameAndProductId(value.getValueName(), product.getProductId());
 
-        return newOptionValue.orElse(value); // Return existing or create new
+        return newOptionValue.orElse(value); // Return existing or follow new
     }
 
     private Product getProductById(Long productId) {

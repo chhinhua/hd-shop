@@ -1,17 +1,13 @@
-package com.hdshop.service.user.impl;
+package com.hdshop.service.user;
 
-import com.hdshop.dto.category.CategoryDTO;
-import com.hdshop.dto.category.CategoryResponse;
 import com.hdshop.dto.user.ChangePassReq;
 import com.hdshop.dto.user.UserDTO;
 import com.hdshop.dto.user.UserProfile;
 import com.hdshop.dto.user.UserResponse;
-import com.hdshop.entity.Category;
 import com.hdshop.entity.User;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.UserRepository;
-import com.hdshop.service.user.UserService;
 import com.hdshop.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -45,12 +41,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm tấy tài khoản người dùng với tên tài khoản là " + username)
-                );
-        return mapToDTO(user);
+    public User getUserByUsername(String username) {
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
     }
 
     @Override
@@ -112,7 +106,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getAllUsers(int pageNo, int pageSize) {
-        // create Pageable instances
+        // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
         // get all users with role is user
@@ -136,6 +130,32 @@ public class UserServiceImpl implements UserService {
         userResponse.setLast(userPage.isLast());
 
         return userResponse;
+    }
+
+    @Override
+    public UserResponse filter(String key, List<String> sortCriteria, int pageNo, int pageSize) {
+        // follow Pageable instances
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+        Page<User> userPage = userRepository.filter(key, sortCriteria, pageable);
+
+        // get content for page object
+        List<User> userList = userPage.getContent();
+
+        List<UserDTO> content = userList.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+
+        // set data to the user response
+        UserResponse pageResponse = new UserResponse();
+        pageResponse.setContent(content);
+        pageResponse.setPageNo(userPage.getNumber() + 1);
+        pageResponse.setPageSize(userPage.getSize());
+        pageResponse.setTotalPages(userPage.getTotalPages());
+        pageResponse.setTotalElements(userPage.getTotalElements());
+        pageResponse.setLast(userPage.isLast());
+
+        return pageResponse;
     }
 
     @Override
@@ -179,15 +199,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String forgotPassword(String email, String newPassword) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("%s %s",
-                        getMessage("user-not-found-with-email-is"), email)));
+        User user = userRepository.findByEmail(email).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("user-not-found-with-email-is") + " " + email)
+        );
 
         userValidator.validatePassword(newPassword);
 
         // change password
         String encodedNewPassword = passwordEncoder.encode(newPassword);
         user.setPassword(encodedNewPassword);
+        userRepository.save(user);
 
         return getMessage("password-changed-successfully");
     }

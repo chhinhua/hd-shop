@@ -3,12 +3,11 @@ package com.hdshop.service.category;
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;
 import com.hdshop.dto.product.ProductResponse;
+import com.hdshop.entity.Category;
 
 import java.util.List;
 
 public interface CategoryService {
-    List<CategoryDTO> getAllCategories();
-
     CategoryDTO getCategoryByIdOrSlug(final String identifier);
 
     CategoryDTO createCategory(final CategoryDTO categoryDTO);
@@ -17,5 +16,14 @@ public interface CategoryService {
 
     void deleteCategory(final Long id);
 
-    CategoryResponse getAllCategories(final int pageNo, final int pageSize);
+    CategoryResponse getAll(int pageNo, int pageSize);
+
+    CategoryResponse filter(
+            String searchTerm,
+            List<String> sortCriteria,
+            int pageNo,
+            int pageSize
+    );
+
+    Category findByName(final String cateName);
 }

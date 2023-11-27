@@ -34,10 +34,6 @@ public class OrderDTO {
 
     private String lastModifiedBy;
 
-    private Date createdDate;
-
-    private Date lastModifiedDate;
-
     private Long userId;
 
     private Long addressId;

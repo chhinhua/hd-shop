@@ -11,20 +11,24 @@ import com.hdshop.entity.Option;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
 import com.hdshop.exception.ResourceNotFoundException;
-import com.hdshop.repository.CategoryRepository;
-import com.hdshop.repository.ProductRepository;
+import com.hdshop.repository.*;
+import com.hdshop.service.category.CategoryService;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
 import com.hdshop.validator.ProductValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -34,17 +38,20 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final ModelMapper modelMapper;
+    private final FollowRepository followRepository;
+    private final ProductSkuService productSkuService;
+    private final CategoryService categoryService;
+    private final OptionService optionService;
     private final UniqueSlugGenerator slugGenerator;
     private final ProductValidator productValidator;
-    private final ProductSkuService productSkuService;
-    private final OptionService optionService;
+    private final MessageSource messageSource;
+    private final ModelMapper modelMapper;
     private final Slugify slugify;
 
     /**
      * Create a new product.
      *
-     * @param product The product object to create.
+     * @param product The product object to follow.
      * @return ProductDTO representing the created product.
      * @throws ResourceNotFoundException if the corresponding category is not found.
      */
@@ -52,15 +59,20 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDTO create(Product product) {
         // find the product category based on its ID
-        Category category = categoryRepository.findById(product.getCategory().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", product.getCategory().getId()));
+        Category category = categoryRepository.findByName(product.getCategory().getName())
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
 
-        // generate a unique slug for the product
+        // build product
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
         product.setSlug(uniqueSlug);
-
-        // set fields
         product.setCategory(category);
+        product.setIsSelling(false);
+        product.setIsActive(true);
+        product.setSold(0);
+        product.setRating(0f);
+        product.setFavoriteCount(0);
+        product.setNumberOfRatings(0);
+        product.setQuantityAvailable(product.getQuantity());
         setProductForChildEntity(product);
 
         // normalize product information
@@ -86,10 +98,10 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductResponse getAllIsActive(int pageNo, int pageSize) {
-        // create Pageable instances
+        // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        Page<Product> productPage = productRepository.findAllByIsActiveIsTrueOrderByProductIdDesc(pageable);
+        Page<Product> productPage = productRepository.findRandomProducts(pageable);
 
         // get content for page object
         List<Product> productList = productPage.getContent();
@@ -100,7 +112,7 @@ public class ProductServiceImpl implements ProductService {
 
         // set data to the product response
         ProductResponse productResponse = new ProductResponse();
-        Long totalElements = productPage.getTotalElements();
+        long totalElements = productPage.getTotalElements();
 
         productResponse.setContent(content);
         productResponse.setPageNo(productPage.getNumber() + 1);
@@ -109,7 +121,7 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setTotalElements(productPage.getTotalElements());
         productResponse.setLast(productPage.isLast());
 
-        Long lastPageSize = totalElements % pageSize != 0 ?
+        long lastPageSize = totalElements % pageSize != 0 ?
                 totalElements % pageSize : totalElements != 0 ?
                 pageSize : 0;
         productResponse.setLastPageSize(lastPageSize);
@@ -125,9 +137,22 @@ public class ProductServiceImpl implements ProductService {
      * @throws ResourceNotFoundException if the product is not found.
      */
     @Override
-    public ProductDTO getOne(Long productId) {
+    public ProductDTO getOne(Long productId, Principal principal) {
         Product product = getExistingProductById(productId);
-        return mapToDTO(product);
+        ProductDTO dto = mapToDTO(product);
+
+        if (principal == null) {
+            return dto;
+        }
+        boolean isLiked = followRepository
+                .existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(dto.getId(), principal.getName());
+        dto.setLiked(isLiked);
+        return dto;
+    }
+
+    @Override
+    public Product findById(Long productId) {
+        return getExistingProductById(productId);
     }
 
     /**
@@ -145,8 +170,8 @@ public class ProductServiceImpl implements ProductService {
         Product existingProduct = getExistingProductById(productId);
 
         // check if category already exists
-        Category category = categoryRepository.findById(productDTO.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", productDTO.getCategoryId()));
+        Category category = categoryRepository.findByName(productDTO.getCategory().getName())
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
 
         // set changes fields
         setProductFields(productDTO, existingProduct, category);
@@ -207,13 +232,26 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse searchSortAndFilterProducts(String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
-        // create Pageable instances
+    public void delete(Long id) {
+        productRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("product-not-found"))
+        );
+    }
+
+    @Override
+    public ProductResponse searchSortAndFilterProducts(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
+        // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
+        // get all name of cate childs for this cate
+        List<String> listCateNames = cateNames;
+        if (cateNames != null && listCateNames.size() > 0) {
+            listCateNames = getOnlyCateChild(cateNames);
+        }
+
         Page<Product> productPage = productRepository.searchSortAndFilterProducts(
-                        key, cateNames, sortCriteria, pageable
-                );
+                sell, key, listCateNames, sortCriteria, pageable
+        );
 
         // get content for page object
         List<Product> productList = productPage.getContent();
@@ -224,7 +262,7 @@ public class ProductServiceImpl implements ProductService {
 
         // set data to the product response
         ProductResponse productResponse = new ProductResponse();
-        Long totalElements = productPage.getTotalElements();
+        long totalElements = productPage.getTotalElements();
         productResponse.setContent(content);
         productResponse.setPageNo(productPage.getNumber() + 1);
         productResponse.setPageSize(productPage.getSize());
@@ -232,12 +270,42 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setTotalElements(productPage.getTotalElements());
         productResponse.setLast(productPage.isLast());
 
-        Long lastPageSize = totalElements % pageSize != 0 ?
+        long lastPageSize = totalElements % pageSize != 0 ?
                 totalElements % pageSize : totalElements != 0 ?
                 pageSize : 0;
         productResponse.setLastPageSize(lastPageSize);
 
         return productResponse;
+    }
+
+    private List<String> getOnlyCateChild(List<String> cateNames) {
+        List<String> allCateNames = new ArrayList<>(cateNames);
+        for (String cateName : cateNames) {
+            Category category = categoryService.findByName(cateName);
+            if (category.getChildren().size() > 0) {
+                category.getChildren().forEach(child -> allCateNames.add(child.getName()));
+            }
+        }
+        return allCateNames;
+    }
+
+    @Override
+    public ProductResponse filter(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) {
+        ProductResponse response = searchSortAndFilterProducts(
+                sell, searchTerm, cateNames, sortCriteria, pageNo, pageSize
+        );
+        if (username == null) {
+            return response;
+        }
+        response.getContent().forEach((item) -> {
+                    boolean isLiked = followRepository
+                            .existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(
+                                    item.getId(), username
+                            );
+                    item.setLiked(isLiked);
+                }
+        );
+        return response;
     }
 
     @Transactional
@@ -284,9 +352,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Product getExistingProductById(Long productId) {
-        Product existingProduct = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
-        return existingProduct;
+        return productRepository
+                .findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("product-not-found")));
     }
 
     public void setProductForChildEntity(Product product) {
@@ -306,6 +374,20 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductDTO mapToDTO(Product product) {
-        return modelMapper.map(product, ProductDTO.class);
+        ProductDTO dto = modelMapper.map(product, ProductDTO.class);
+        dto.setCategoryName(product.getCategory().getName());
+        return dto;
+    }
+
+    private boolean checkLiked(Long productId, String username) {
+        boolean liked = false;
+        if (username != null) {
+            liked = followRepository.existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(productId, username);
+        }
+        return liked;
+    }
+
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 }

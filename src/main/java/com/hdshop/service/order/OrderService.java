@@ -2,8 +2,9 @@ package com.hdshop.service.order;
 
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
+import com.hdshop.dto.order.OrderPageResponse;
 import com.hdshop.dto.order.OrderResponse;
-import com.hdshop.dto.order.PageOrderResponse;
+import com.hdshop.entity.Order;
 
 import java.security.Principal;
 import java.util.List;
@@ -15,29 +16,41 @@ public interface OrderService {
 
     OrderResponse createOrderWithVNPay(final OrderDTO order, final String username, final String vnp_TxnRef);
 
+    OrderResponse getOrderById(final Long orderId);
+
+    Order findById(final Long orderId);
+
+    Order findByItemId(final Long itemId);
+
     String isDeletedOrderById(final Long orderId);
 
     String deleteOrderById(final Long orderId);
 
-    OrderDTO getOrderById(final Long orderId);
+    OrderResponse updateStatus(final Long orderId, final String statusValue);
 
-    OrderDTO updateStatus(final Long orderId, final String status);
+    List<OrderResponse> getOrdersByUsername(final String username);
 
-    List<OrderDTO> getOrdersByUsername(final String username);
+    List<OrderResponse> getOrdersByUserId(final Long userId);
 
-    List<OrderDTO> getOrdersByUserId(final Long userId);
+    List<OrderResponse> findForUserByStatus(final String value, final Principal principal);
 
-    CheckOutDTO getDataFromUserInfor(final Principal principal);
+    List<OrderResponse> findByStatus(final String value);
 
     List<OrderResponse> getListOrderByCurrentUser(final Principal principal);
+
+    OrderPageResponse getAllOrders(final int pageNo, final int pageSize);
+
+    CheckOutDTO getDataFromUserInfor(final Principal principal);
 
     void paymentCompleted(final String vnp_TxnRef);
 
     void paymentFailed(final String vnp_TxnRef);
 
-    PageOrderResponse getAllOrders(final int pageNo, final int pageSize);
-
-    List<OrderResponse> findForUserByStatus(final String value, final Principal principal);
-
-    List<OrderResponse> findByStatus(final String value);
+    OrderPageResponse filter(
+            String statusValue,
+            String key,
+            List<String> sortCriteria,
+            int pageNo,
+            int pageSize
+    );
 }
