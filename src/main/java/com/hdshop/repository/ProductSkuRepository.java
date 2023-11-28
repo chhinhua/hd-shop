@@ -32,7 +32,6 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
     Optional<ProductSku> findByProductIdAndValueNames(@Param("productId") Long productId,
                                                       @Param("valueNames") List<String> valueNames,
                                                       @Param("valueCount") int valueCount);
-
 }
 
 

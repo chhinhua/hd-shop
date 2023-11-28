@@ -545,7 +545,9 @@ public class OrderServiceImpl implements OrderService {
         OrderResponse response = modelMapper.map(order, OrderResponse.class);
         response.setStatus(order.getStatus().getValue());
         response.setPaymentType(order.getPaymentType().getValue());
-        response.getOrderItems().forEach(item -> item.setHasReview(!reviewRepository.existsByOrderItem_Id(item.getId())));
+        response.getOrderItems().forEach(item -> item.setHasReview(
+                reviewRepository.checkHasReview(item.getId()))
+        );
         return response;
     }
 

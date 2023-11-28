@@ -82,9 +82,13 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         if (valueNames.isEmpty()) {
             throw new InvalidException("value-names-must-not-be-empty");
         }
-        return productSkuRepository
-                .findByProductIdAndValueNames(productId, valueNames, valueNames.size())
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("sku-not-found-please-choose-anorther-style")));
+        ProductSku sku;
+        try {
+            sku = productSkuRepository.findByProductIdAndValueNames(productId, valueNames, valueNames.size()).get();
+        } catch (Exception e) {
+            throw new ResourceNotFoundException(getMessage("sku-not-found-please-choose-anorther-style"));
+        }
+        return sku;
     }
 
     private List<OptionValue> getOptionValuesForSku(ProductSku sku, Product product) {

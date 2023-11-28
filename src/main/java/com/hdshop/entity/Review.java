@@ -37,7 +37,7 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orderItem_id")
+    @OneToOne
+    @JoinColumn(name = "order_item_id")
     private OrderItem orderItem;
 }

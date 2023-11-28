@@ -40,4 +40,7 @@ public class OrderItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sku_id")
     private ProductSku sku;
+
+    @OneToOne(mappedBy = "orderItem")
+    private Review review;
 }

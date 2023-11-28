@@ -21,4 +21,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findAllByProduct_ProductId(Long productId);
 
     boolean existsByOrderItem_Id(Long itemId);
+
+    @Query("SELECT CASE WHEN COUNT(r) = 0 AND oi.order.status = 'DELIVERED' THEN true ELSE false END " +
+            "FROM OrderItem oi " +
+            "LEFT JOIN oi.review r " +
+            "WHERE oi.id = :itemId")
+    boolean checkHasReview(@Param("itemId") Long itemId);
 }
