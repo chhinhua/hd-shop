@@ -189,12 +189,7 @@ public class UserServiceImpl implements UserService {
         if (request.getOldPassword().isBlank()) {
             throw new InvalidException(getMessage("new-password-must-not-be-empty"));
         }
-        if (!UserValidator.isValidPassword(request.getNewPassword())) {
-            throw new InvalidException(String.format("%s (%s)",
-                    getMessage("invalid-new-password"),
-                    String.format(getMessage("cannot-be-less-than-n-characters"), 8))
-            );
-        }
+        userValidator.validatePassword(request.getNewPassword());
     }
 
     @Override
@@ -218,7 +213,6 @@ public class UserServiceImpl implements UserService {
         updateUserProfile.setName(profile.getName());
         updateUserProfile.setEmail(profile.getEmail());
         updateUserProfile.setPhoneNumber(profile.getPhoneNumber());
-        updateUserProfile.setAvatarUrl(profile.getAvatarUrl());
         updateUserProfile.setGender(profile.getGender());
     }
 

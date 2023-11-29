@@ -80,9 +80,9 @@ public class UserValidator {
         if (!isValidPassword(password)) {
             throw new InvalidException(String.format("%s %s (%s)",
                     getMessage("password-length"),
-                    String.format(getMessage("cannot-be-less-than-n-characters"), 8),
-                    getMessage("has-at-least-1-number-and-1-letter"))
-            );
+                    getMessage("cannot-be-less-than-8-characters"),
+                    getMessage("has-at-least-1-number-and-1-letter")
+            ));
         }
     }
 
