@@ -10,6 +10,7 @@ import com.hdshop.entity.Category;
 import com.hdshop.entity.Option;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
+import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
 import com.hdshop.service.category.CategoryService;
@@ -239,6 +240,18 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public ProductDTO addQuantity(Long product_id, Integer quantity) {
+        Product product = getExistingProductById(product_id);
+        if (quantity < 1) {
+            throw new InvalidException(getMessage("the-additional-quantity-cannot-be-less-than-one"));
+        }
+        product.setQuantity(product.getQuantity() + quantity);
+        product.setQuantityAvailable(product.getQuantityAvailable() + quantity);
+        Product addQuantity = productRepository.save(product);
+        return mapToDTO(addQuantity);
+    }
+
+    @Override
     public ProductResponse searchSortAndFilterProducts(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
@@ -335,7 +348,6 @@ public class ProductServiceImpl implements ProductService {
         existingProduct.setPrice(productDTO.getPrice());
         existingProduct.setListImages(productDTO.getListImages());
         existingProduct.setQuantity(productDTO.getQuantity());
-        existingProduct.setQuantityAvailable(productDTO.getQuantityAvailable());
         existingProduct.setPromotionalPrice(productDTO.getPromotionalPrice());
 
         // set unique slug for product
@@ -377,14 +389,6 @@ public class ProductServiceImpl implements ProductService {
         ProductDTO dto = modelMapper.map(product, ProductDTO.class);
         dto.setCategoryName(product.getCategory().getName());
         return dto;
-    }
-
-    private boolean checkLiked(Long productId, String username) {
-        boolean liked = false;
-        if (username != null) {
-            liked = followRepository.existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(productId, username);
-        }
-        return liked;
     }
 
     private String getMessage(String code) {

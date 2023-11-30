@@ -102,8 +102,9 @@ public class UserController {
             @RequestParam(name = "key", required = false) String key,
             @RequestParam(name = "sort", required = false) List<String> sortCriteria,
             @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
-            @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize
+            @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize,
+            @RequestParam(value = "role", required = false, defaultValue = "ROLE_USER") String roleName
     ) {
-        return ResponseEntity.ok(userService.filter(key, sortCriteria, pageNo, pageSize));
+        return ResponseEntity.ok(userService.filter(key, sortCriteria, pageNo, pageSize, roleName));
     }
 }

@@ -31,7 +31,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT COUNT(u) FROM User u WHERE YEAR(u.createdDate) = :year AND MONTH(u.createdDate) = :month AND u.isEnabled=true")
     Long getMonthlyUserCounts(@Param("month") int month, @Param("year") int year);
 
-    @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r.name = 'ROLE_USER' " +
+    // TODO vấn đề lấy tất cả lại được cả admin nhưng khi seach thì không ra"
+    @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r.name = :roleName AND u.username != 'admin'" +
             "AND u.isEnabled = true AND u.isLocked = false " +
             "AND (:key IS NOT NULL AND (LOWER(u.name) LIKE %:key% " +
             "OR LOWER(u.username) LIKE %:key% " +
@@ -43,6 +44,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "CASE WHEN 'username:asc' IN :sortCriteria THEN u.username END ASC, " +
             "CASE WHEN 'username:desc' IN :sortCriteria THEN u.username END DESC")
     Page<User> filter(
+            @Param("roleName") String roleName,
             @Param("key") String key,
             @Param("sortCriteria") List<String> sortCriteria,
             Pageable pageable);

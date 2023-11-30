@@ -32,6 +32,7 @@ public interface UserService {
             String key,
             List<String> sortCriteria,
             int pageNo,
-            int pageSize
+            int pageSize,
+            String roleName
     );
 }

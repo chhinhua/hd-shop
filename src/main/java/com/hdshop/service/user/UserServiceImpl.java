@@ -133,11 +133,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse filter(String key, List<String> sortCriteria, int pageNo, int pageSize) {
+    public UserResponse filter(String key, List<String> sortCriteria, int pageNo, int pageSize, String roleName) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        Page<User> userPage = userRepository.filter(key, sortCriteria, pageable);
+        Page<User> userPage = userRepository.filter(roleName, key, sortCriteria, pageable);
 
         // get content for page object
         List<User> userList = userPage.getContent();
