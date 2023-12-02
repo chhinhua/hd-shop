@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,15 +41,19 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     @Override
     @Transactional
     public List<ProductSku> saveOrUpdateSkus(Long productId, List<ProductSku> skus) {
-        List<ProductSku> saveProductSkus = new ArrayList<>();
         Product product = getProductById(productId);
 
+        List<ProductSku> saveProductSkus = new ArrayList<>();
         for (ProductSku productSku : skus) {
-            Optional<ProductSku> existingProductSku = getProductSkuBySkuAndProductId(productSku.getSku(), productId);
+            List<String> valueNames = getValueNames(productSku.getOptionValues());
+            Optional<ProductSku> existingSku = productSkuRepository.findByProductIdAndValueNames(
+                    productId, valueNames, valueNames.size()
+            );
 
-            if (existingProductSku.isPresent()) {
-                updateExistingProductSku(existingProductSku.get(), productSku);
-                saveProductSkus.add(existingProductSku.get());
+            if (existingSku.isPresent()) {
+                updateExistingSku(existingSku.get(), productSku);
+                productSkuRepository.flush();
+                saveProductSkus.add(existingSku.get());
             } else {
                 ProductSku newProductSku = createNewProductSku(productSku, product);
                 saveProductSkus.add(newProductSku);
@@ -82,9 +87,19 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         if (valueNames.isEmpty()) {
             throw new InvalidException("value-names-must-not-be-empty");
         }
-        return productSkuRepository
-                .findByProductIdAndValueNames(productId, valueNames, valueNames.size())
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("sku-not-found-please-choose-anorther-style")));
+        ProductSku sku;
+        try {
+            sku = productSkuRepository.findByProductIdAndValueNames(productId, valueNames, valueNames.size()).get();
+        } catch (Exception e) {
+            throw new ResourceNotFoundException(getMessage("sku-not-found-please-choose-anorther-style"));
+        }
+        return sku;
+    }
+
+    private List<String> getValueNames(List<OptionValue> values) {
+        return values.stream()
+                .map(value -> value.getValueName())
+                .collect(Collectors.toList());
     }
 
     private List<OptionValue> getOptionValuesForSku(ProductSku sku, Product product) {
@@ -101,7 +116,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     private OptionValue getOrCreateOptionValue(OptionValue value, Product product) {
         Optional<OptionValue> newOptionValue = optionValueService
-                .getByValueNameAndProductId(value.getValueName(), product.getProductId());
+                .findByValueNameAndProductId(value.getValueName(), product.getProductId());
 
         return newOptionValue.orElse(value); // Return existing or follow new
     }
@@ -115,9 +130,8 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         return productSkuRepository.findBySkuAndProduct_ProductId(sku, productId);
     }
 
-    private void updateExistingProductSku(ProductSku existingProductSku, ProductSku newProductSku) {
+    private void updateExistingSku(ProductSku existingProductSku, ProductSku newProductSku) {
         existingProductSku.setPrice(newProductSku.getPrice());
-        // Add any other fields that need to be updated
     }
 
     private ProductSku createNewProductSku(ProductSku productSku, Product product) {
@@ -133,7 +147,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         List<OptionValue> valueList = new ArrayList<>();
 
         for (OptionValue value : optionValues) {
-            OptionValue existingOptionValue = getOptionValueByValueNameAndProductId(value.getValueName(), productId);
+            OptionValue existingOptionValue = optionValueService.findByValueNameAndProductId(value.getValueName(), productId).get();
             valueList.add(existingOptionValue);
         }
 
@@ -141,7 +155,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     }
 
     private OptionValue getOptionValueByValueNameAndProductId(String valueName, Long productId) {
-        return optionValueService.getByValueNameAndProductId(valueName, productId)
+        return optionValueService.findByValueNameAndProductId(valueName, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("OptionValue", "valueName and productId", valueName));
     }
 

@@ -19,6 +19,10 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.security.Principal;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Controller
 @RequiredArgsConstructor
@@ -97,9 +101,21 @@ public class VNPayController {
         String totalPrice = request.getParameter("vnp_Amount");
         String vnp_TxnRef = request.getParameter("vnp_TxnRef");
 
+        // Định dạng chuỗi ngày giờ thành LocalDateTime
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        LocalDateTime formatedPaymentTime = LocalDateTime.parse(paymentTime, formatter);
+
+        String formattedTotalPrice = totalPrice;
+        try {
+            double totalPriceValue = Double.parseDouble(totalPrice) / 100;
+            NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+            formattedTotalPrice = currencyFormat.format(totalPriceValue);
+        } catch (NumberFormatException e) {
+        }
+
         model.addAttribute("orderId", orderInfo);
-        model.addAttribute("totalPrice", totalPrice);
-        model.addAttribute("paymentTime", paymentTime);
+        model.addAttribute("totalPrice", formattedTotalPrice);
+        model.addAttribute("paymentTime", formatedPaymentTime);
         model.addAttribute("transactionId", transactionId);
 
         // TODO lưu transaction

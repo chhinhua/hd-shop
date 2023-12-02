@@ -24,6 +24,8 @@ public interface ProductService {
 
     void delete(final Long id);
 
+    ProductDTO addQuantity(final Long product_id, final Integer quantity);
+
     ProductResponse searchSortAndFilterProducts(
             Boolean sell,
             String searchTerm,

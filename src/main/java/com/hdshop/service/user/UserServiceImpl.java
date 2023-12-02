@@ -133,11 +133,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse filter(String key, List<String> sortCriteria, int pageNo, int pageSize) {
+    public UserResponse filter(String key, List<String> sortCriteria, int pageNo, int pageSize, String roleName) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        Page<User> userPage = userRepository.filter(key, sortCriteria, pageable);
+        Page<User> userPage = userRepository.filter(roleName, key, sortCriteria, pageable);
 
         // get content for page object
         List<User> userList = userPage.getContent();
@@ -189,12 +189,7 @@ public class UserServiceImpl implements UserService {
         if (request.getOldPassword().isBlank()) {
             throw new InvalidException(getMessage("new-password-must-not-be-empty"));
         }
-        if (!UserValidator.isValidPassword(request.getNewPassword())) {
-            throw new InvalidException(String.format("%s (%s)",
-                    getMessage("invalid-new-password"),
-                    String.format(getMessage("cannot-be-less-than-n-characters"), 8))
-            );
-        }
+        userValidator.validatePassword(request.getNewPassword());
     }
 
     @Override
@@ -218,7 +213,6 @@ public class UserServiceImpl implements UserService {
         updateUserProfile.setName(profile.getName());
         updateUserProfile.setEmail(profile.getEmail());
         updateUserProfile.setPhoneNumber(profile.getPhoneNumber());
-        updateUserProfile.setAvatarUrl(profile.getAvatarUrl());
         updateUserProfile.setGender(profile.getGender());
     }
 

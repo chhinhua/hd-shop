@@ -111,4 +111,13 @@ public class ProductController {
         ProductSku sku = skuService.findByProductIdAndValueNames(product_id, value_names);
         return ResponseEntity.ok(sku.getPrice());
     }
+
+    @Operation(summary = "Add product quantity")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bear Authentication")
+    @PutMapping("/add-quantity")
+    public ResponseEntity<ProductDTO> addQuantity(@RequestParam(value = "productId") Long product_id,
+                                                  @RequestParam(value = "quantity") Integer quantity) {
+        return ResponseEntity.ok(productService.addQuantity(product_id, quantity));
+    }
 }

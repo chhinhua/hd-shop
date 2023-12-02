@@ -6,10 +6,8 @@ import com.hdshop.dto.product.OptionDTO;
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.dto.product.ProductSkuDTO;
-import com.hdshop.entity.Category;
-import com.hdshop.entity.Option;
-import com.hdshop.entity.Product;
-import com.hdshop.entity.ProductSku;
+import com.hdshop.entity.*;
+import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
 import com.hdshop.service.category.CategoryService;
@@ -37,8 +35,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
+    private final OptionValueRepository valueRepository;
     private final CategoryRepository categoryRepository;
     private final FollowRepository followRepository;
+    private final ProductSkuRepository skuRepository;
+    private final OptionRepository optionRepository;
     private final ProductSkuService productSkuService;
     private final CategoryService categoryService;
     private final OptionService optionService;
@@ -58,9 +59,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDTO create(Product product) {
+        // validate input product
+        productValidator.validate(product);
+
         // find the product category based on its ID
-        Category category = categoryRepository.findByName(product.getCategory().getName())
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
+        Category category = categoryService.findByName(product.getCategory().getName());
 
         // build product
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
@@ -78,7 +81,6 @@ public class ProductServiceImpl implements ProductService {
         // normalize product information
         Product normalizedProduct = normalizeProduct(product);
 
-
         // save the product to the database
         Product newProduct = productRepository.save(normalizedProduct);
 
@@ -86,7 +88,7 @@ public class ProductServiceImpl implements ProductService {
         productSkuService.saveSkusFromProduct(newProduct);
 
         // convert the product to a ProductDTO object and return it
-        return mapToDTO(newProduct);
+        return mapToDTO(findById(newProduct.getProductId()));
     }
 
     /**
@@ -138,7 +140,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductDTO getOne(Long productId, Principal principal) {
-        Product product = getExistingProductById(productId);
+        Product product = findById(productId);
         ProductDTO dto = mapToDTO(product);
 
         if (principal == null) {
@@ -152,46 +154,123 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product findById(Long productId) {
-        return getExistingProductById(productId);
+        return productRepository.findById(productId).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("product-not-found"))
+        );
     }
 
     /**
      * Update a product.
      *
-     * @param productDTO Updated product information.
+     * @param dto Updated product information.
      * @param productId  Product ID to update.
      * @return Updated product DTO object.
      * @date 25-10-2023
      */
     @Override
     @Transactional
-    public ProductDTO update(ProductDTO productDTO, Long productId) {
-        // check if product already exists
-        Product existingProduct = getExistingProductById(productId);
+    public ProductDTO update(ProductDTO dto, Long productId) {
+        // validate product update data
+        productValidator.validateUpdate(dto);
 
-        // check if category already exists
-        Category category = categoryRepository.findByName(productDTO.getCategory().getName())
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
+        // Kiểm tra nếu sản phẩm đã tồn tại
+        Product existingProduct = findById(productId);
 
-        // set changes fields
-        setProductFields(productDTO, existingProduct, category);
+        // Kiểm tra nếu danh mục đã tồn tại
+        Category category = categoryService.findByName(dto.getCategory().getName());
 
-        // normalize product input
+        // Cập nhật các trường thay đổi
+        setProductFields(dto, existingProduct, category);
+
+        // Chuẩn hóa dữ liệu sản phẩm đầu vào
         Product normalizedProduct = normalizeProduct(existingProduct);
 
-        // save product
+        // Lưu sản phẩm đã cập nhật
         existingProduct = productRepository.save(normalizedProduct);
 
-        // save or update options & optionValues
-        List<Option> options = saveOrUpdateOptions(existingProduct, productDTO.getOptions());
-        existingProduct.setOptions(options);
+        // Lưu hoặc cập nhật Options và OptionValues
+        saveOrUpdateOptions(existingProduct, dto.getOptions());
 
-        // save or update productSkus
-        List<ProductSku> skus = saveOrUpdateSkus(existingProduct, productDTO.getSkus());
-        existingProduct.setSkus(skus);
+        // Lưu hoặc cập nhật ProductSkus
+        saveOrUpdateSkus(existingProduct, dto.getSkus());
 
-        return mapToDTO(existingProduct);
+        // Trả về DTO của sản phẩm sau khi cập nhật
+        return mapToDTO(findById(productId));
     }
+
+    private void updateOptionsAndValues(Product product, List<Option> options) {
+        List<Option> existingOptions = product.getOptions();
+
+        for (Option existingOption : existingOptions) {
+            boolean found = false;
+            for (Option updatedOption : options) {
+                if (existingOption.getOptionName().equals(updatedOption.getOptionName())) {
+                    found = true;
+
+                    // Update Option's details
+                    existingOption.setOptionName(updatedOption.getOptionName());
+
+                    // Update or create OptionValues
+                    updateOrCreateOptionValues(existingOption, updatedOption.getValues());
+
+                    break;
+                }
+            }
+
+            // If Option not found in updated list, remove it
+            if (!found) {
+                product.getOptions().remove(existingOption);
+                optionRepository.delete(existingOption);
+            }
+        }
+
+        // Save or create new Options
+        for (Option option : options) {
+            if (!existingOptions.contains(option)) {
+                Option persistedOption = optionRepository.save(option);
+                product.getOptions().add(persistedOption);
+
+                // Save or create OptionValues for new Options
+                updateOrCreateOptionValues(persistedOption, option.getValues());
+            }
+        }
+    }
+
+    private void updateOrCreateOptionValues(Option option, List<OptionValue> optionValues) {
+        List<OptionValue> existingValues = option.getValues();
+
+        for (OptionValue existingValue : existingValues) {
+            if (!optionValues.contains(existingValue)) {
+                valueRepository.delete(existingValue);
+            }
+        }
+
+        for (OptionValue value : optionValues) {
+            if (!existingValues.contains(value)) {
+                value.setOption(option);
+                valueRepository.save(value);
+            }
+        }
+    }
+
+    private void updateProductSkus(Product product, List<ProductSku> skus) {
+        List<ProductSku> existingSkus = product.getSkus();
+
+        for (ProductSku existingSku : existingSkus) {
+            if (!skus.contains(existingSku)) {
+                // Handle update or delete for existing SKU if necessary
+                // ...
+            }
+        }
+
+        for (ProductSku sku : skus) {
+            if (!existingSkus.contains(sku)) {
+                sku.setProduct(product);
+                skuRepository.save(sku);
+            }
+        }
+    }
+
 
     /**
      * Deactivate or activate a product based on its ID.
@@ -203,7 +282,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductDTO toggleActiveStatus(Long productId) {
-        Product existingProduct = getExistingProductById(productId);
+        Product existingProduct = findById(productId);
 
         existingProduct.setIsActive(!existingProduct.getIsActive());
 
@@ -222,7 +301,7 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductDTO toggleSellingStatus(Long productId) {
-        Product existingProduct = getExistingProductById(productId);
+        Product existingProduct = findById(productId);
 
         existingProduct.setIsSelling(!existingProduct.getIsSelling());
 
@@ -236,6 +315,18 @@ public class ProductServiceImpl implements ProductService {
         productRepository.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException(getMessage("product-not-found"))
         );
+    }
+
+    @Override
+    public ProductDTO addQuantity(Long product_id, Integer quantity) {
+        Product product = findById(product_id);
+        if (quantity < 1) {
+            throw new InvalidException(getMessage("the-additional-quantity-cannot-be-less-than-one"));
+        }
+        product.setQuantity(product.getQuantity() + quantity);
+        product.setQuantityAvailable(product.getQuantityAvailable() + quantity);
+        Product addQuantity = productRepository.save(product);
+        return mapToDTO(addQuantity);
     }
 
     @Override
@@ -310,51 +401,46 @@ public class ProductServiceImpl implements ProductService {
 
     @Transactional
     protected List<Option> saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
-        List<Option> optionListFromDTO = optionDTOList.stream()
-                .map(optionDTO -> modelMapper.map(optionDTO, Option.class))
+        List<Option> options = optionDTOList.stream()
+                .map(dto -> modelMapper.map(dto, Option.class))
                 .collect(Collectors.toList());
 
-        return optionService.saveOrUpdateOptionsByProductId(existingProduct.getProductId(), optionListFromDTO);
+        return optionService.saveOrUpdateOptions(existingProduct.getProductId(), options);
+    }
+
+    @Transactional
+    protected List<ProductSku> saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
+        List<ProductSku> skus = skuDTOList.stream()
+                .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
+                .collect(Collectors.toList());
+
+        return productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skus);
     }
 
     /**
-     * Set fields for product entity is values from productDTO and Category entity
+     * Build product object
      *
-     * @param productDTO
+     * @param dto
      * @param existingProduct
      * @param category
      */
-    private void setProductFields(ProductDTO productDTO, Product existingProduct, Category category) {
-        if (!Objects.equals(existingProduct.getCategory().getId(), productDTO.getCategoryId())) {
+    private void setProductFields(ProductDTO dto, Product existingProduct, Category category) {
+        if (!Objects.equals(existingProduct.getCategory().getId(), category.getId())) {
             existingProduct.setCategory(category);
         }
 
         // set fields
-        existingProduct.setName(productDTO.getName());
-        existingProduct.setDescription(productDTO.getDescription());
-        existingProduct.setPrice(productDTO.getPrice());
-        existingProduct.setListImages(productDTO.getListImages());
-        existingProduct.setQuantity(productDTO.getQuantity());
-        existingProduct.setQuantityAvailable(productDTO.getQuantityAvailable());
-        existingProduct.setPromotionalPrice(productDTO.getPromotionalPrice());
+        existingProduct.setQuantity(dto.getQuantity());
+        existingProduct.setPrice(dto.getPrice());
+        existingProduct.setPromotionalPrice(dto.getPromotionalPrice());
+        existingProduct.setDescription(dto.getDescription());
 
         // set unique slug for product
-        String uniqueSlug = slugGenerator.generateUniqueSlug(existingProduct, productDTO.getName());
-        existingProduct.setSlug(uniqueSlug);
-    }
-
-    protected List<ProductSku> saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
-        List<ProductSku> skuListFromDTO = skuDTOList.stream()
-                .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
-                .collect(Collectors.toList());
-
-        return productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skuListFromDTO);
-    }
-
-    private Product getExistingProductById(Long productId) {
-        return productRepository
-                .findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("product-not-found")));
+        if (!dto.getName().trim().equals(existingProduct.getName())) {
+            existingProduct.setName(dto.getName());
+            String uniqueSlug = slugGenerator.generateUniqueSlug(existingProduct, dto.getName());
+            existingProduct.setSlug(uniqueSlug);
+        }
     }
 
     public void setProductForChildEntity(Product product) {
@@ -377,14 +463,6 @@ public class ProductServiceImpl implements ProductService {
         ProductDTO dto = modelMapper.map(product, ProductDTO.class);
         dto.setCategoryName(product.getCategory().getName());
         return dto;
-    }
-
-    private boolean checkLiked(Long productId, String username) {
-        boolean liked = false;
-        if (username != null) {
-            liked = followRepository.existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(productId, username);
-        }
-        return liked;
     }
 
     private String getMessage(String code) {

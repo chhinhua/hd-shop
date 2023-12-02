@@ -40,7 +40,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "OR (:key IS NULL)) " +
             "ORDER BY " +
             "CASE WHEN 'id:asc' IN :sortCriteria THEN o.id END ASC, " +
-            "CASE WHEN 'id:desc' IN :sortCriteria THEN o.id END DESC ")
+            "CASE WHEN 'id:desc' IN :sortCriteria THEN o.id END DESC, " +
+            "CASE WHEN 'date:asc' IN :sortCriteria THEN o.createdDate END ASC, " +
+            "CASE WHEN 'date:desc' IN :sortCriteria THEN o.createdDate END DESC, " +
+            "CASE WHEN 'status:asc' IN :sortCriteria THEN o.status END ASC, " +
+            "CASE WHEN 'status:desc' IN :sortCriteria THEN o.status END DESC, " +
+            "CASE WHEN 'total:asc' IN :sortCriteria THEN o.total END ASC, "+
+            "CASE WHEN 'total:desc' IN :sortCriteria THEN o.total END DESC " )
     Page<Order> filter(
             @Param("status") EnumOrderStatus status,
             @Param("key") String key,

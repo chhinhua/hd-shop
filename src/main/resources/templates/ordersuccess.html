@@ -20,15 +20,18 @@
                 <tbody>
                 <tr>
                     <td>Thông tin đơn hàng:</td>
-                    <td><span th:text="${orderId}">[order ID]</span></td>
+                    <td><span>Thanh toán đơn đặt hàng trên Duck Shop</span></td>
                 </tr>
                 <tr>
                     <td>Tổng tiền:</td>
-                    <td><span th:text="${totalPrice}">[total price]</span></td>
+                    <td>
+                        <span th:text="${totalPrice}">[total price]</span>
+                    </td>
+
                 </tr>
                 <tr>
                     <td>Thời gian thanh toán:</td>
-                    <td><span th:text="${paymentTime}">[payment time]</span></td>
+                    <td><p th:text="${#temporals.format(paymentTime, 'dd-MM-yyyy HH:mm')}"></p></td>
                 </tr>
                 <tr>
                     <td>Mã giao dịch:</td>

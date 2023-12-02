@@ -2,7 +2,6 @@ package com.hdshop.service.address;
 
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.entity.Address;
-import com.hdshop.entity.Category;
 import com.hdshop.entity.User;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
@@ -30,7 +29,7 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public List<AddressDTO> getAllAddressForUser(Principal principal) {
         String username = principal.getName();
-        return addressRepository.findAllByUserUsername(username)
+        return addressRepository.findAllByUserUsernameAndIsDeletedIsFalse(username)
                 .stream()
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
@@ -47,6 +46,7 @@ public class AddressServiceImpl implements AddressService {
         Address address = modelMapper.map(addressDTO, Address.class);
         address.setUser(user);
         address.setIsDefault(user.getAddresses().isEmpty());
+        address.setIsDeleted(false);
 
         Address newAddress = addressRepository.save(address);
 
@@ -81,6 +81,7 @@ public class AddressServiceImpl implements AddressService {
         // Cập nhật các trường từ addressDTO vào existingAddress
         existingAddress.setFullName(address.getFullName());
         existingAddress.setPhoneNumber(address.getPhoneNumber());
+        existingAddress.setCity(address.getCity());
         existingAddress.setDistrict(address.getDistrict());
         existingAddress.setWard(address.getWard());
         existingAddress.setOrderDetails(address.getOrderDetails());
@@ -122,7 +123,7 @@ public class AddressServiceImpl implements AddressService {
         newDefaultAddress.setIsDefault(true);
         addressRepository.save(newDefaultAddress);
 
-        return addressRepository.findAllByUserUsername(username)
+        return addressRepository.findAllByUserUsernameAndIsDeletedIsFalse(username)
                 .stream()
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
@@ -132,7 +133,8 @@ public class AddressServiceImpl implements AddressService {
     public String deleteAddress(Long addressId, Principal principal) {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("address-not-found")));
-        addressRepository.delete(address);
+        address.setIsDeleted(true);
+        addressRepository.save(address);
 
         return getMessage("deleted-successfully");
     }

@@ -68,6 +68,9 @@ public class FollowServiceImpl implements FollowService {
             product.setFavoriteCount(product.getFavoriteCount() + 1);
         }
 
+        // save favoriteCount
+        productRepository.save(product);
+
         return mapEntityToDTO(followProduct);
     }
 

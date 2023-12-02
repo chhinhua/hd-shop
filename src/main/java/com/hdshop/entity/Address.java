@@ -34,6 +34,8 @@ public class Address {
 
     private Boolean isDefault;
 
+    private Boolean isDeleted;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;

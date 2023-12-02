@@ -28,6 +28,8 @@ public class ReviewDTO {
     private Long orderId;
 
     private Long itemId;
+
+    private String sku;
 }
 
 

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -143,8 +144,26 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private ReviewDTO mapEntityToDTO(Review review) {
-        return modelMapper.map(review, ReviewDTO.class);
+        ReviewDTO dto = modelMapper.map(review, ReviewDTO.class);
+        dto.setSku(getSkuValue(review.getOrderItem().getSku()));
+        return dto;
     }
+
+    private String getSkuValue(ProductSku sku) {
+        StringBuilder concatenatedValues = new StringBuilder();
+
+        sku.getOptionValues().forEach(v -> {
+            concatenatedValues.append(v.getValueName()).append(" - ");
+        });
+
+        // Remove the extra " - " at the end
+        if (concatenatedValues.length() > 0) {
+            concatenatedValues.setLength(concatenatedValues.length() - 3);
+        }
+
+        return concatenatedValues.toString();
+    }
+
 
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
