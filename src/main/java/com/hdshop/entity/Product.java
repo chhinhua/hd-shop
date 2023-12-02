@@ -87,6 +87,6 @@ public class Product extends BaseEntity {
 
     @OneToMany(
             mappedBy = "product",
-            cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+            cascade = {CascadeType.REMOVE})
     private List<ProductSku> skus;
 }

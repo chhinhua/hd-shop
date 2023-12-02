@@ -40,15 +40,15 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     @Override
     @Transactional
     public List<ProductSku> saveOrUpdateSkus(Long productId, List<ProductSku> skus) {
-        List<ProductSku> saveProductSkus = new ArrayList<>();
         Product product = getProductById(productId);
 
+        List<ProductSku> saveProductSkus = new ArrayList<>();
         for (ProductSku productSku : skus) {
-            Optional<ProductSku> existingProductSku = getProductSkuBySkuAndProductId(productSku.getSku(), productId);
+            Optional<ProductSku> existingSku = getProductSkuBySkuAndProductId(productSku.getSku(), productId);
 
-            if (existingProductSku.isPresent()) {
-                updateExistingProductSku(existingProductSku.get(), productSku);
-                saveProductSkus.add(existingProductSku.get());
+            if (existingSku.isPresent()) {
+                updateExistingSku(existingSku.get(), productSku);
+                saveProductSkus.add(existingSku.get());
             } else {
                 ProductSku newProductSku = createNewProductSku(productSku, product);
                 saveProductSkus.add(newProductSku);
@@ -105,7 +105,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     private OptionValue getOrCreateOptionValue(OptionValue value, Product product) {
         Optional<OptionValue> newOptionValue = optionValueService
-                .getByValueNameAndProductId(value.getValueName(), product.getProductId());
+                .findByValueNameAndProductId(value.getValueName(), product.getProductId());
 
         return newOptionValue.orElse(value); // Return existing or follow new
     }
@@ -119,7 +119,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         return productSkuRepository.findBySkuAndProduct_ProductId(sku, productId);
     }
 
-    private void updateExistingProductSku(ProductSku existingProductSku, ProductSku newProductSku) {
+    private void updateExistingSku(ProductSku existingProductSku, ProductSku newProductSku) {
         existingProductSku.setPrice(newProductSku.getPrice());
         // Add any other fields that need to be updated
     }
@@ -145,7 +145,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     }
 
     private OptionValue getOptionValueByValueNameAndProductId(String valueName, Long productId) {
-        return optionValueService.getByValueNameAndProductId(valueName, productId)
+        return optionValueService.findByValueNameAndProductId(valueName, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("OptionValue", "valueName and productId", valueName));
     }
 
