@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,10 +45,14 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
         List<ProductSku> saveProductSkus = new ArrayList<>();
         for (ProductSku productSku : skus) {
-            Optional<ProductSku> existingSku = getProductSkuBySkuAndProductId(productSku.getSku(), productId);
+            List<String> valueNames = getValueNames(productSku.getOptionValues());
+            Optional<ProductSku> existingSku = productSkuRepository.findByProductIdAndValueNames(
+                    productId, valueNames, valueNames.size()
+            );
 
             if (existingSku.isPresent()) {
                 updateExistingSku(existingSku.get(), productSku);
+                productSkuRepository.flush();
                 saveProductSkus.add(existingSku.get());
             } else {
                 ProductSku newProductSku = createNewProductSku(productSku, product);
@@ -91,6 +96,12 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         return sku;
     }
 
+    private List<String> getValueNames(List<OptionValue> values) {
+        return values.stream()
+                .map(value -> value.getValueName())
+                .collect(Collectors.toList());
+    }
+
     private List<OptionValue> getOptionValuesForSku(ProductSku sku, Product product) {
         List<OptionValue> optionValues = new ArrayList<>();
 
@@ -121,7 +132,6 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     private void updateExistingSku(ProductSku existingProductSku, ProductSku newProductSku) {
         existingProductSku.setPrice(newProductSku.getPrice());
-        // Add any other fields that need to be updated
     }
 
     private ProductSku createNewProductSku(ProductSku productSku, Product product) {
@@ -137,7 +147,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         List<OptionValue> valueList = new ArrayList<>();
 
         for (OptionValue value : optionValues) {
-            OptionValue existingOptionValue = getOptionValueByValueNameAndProductId(value.getValueName(), productId);
+            OptionValue existingOptionValue = optionValueService.findByValueNameAndProductId(value.getValueName(), productId).get();
             valueList.add(existingOptionValue);
         }
 

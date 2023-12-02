@@ -190,36 +190,9 @@ public class ProductServiceImpl implements ProductService {
 
         // Lưu hoặc cập nhật Options và OptionValues
         saveOrUpdateOptions(existingProduct, dto.getOptions());
-//
-//        // Lưu hoặc cập nhật ProductSkus
-//        saveOrUpdateSkus(existingProduct, dto.getSkus());
-
-        // Trả về DTO của sản phẩm sau khi cập nhật
-        return mapToDTO(findById(productId));
-    }
-
-    @Override
-    public ProductDTO update2(Product product, Long productId) {
-        // Kiểm tra nếu sản phẩm đã tồn tại
-        Product existingProduct = findById(productId);
-
-        // Kiểm tra nếu danh mục đã tồn tại
-        Category category = categoryService.findByName(product.getCategory().getName());
-
-        // Cập nhật các trường thay đổi
-        //setProductFields(product, existingProduct, category);
-
-        // Chuẩn hóa dữ liệu sản phẩm đầu vào
-        Product normalizedProduct = normalizeProduct(existingProduct);
-
-        // Lưu sản phẩm đã cập nhật
-        existingProduct = productRepository.save(normalizedProduct);
-
-        // Lưu hoặc cập nhật Options và OptionValues
-        updateOptionsAndValues(existingProduct, product.getOptions());
 
         // Lưu hoặc cập nhật ProductSkus
-        updateProductSkus(existingProduct, product.getSkus());
+        saveOrUpdateSkus(existingProduct, dto.getSkus());
 
         // Trả về DTO của sản phẩm sau khi cập nhật
         return mapToDTO(findById(productId));
@@ -435,12 +408,13 @@ public class ProductServiceImpl implements ProductService {
         return optionService.saveOrUpdateOptions(existingProduct.getProductId(), options);
     }
 
+    @Transactional
     protected List<ProductSku> saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
-        List<ProductSku> skuListFromDTO = skuDTOList.stream()
+        List<ProductSku> skus = skuDTOList.stream()
                 .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
                 .collect(Collectors.toList());
 
-        return productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skuListFromDTO);
+        return productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skus);
     }
 
     /**
