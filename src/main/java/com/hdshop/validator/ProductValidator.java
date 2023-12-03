@@ -28,6 +28,11 @@ public class ProductValidator {
         if (product.getPromotionalPrice() != null && product.getPromotionalPrice().compareTo(BigDecimal.ZERO) < 0) {
             throw new InvalidException("promotional-price-must-not-be-less-than-zero");
         }
+        product.getSkus().forEach(sku -> {
+            if (sku.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+                throw new InvalidException("sku-price-must-not-be-less-than-zero");
+            }
+        });
     }
 
     public void validateUpdate(ProductDTO product) {

@@ -8,6 +8,7 @@ import com.hdshop.entity.User;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.UserRepository;
+import com.hdshop.validator.ProductValidator;
 import com.hdshop.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -21,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,7 @@ public class UserServiceImpl implements UserService {
     private final MessageSource messageSource;
     private final PasswordEncoder passwordEncoder;
     private final UserValidator userValidator;
+    private final ProductValidator appValidator;
 
     @Override
     public UserDTO getUserById(Long id) {
@@ -137,10 +140,17 @@ public class UserServiceImpl implements UserService {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
-        Page<User> userPage = userRepository.filter(roleName, key, sortCriteria, pageable);
+        String keyValue = key;
+        if (key != null) {
+            keyValue = appValidator.normalizeInputString(key);
+        }
+        Page<User> userPage = userRepository.filter(roleName, keyValue, sortCriteria, pageable);
 
         // get content for page object
-        List<User> userList = userPage.getContent();
+        List<User> userList = userPage.getContent().stream()
+                .filter(user -> user.getRoles().stream().noneMatch(role -> role.getName().equals("ROLE_ADMIN")))
+                .collect(Collectors.toList());
+
 
         List<UserDTO> content = userList.stream()
                 .map(this::mapToDTO)

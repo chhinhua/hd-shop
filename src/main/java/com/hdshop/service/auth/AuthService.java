@@ -10,6 +10,8 @@ public interface AuthService {
 
     LoginResponse login(final LoginDTO loginDTO);
 
+    LoginResponse loginAdmin(final LoginDTO loginDTO);
+
     String sendOTP_ByEmail(final String email);
 
     String sendOTP_ByUsername(final String username);

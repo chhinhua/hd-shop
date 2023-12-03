@@ -15,6 +15,7 @@ import com.hdshop.service.user.UserService;
 import com.hdshop.utils.OtpUtils;
 import com.hdshop.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.MailException;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,6 +52,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserService userService;
     private final MessageSource messageSource;
     private final UserValidator userValidator;
+    private final ModelMapper modelMapper;
 
     /**
      * Handles user login based on the provided login credentials.
@@ -94,6 +97,17 @@ public class AuthServiceImpl implements AuthService {
         } catch (BadCredentialsException exception) {
             throw new com.hdshop.exception.BadCredentialsException(getMessage("username-or-password-incorrect"));
         }
+    }
+
+    @Override
+    public LoginResponse loginAdmin(LoginDTO loginDTO) {
+        Optional<User> user = userRepository.findByUsernameOrEmail(loginDTO.getUsernameOrEmail(), loginDTO.getUsernameOrEmail());
+        if (user.isPresent()) {
+            if (!user.get().getRoles().stream().anyMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
+                throw new RuntimeException(getMessage("username-or-password-incorrect"));
+            }
+        }
+        return login(loginDTO);
     }
 
     /**

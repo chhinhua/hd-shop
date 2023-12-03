@@ -25,8 +25,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -36,7 +38,6 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final OptionValueRepository valueRepository;
-    private final CategoryRepository categoryRepository;
     private final FollowRepository followRepository;
     private final ProductSkuRepository skuRepository;
     private final OptionRepository optionRepository;
@@ -75,6 +76,7 @@ public class ProductServiceImpl implements ProductService {
         product.setRating(0f);
         product.setFavoriteCount(0);
         product.setNumberOfRatings(0);
+        product.setPromotionalPrice(BigDecimal.ZERO);
         product.setQuantityAvailable(product.getQuantity());
         setProductForChildEntity(product);
 
@@ -154,9 +156,23 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product findById(Long productId) {
-        return productRepository.findById(productId).orElseThrow(() ->
+        Product product = productRepository.findById(productId).orElseThrow(() ->
                 new ResourceNotFoundException(getMessage("product-not-found"))
         );
+
+        // Sắp xếp danh sách SKU theo valueName của Option có tên "size"
+        List<ProductSku> skus = product.getSkus();
+        skus.sort(Comparator.comparing(sku -> getValueNameForSizeOption(sku)));
+        product.setSkus(skus);
+
+        return product;
+    }
+    private String getValueNameForSizeOption(ProductSku sku) {
+        return sku.getOptionValues().stream()
+                .filter(optionValue -> optionValue.getOption().getOptionName().equalsIgnoreCase("size"))
+                .findFirst()
+                .map(OptionValue::getValueName)
+                .orElse("");
     }
 
     /**

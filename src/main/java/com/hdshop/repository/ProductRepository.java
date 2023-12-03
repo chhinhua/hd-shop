@@ -26,6 +26,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND (:key IS NULL OR LOWER(p.name) LIKE %:key%) " +
             "AND (:cateNames IS NULL OR p.category.name IN :cateNames) " +
             "ORDER BY " +
+            "CASE WHEN 'random' IN :sortCriteria THEN RAND() END, " +
             "CASE WHEN 'id:asc' IN :sortCriteria THEN p.productId END ASC, " +
             "CASE WHEN 'id:desc' IN :sortCriteria THEN p.productId END DESC, " +
             "CASE WHEN 'price:asc' IN :sortCriteria THEN p.price END ASC, " +
@@ -34,6 +35,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "CASE WHEN 'favorite:desc' IN :sortCriteria THEN p.favoriteCount END DESC, " +
             "CASE WHEN 'review:asc' IN :sortCriteria THEN p.numberOfRatings END ASC, " +
             "CASE WHEN 'review:desc' IN :sortCriteria THEN p.numberOfRatings END DESC, " +
+            "CASE WHEN 'sold:asc' IN :sortCriteria THEN p.sold END ASC, " +
+            "CASE WHEN 'sold:desc' IN :sortCriteria THEN p.sold END DESC, " +
+            "CASE WHEN 'available:asc' IN :sortCriteria THEN p.quantityAvailable END ASC, " +
+            "CASE WHEN 'available:desc' IN :sortCriteria THEN p.quantityAvailable END DESC, " +
             "CASE WHEN 'rating:asc' IN :sortCriteria THEN p.rating END ASC, " +
             "CASE WHEN 'rating:desc' IN :sortCriteria THEN p.rating END DESC")
     Page<Product> searchSortAndFilterProducts(
