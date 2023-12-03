@@ -16,6 +16,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -131,7 +132,9 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     }
 
     private void updateExistingSku(ProductSku existingProductSku, ProductSku newProductSku) {
-        existingProductSku.setPrice(newProductSku.getPrice());
+        if (newProductSku.getPrice() != null && newProductSku.getPrice().compareTo(BigDecimal.ZERO) > 0) {
+            existingProductSku.setPrice(newProductSku.getPrice());
+        }
     }
 
     private ProductSku createNewProductSku(ProductSku productSku, Product product) {
@@ -152,11 +155,6 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         }
 
         return valueList;
-    }
-
-    private OptionValue getOptionValueByValueNameAndProductId(String valueName, Long productId) {
-        return optionValueService.findByValueNameAndProductId(valueName, productId)
-                .orElseThrow(() -> new ResourceNotFoundException("OptionValue", "valueName and productId", valueName));
     }
 
     private String getMessage(String code) {

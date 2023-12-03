@@ -53,9 +53,9 @@ public class FollowServiceImpl implements FollowService {
             followProduct = followRepository.save(changeDeleted);
 
             if (changeDeleted.getIsDeleted()) {
-                product.setFavoriteCount(product.getFavoriteCount() + 1);
-            } else {
                 product.setFavoriteCount(product.getFavoriteCount() - 1);
+            } else {
+                product.setFavoriteCount(product.getFavoriteCount() + 1);
             }
         } else {
             // Build follow

@@ -17,7 +17,7 @@ spring:
                     time_zone: Asia/Ho_Chi_Minh
         show-sql: true
     profiles:
-        active: dev
+        active: prod
     mail:
         default-encoding: UTF-8
         host: smtp.gmail.com

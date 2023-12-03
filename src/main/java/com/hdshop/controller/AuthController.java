@@ -38,12 +38,12 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-//    @Operation(summary = "Signin account")
-//    @PostMapping(value = {"/admin/signin", "/admin/login"})
-//    public ResponseEntity<LoginResponse> loginForAdmin(@Valid @RequestBody LoginDTO loginDTO) {
-//        LoginResponse response = authService.login(loginDTO);
-//        return ResponseEntity.ok(response);
-//    }
+    @Operation(summary = "Signin account")
+    @PostMapping(value = {"/admin/signin", "/admin/login"})
+    public ResponseEntity<LoginResponse> loginForAdmin(@Valid @RequestBody LoginDTO loginDTO) {
+        LoginResponse response = authService.loginAdmin(loginDTO);
+        return ResponseEntity.ok(response);
+    }
 
     @Operation(summary = "Send OTP by email address")
     @PostMapping("/otp/send")
