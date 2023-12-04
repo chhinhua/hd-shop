@@ -2,29 +2,25 @@ package com.hdshop.service.product.impl;
 
 import com.hdshop.entity.Option;
 import com.hdshop.entity.OptionValue;
-import com.hdshop.entity.Product;
 import com.hdshop.repository.OptionRepository;
 import com.hdshop.repository.OptionValueRepository;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.OptionValueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class OptionServiceImpl implements OptionService {
     private final OptionRepository optionRepository;
-    private final OptionValueService optionValueService;
-    private final OptionValueRepository optionValueRepository;
-
-    @Override
-    public List<Option> addOptions(Long productId, List<Option> options) {
-        return null;
-    }
+    private final OptionValueService valueService;
+    private final OptionValueRepository valueRepository;
 
     /**
      * Lưu danh sách option ứng vs product vào database
@@ -33,64 +29,61 @@ public class OptionServiceImpl implements OptionService {
      * @return option list
      */
     @Override
-    public List<Option> saveOrUpdateOptionsByProductId(Long productId, List<Option> options) {
+    public List<Option> saveOrUpdateOptions(Long productId, List<Option> options) {
         List<Option> savedOptions = new ArrayList<>();
         for (Option option : options) {
 
-            //check existing option
-            Option existingOption = optionRepository
-                    .findByOptionNameAndProduct_ProductId(option.getOptionName(), productId)
-                    .orElse(option);
+            // check existing option
+            Optional<Option> existingOption = optionRepository
+                    .findByOptionNameAndProduct_ProductId(option.getOptionName(), productId);
 
-            List<OptionValue> newListOptionValues = new ArrayList<>();
-            for (OptionValue value : option.getValues()) {
-                Optional<OptionValue> existingOptionValue = optionValueService
-                        .getByValueNameAndProductId(value.getValueName(), productId);
+            if (existingOption.isPresent()) {
+                for (OptionValue value : option.getValues()) {
+                    Optional<OptionValue> existingOptionValue = valueService
+                            .findByValueNameAndProductId(value.getValueName(), productId);
 
-                // Kiểm tra nếu đã tồn tại optionvalue thì thay đổi imageUrl mới
-                // Nếu không tồn tại thì set option cho nó và set nó cho option
-                // Khi lưu option nó sẽ được lưu
-                if (existingOptionValue.isPresent()) {
-                    existingOptionValue.get().setImageUrl(value.getImageUrl());
-                    newListOptionValues.add(existingOptionValue.get());
-                } else {
-                    value.setOption(existingOption);
-                    newListOptionValues.add(optionValueRepository.save(value));
+                    // Kiểm tra nếu đã tồn tại optionvalue thì thay đổi imageUrl mới
+                    // Nếu không tồn tại thì set option cho nó và set nó cho option
+                    // Khi lưu option nó sẽ được lưu
+                    if (existingOptionValue.isPresent()) {
+                        existingOptionValue.get().setImageUrl(value.getImageUrl());
+                    } else {
+                        value.setOption(existingOption.get());
+                        existingOption.get().getValues().add(valueRepository.save(value));
+                    }
                 }
-            }
 
-            existingOption.setValues(newListOptionValues);
-            savedOptions.add(optionRepository.save(existingOption));
+                Option updateOption = optionRepository.saveAndFlush(existingOption.get());
+
+                deleteUnusedValues(updateOption, option.getValues());
+
+                savedOptions.add(updateOption);
+            }
         }
 
         return savedOptions.stream().toList();
     }
 
-    @Override
-    public List<Option> saveOptionsFromProduct(Product product) {
-        List<Option> savedOptions = new ArrayList<>();
-        for (Option option : product.getOptions()) {
+    @Transactional
+    protected void deleteUnusedValues(Option existingOption, List<OptionValue> newOptionValues) {
+        List<OptionValue> existingOptionValues = existingOption.getValues();
 
-            //check existing option
-            Option existingOption = optionRepository
-                    .findByOptionNameAndProduct_ProductId(option.getOptionName(), product.getProductId())
-                    .orElse(option);
+        // Xác định các OptionValues không còn được sử dụng
+        List<OptionValue> optionValuesToDelete = existingOptionValues.stream()
+                .filter(optionValue -> !valueNameExists(optionValue, newOptionValues))
+                .collect(Collectors.toList());
 
-            List<OptionValue> newOptionValues = new ArrayList<>();
-            for (OptionValue value : existingOption.getValues()) {
-                Optional<OptionValue> newOptionValue = optionValueService
-                        .getByValueNameAndProductId(value.getValueName(), product.getProductId());
-
-                if (newOptionValue.isPresent()) {
-                    newOptionValues.add(newOptionValue.get());
-                } else {
-                    newOptionValues.add(optionValueRepository.save(value));
-                }
-            }
-
-            existingOption.setValues(newOptionValues);
-            savedOptions.add(optionRepository.save(existingOption));
+        // Xóa các OptionValues không còn được sử dụng khỏi cơ sở dữ liệu
+        for (OptionValue optionValue : optionValuesToDelete) {
+            existingOption.getValues().remove(optionValue);
+            valueRepository.delete(optionValue);
         }
-        return savedOptions.stream().toList();
     }
+
+    private boolean valueNameExists(OptionValue optionValue, List<OptionValue> newOptionValues) {
+        String valueNameToMatch = optionValue.getValueName();
+        return newOptionValues.stream()
+                .anyMatch(newOptionValue -> newOptionValue.getValueName().equals(valueNameToMatch));
+    }
+
 }

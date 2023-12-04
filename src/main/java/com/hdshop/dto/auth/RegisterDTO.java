@@ -13,14 +13,9 @@ import lombok.Setter;
 @AllArgsConstructor
 @Hidden
 public class RegisterDTO {
-    @NotBlank(message = "Username is required")
-    @Pattern(regexp = "^[a-zA-Z0-9]{4,}$", message = "Invalid username")
     private String username;
 
-    @NotEmpty(message = "Email is required")
-    @Email(message = "Email is invalid")
     private String email;
 
-    @Size(min = 8, message = "Password must be minimum 8 characters")
     private String password;
 }

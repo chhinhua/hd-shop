@@ -1,5 +1,7 @@
 package com.hdshop.entity;
 
+import com.hdshop.utils.EnumOrderStatus;
+import com.hdshop.utils.EnumPaymentType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,17 +27,25 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String vnpTxnRef;
+
     @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private EnumOrderStatus status;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private EnumPaymentType paymentType;
+
+    private Integer totalItems;
 
     private BigDecimal total;
 
     private String note;
 
-    private Boolean isPaidBefore = false;
+    private Boolean isPaidBefore;
 
-    // TODO thiết kết kiểu thanh toán (enum or string)
-    private String paymentType;
+    private Boolean isDeleted;
 
     @CreatedBy
     private String createdBy;
@@ -51,9 +61,12 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "address_id")
     private Address address;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order")
     private List<Review> reviews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(
+            mappedBy = "order",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE, CascadeType.DETACH}
+    )
     private List<OrderItem> orderItems = new ArrayList<>();
 }

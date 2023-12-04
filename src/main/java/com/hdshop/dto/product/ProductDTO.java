@@ -1,5 +1,7 @@
 package com.hdshop.dto.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hdshop.dto.category.CategoryDTO;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -21,45 +23,44 @@ import java.util.List;
 public class ProductDTO {
     private Long id;
 
-    @NotBlank(message = "Product name must not be empty")
     private String name;
 
-    @NotBlank(message = "Product description must not be empty")
-    @Size(max = 1000, message = "Product description must not exceed 1000 characters")
     private String description;
 
     private BigDecimal price;
 
-    @Min(value = 1, message = "Quantity must be larger than 1")
-    @NotNull(message = "Quantity is required")
     private Integer quantity;
 
-    @Min(value = 1, message = "Quantity must be larger than 1")
-    @NotNull(message = "Quantity is required")
     private int quantityAvailable;
 
-    @NotNull(message = "CategoryId is required")
     private Long categoryId;
+
+    private String categoryName;
 
     private String slug;
 
     private BigDecimal promotionalPrice;
 
-    private int sold = 0;
+    private int sold;
 
-    private float rating = 0;
+    private float rating;
 
-    private int numberOfRatings = 0;
+    private int numberOfRatings;
 
-    private int favoriteCount = 0;
+    private int favoriteCount;
 
-    private Boolean isActive = true;
+    private boolean liked;
 
-    private Boolean isSelling = true;
+    private Boolean isActive;
 
-    private Date createdDate;
+    private Boolean isSelling;
 
-    private Date lastModifiedDate;
+    private String createdDate;
+
+    private String lastModifiedDate;
+
+    private CategoryDTO category;
+
 
     private String createdBy;
 

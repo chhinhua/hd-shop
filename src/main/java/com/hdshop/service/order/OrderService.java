@@ -1,19 +1,56 @@
 package com.hdshop.service.order;
 
+import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
+import com.hdshop.dto.order.OrderPageResponse;
+import com.hdshop.dto.order.OrderResponse;
+import com.hdshop.entity.Order;
 
+import java.security.Principal;
 import java.util.List;
 
 public interface OrderService {
-    OrderDTO createOrder(final OrderDTO order);
+    OrderResponse addOrder(final OrderDTO order, final Principal principal);
 
-    void deleteOrderById(final Long orderId);
+    OrderResponse createOrderFromUserCart(final OrderDTO order, final Principal principal);
 
-    OrderDTO getOrderById(final Long orderId);
+    OrderResponse createOrderWithVNPay(final OrderDTO order, final String username, final String vnp_TxnRef);
 
-    OrderDTO updateStatus(final Long orderId, final String status);
+    OrderResponse getOrderById(final Long orderId);
 
-    List<OrderDTO> getOrdersByUsername(final String username);
+    Order findById(final Long orderId);
 
-    List<OrderDTO> getOrdersByUserId(final Long userId);
+    Order findByItemId(final Long itemId);
+
+    String isDeletedOrderById(final Long orderId);
+
+    String deleteOrderById(final Long orderId);
+
+    OrderResponse updateStatus(final Long orderId, final String statusValue);
+
+    List<OrderResponse> getOrdersByUsername(final String username);
+
+    List<OrderResponse> getOrdersByUserId(final Long userId);
+
+    List<OrderResponse> findForUserByStatus(final String value, final Principal principal);
+
+    List<OrderResponse> findByStatus(final String value);
+
+    List<OrderResponse> getListOrderByCurrentUser(final Principal principal);
+
+    OrderPageResponse getAllOrders(final int pageNo, final int pageSize);
+
+    CheckOutDTO getDataFromUserInfor(final Principal principal);
+
+    void paymentCompleted(final String vnp_TxnRef);
+
+    void paymentFailed(final String vnp_TxnRef);
+
+    OrderPageResponse filter(
+            String statusValue,
+            String key,
+            List<String> sortCriteria,
+            int pageNo,
+            int pageSize
+    );
 }

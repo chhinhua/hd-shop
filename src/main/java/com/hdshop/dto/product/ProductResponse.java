@@ -14,7 +14,7 @@ import java.util.List;
 @Hidden
 @Schema(description = "Product Response Information")
 public class ProductResponse {
-    @Schema(description = "Post Content")
+    @Schema(description = "Product Content")
     private List<ProductDTO> content;
 
     @Schema(description = "Page Number")
@@ -31,4 +31,7 @@ public class ProductResponse {
 
     @Schema(description = "Is it the last page?")
     private boolean last;
+
+    @Schema(description = "Is it the total element in last page?")
+    private long lastPageSize;
 }

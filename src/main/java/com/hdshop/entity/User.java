@@ -9,8 +9,9 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -32,30 +33,29 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
-    private String firstName;
-
-    private String lastName;
+    private String name;
 
     @Column(nullable = false, unique = true)
     private String email;
-
-    @Column(unique = true)
-    private String id_card;
 
     @Column(unique = true)
     private String phoneNumber;
 
     private String gender;
 
-    private LocalDate dateOfBirth;
-
     private String avatarUrl;
 
-    private Boolean isEnabled = false;
+    private Boolean isEnabled;
 
-    private Boolean isEmailActive = false;
+    private boolean isLocked;
 
-    private Boolean isPhoneActive = false;
+    private Boolean isEmailActive;
+
+    private Boolean isPhoneActive;
+
+    private String otp;
+
+    private LocalDateTime otpCreatedTime;
 
     @CreatedBy
     private String createdBy;
@@ -69,11 +69,17 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Review> reviews = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
-    private Set<Role> roles;
+    @ManyToMany(
+            fetch = FetchType.EAGER,
+            cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}
+    )
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
+    )
+    private Set<Role> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
+    private List<Follow> userFollowProducts = new ArrayList<>();
 }

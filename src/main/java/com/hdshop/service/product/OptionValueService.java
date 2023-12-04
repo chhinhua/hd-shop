@@ -5,5 +5,7 @@ import com.hdshop.entity.OptionValue;
 import java.util.Optional;
 
 public interface OptionValueService {
-    Optional<OptionValue> getByValueNameAndProductId(final String valueName, final Long productId);
+    Optional<OptionValue> findByValueNameAndProductId(final String valueName, final Long productId);
+
+    OptionValue finById(final Long valueId);
 }

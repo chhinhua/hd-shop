@@ -13,7 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Optional;
 
 @Configuration
-@EnableJpaAuditing
+@EnableJpaAuditing(dateTimeProviderRef = "dateTimeProvider")
 public class AuditingConfig implements AuditorAware<String> {
     @Override
     public Optional<String> getCurrentAuditor() {
@@ -25,7 +25,7 @@ public class AuditingConfig implements AuditorAware<String> {
                 !authentication.isAuthenticated() ||
                     authentication instanceof AnonymousAuthenticationToken
         ) {
-            return Optional.empty();
+            return Optional.of("system");
         }
 
         if (authentication.getPrincipal() instanceof User)

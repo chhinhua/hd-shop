@@ -5,6 +5,8 @@ import com.hdshop.security.JwtAuthenticationFilter;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,6 +23,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -33,8 +37,15 @@ import org.springframework.security.web.authentication.logout.HttpStatusReturnin
         scheme = "bearer"
 )
 public class SecurityConfig {
+    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
+    private final JwtAuthenticationFilter authenticationFilter;
+    private final CorsConfigurationSource configurationSource;
     private static final String[] WHITE_LIST_URL = {
+            "/api/v1/image/**",
+            "/api/v1/vnpay/**",
+            "/vnpay-payment",
             "/api/v1/auth/**",
+            "/api/v1/users/password/forgot",
             "/swagger-ui/**",
             "/v2/api-docs",
             "/v3/api-docs",
@@ -46,9 +57,6 @@ public class SecurityConfig {
             "/webjars/**",
             "/swagger-ui.html"
     };
-
-    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
-    private final JwtAuthenticationFilter authenticationFilter;
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
@@ -72,6 +80,8 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .formLogin().disable()
+                .cors().configurationSource(configurationSource)
+                .and()
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers(WHITE_LIST_URL).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()

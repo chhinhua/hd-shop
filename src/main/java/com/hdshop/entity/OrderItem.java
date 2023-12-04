@@ -23,7 +23,11 @@ public class OrderItem extends BaseEntity {
 
     private Integer quantity;
 
+    private BigDecimal price;
+
     private BigDecimal subTotal;
+
+    private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
@@ -32,4 +36,11 @@ public class OrderItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sku_id")
+    private ProductSku sku;
+
+    @OneToOne(mappedBy = "orderItem")
+    private Review review;
 }

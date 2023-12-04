@@ -37,21 +37,21 @@ public class Product extends BaseEntity {
 
     private BigDecimal promotionalPrice;
 
-    private Integer quantity = 0;
+    private Integer quantity;
 
-    private Integer quantityAvailable = 0;
+    private Integer quantityAvailable;
 
-    private Integer sold = 0;
+    private Integer sold;
 
     private Float rating;
 
-    private Integer numberOfRatings = 0;
+    private Integer numberOfRatings;
 
-    private Integer favoriteCount = 0;
+    private Integer favoriteCount;
 
-    private Boolean isActive = true;
+    private Boolean isActive;
 
-    private Boolean isSelling = true;
+    private Boolean isSelling;
 
     @CreatedBy
     private String createdBy;
@@ -67,17 +67,17 @@ public class Product extends BaseEntity {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.REMOVE)
     private List<Review> reviews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "product")
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private List<CartItem> cartItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "product")
-    private List<UserFollowProduct> userFollowProducts = new ArrayList<>();
+    private List<Follow> userFollowProducts = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "product",
@@ -87,20 +87,6 @@ public class Product extends BaseEntity {
 
     @OneToMany(
             mappedBy = "product",
-            cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+            cascade = {CascadeType.REMOVE})
     private List<ProductSku> skus;
-
-    @PrePersist
-    @PreUpdate
-    public void prePersist() {
-        // Set this product for options
-        for (Option option : options) {
-            option.setProduct(this);
-        }
-
-        // Set this product for skus
-        for (ProductSku sku : skus) {
-            sku.setProduct(this);
-        }
-    }
 }

@@ -4,11 +4,12 @@ import lombok.Getter;
 
 @Getter
 public enum EnumOrderStatus {
-    PENDING_PROCESSING("PENDING_PROCESSING", "Đang chờ xử lý"),
+    ORDERED("ORDERED", "Đã đặt hàng"),
     PROCESSING("PROCESSING", "Đang xử lý"),
-    SHIPPED("SHIPPED", "Đã gửi"),
+    SHIPPING("SHIPPING", "Đang giao"),
     DELIVERED("DELIVERED", "Đã giao"),
-    CANCELED("CANCELED", "Đã hủy");
+    CANCELED("CANCELED", "Đã hủy"),
+    WAIT_FOR_PAY("WAIT_FOR_PAY", "Chờ thanh toán");
 
     private final String key;
 

@@ -4,8 +4,10 @@ import com.hdshop.exception.APIException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +16,9 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
+    @Autowired
+    private MessageSource messageSource;
+
     @Value("${app.jwt-secret}")
     private String jwtSecret;
 
@@ -84,14 +89,32 @@ public class JwtTokenProvider {
                     .parse(token);
             return true;
 
-        } catch (MalformedJwtException exception) {
-            throw new APIException(HttpStatus.BAD_REQUEST, "Invalid JWT Token");
+        } catch (MalformedJwtException | SignatureException exception) {
+            throw new APIException(getMessage("invalid-jwt-token"));
         } catch (ExpiredJwtException exception) {
-            throw new APIException(HttpStatus.BAD_REQUEST, "Expired JWT Token");
+            throw new APIException(getMessage("expired-jwt-token"));
         } catch (UnsupportedJwtException exception) {
-            throw new APIException(HttpStatus.BAD_REQUEST, "Unsupported JWT Token");
+            throw new APIException(getMessage("unsupported-jwt-token"));
         } catch (IllegalArgumentException exception) {
-            throw new APIException(HttpStatus.BAD_REQUEST, "JWT claims string is empty");
+            throw new APIException(getMessage("jwt-claims-string-is-empty"));
         }
+
+        // TODO chưa handle được jwt ra message
+    }
+
+    public boolean checkExpiredToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(key())
+                    .build()
+                    .parse(token);
+            return true;
+        } catch (ExpiredJwtException exception) {
+           return false;
+        }
+    }
+
+    private String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 }

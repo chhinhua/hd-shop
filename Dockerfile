@@ -1,8 +1,9 @@
-FROM openjdk:17
+FROM maven:3.8.5-openjdk-17 AS build
+COPY . .
+RUN mvn clean package -DskipTests
 
+FROM openjdk:17.0.1-jdk-slim
+COPY --from=build /target/hdshop-0.0.1-SNAPSHOT.jar hdshop.jar
 EXPOSE 8080
-
-ADD target/hdshop-0.0.1-SNAPSHOT.jar hdshop.jar
-
 ENTRYPOINT ["java", "-jar", "/hdshop.jar"]
 
