@@ -53,4 +53,8 @@ public interface OrderService {
             int pageNo,
             int pageSize
     );
+
+    OrderResponse makePaymentForCOD(final OrderDTO order, final Long orderId);
+
+    void makePaymentForVNPAY(final OrderDTO dto, final Long orderId);
 }

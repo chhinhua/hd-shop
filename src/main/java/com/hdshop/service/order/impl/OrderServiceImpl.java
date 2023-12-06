@@ -1,5 +1,6 @@
 package com.hdshop.service.order.impl;
 
+import com.hdshop.config.VNPayConfig;
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
@@ -302,6 +303,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     @Override
     public void paymentCompleted(String vnp_TxnRef) {
+        // TODO must optimize code here
         Order order = orderRepository.findByVnpTxnRef(vnp_TxnRef)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
 
@@ -356,6 +358,40 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             throw new InvalidException(getMessage("list-order-is-empty"));
         }
+    }
+
+    @Override
+    public OrderResponse makePaymentForCOD(OrderDTO dto, Long orderId) {
+        // TODO must test & debug
+        Order order = findById(orderId);
+        Address newAddress = getAddressById(dto.getAddressId());
+
+        // set fields
+        order.setTotal(dto.getTotal());
+        order.setNote(dto.getNote());
+        order.setAddress(newAddress);
+        order.setStatus(EnumOrderStatus.ORDERED);
+        order.setPaymentType(EnumPaymentType.COD);
+
+        Order makePayment = orderRepository.save(order);
+        return mapEntityToResponse(makePayment);
+    }
+
+    @Override
+    public void makePaymentForVNPAY(OrderDTO dto, Long orderId) {
+        // TODO must test & debug
+        // retrieve data
+        Order order = findById(orderId);
+        Address newAddress = getAddressById(dto.getAddressId());
+
+        // set fields
+        order.setTotal(dto.getTotal());
+        order.setNote(dto.getNote());
+        order.setAddress(newAddress);
+        order.setVnpTxnRef(VNPayConfig.vnp_TxnRef);
+
+        // save the order
+        orderRepository.save(order);
     }
 
     @Override
@@ -421,16 +457,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     protected void clearItems(Cart cart) {
-        try {
-            cart.getCartItems().forEach(
-                    (item) -> cartItemRepository.deleteById(item.getId())
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        if (cart.getCartItems().size() > 0) {
+            try {
+                cart.getCartItems().forEach(
+                        (item) -> cartItemRepository.deleteById(item.getId())
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-        cart.getCartItems().clear();
-        cartService.updateCartTotals(cart);
+            cart.getCartItems().clear();
+            cartService.updateCartTotals(cart);
+        }
     }
 
     private Cart getCartByUsername(String username) {
@@ -477,10 +515,7 @@ public class OrderServiceImpl implements OrderService {
         order.setTotal(orderDTO.getTotal());
         order.setUser(user);
         order.setAddress(address);
-
-        // retrieve enum payment type from input
-        EnumPaymentType paymentType = appUtils.getPaymentType(orderDTO.getPaymentType());
-        order.setPaymentType(paymentType);
+        order.setPaymentType(EnumPaymentType.VN_PAY);
 
         return order;
     }

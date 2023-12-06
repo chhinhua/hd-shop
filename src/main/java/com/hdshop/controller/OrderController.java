@@ -74,8 +74,7 @@ public class OrderController {
     @SecurityRequirement(name = "Bear Authentication")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PutMapping("{id}/status")
-    public ResponseEntity<?> updateStatus(@PathVariable Long id,
-                                                 @RequestParam String status) {
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam String status) {
         return ResponseEntity.ok(orderService.updateStatus(id, status));
     }
 
@@ -145,5 +144,13 @@ public class OrderController {
                 statusValue, key, sortCriteria, pageNo, pageSize
         );
         return ResponseEntity.ok(searchResponse);
+    }
+
+    @SecurityRequirement(name = "Bear Authentication")
+    @Operation(summary = "Make payment with COD")
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/pay-cod")
+    public ResponseEntity<OrderResponse> makePaymentForCOD(@RequestBody OrderDTO order, @RequestParam("orderId") Long orderId) {
+        return ResponseEntity.ok(orderService.makePaymentForCOD(order, orderId));
     }
 }
