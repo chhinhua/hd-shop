@@ -82,4 +82,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "AND YEAR(o.createdDate) = :year " +
             "AND MONTH(o.createdDate) = :month")
     BigDecimal getMonthlyTotalRevenue(@Param("month") int month, @Param("year") int year);
+
+    @Query("SELECT SUM(o.total) FROM Order o WHERE o.status = 'DELIVERED'")
+    BigDecimal getCountRevenue();
+
+    @Query("SELECT COUNT(oi) FROM OrderItem oi " +
+            "JOIN oi.order o " +
+            "where o.status = 'DELIVERED'")
+    Long countAllSold();
 }

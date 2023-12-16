@@ -1,4 +1,4 @@
-package com.hdshop.dto.statistic;
+package com.hdshop.dto.statistic.revenue;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,7 +44,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         // retrieve data
         String username = principal.getName();
-        User user = userService.getUserByUsername(username);
+        User user = userService.findByUsername(username);
         Order order = orderService.findByItemId(dto.getItemId());
         OrderItem orderItem = orderItemService.findById(dto.getItemId());
         Product product = productService.findById(dto.getProductId());

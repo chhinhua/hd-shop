@@ -38,7 +38,7 @@ public interface ProductService {
     ProductResponse filter(
             Boolean sell,
             String searchTerm,
-            List<String> cateName,
+            List<String> cateNames,
             List<String> sortCriteria,
             int pageNo,
             int pageSize,

@@ -2,7 +2,8 @@ package com.hdshop.service.statistic;
 
 import com.hdshop.config.DateTimeConfig;
 import com.hdshop.dto.statistic.*;
-import com.hdshop.entity.User;
+import com.hdshop.dto.statistic.revenue.CountRevenueStatistic;
+import com.hdshop.dto.statistic.revenue.RevenueStatistic;
 import com.hdshop.repository.OrderRepository;
 import com.hdshop.repository.ProductRepository;
 import com.hdshop.repository.UserRepository;
@@ -47,6 +48,13 @@ public class StatisticServiceImpl implements StatisticService {
         countStatistic.setDeliveredCount(deliveredCount);
 
         return countStatistic;
+    }
+
+    @Override
+    public CountRevenueStatistic getCountRevenueStatistic() {
+        BigDecimal countRevenue = orderRepository.getCountRevenue();
+        Long countSold = orderRepository.countAllSold();
+        return new CountRevenueStatistic(countRevenue, countSold);
     }
 
     @Override

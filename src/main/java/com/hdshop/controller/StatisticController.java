@@ -1,6 +1,6 @@
 package com.hdshop.controller;
 
-import com.hdshop.dto.statistic.RevenueStatistic;
+import com.hdshop.dto.statistic.revenue.RevenueStatistic;
 import com.hdshop.service.statistic.StatisticService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -92,5 +92,11 @@ public class StatisticController {
             year = Year.now().getValue();
         }
         return ResponseEntity.ok(statisticService.getRevenueStatistic(year));
+    }
+
+    @Operation(summary = "Get count revenue & count product sold")
+    @GetMapping("/revenue-count")
+    public ResponseEntity<?> getCountRevenue() {
+        return ResponseEntity.ok(statisticService.getCountRevenueStatistic());
     }
 }
