@@ -33,7 +33,7 @@ public class AddressController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     public ResponseEntity<AddressDTO> getOneAddress(@PathVariable(value = "id") Long addressId) {
-        return ResponseEntity.ok(addressService.getOneAddress(addressId));
+        return ResponseEntity.ok(addressService.getOne(addressId));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
@@ -58,7 +58,7 @@ public class AddressController {
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}/default")
     public ResponseEntity<List<AddressDTO>> setDefault(@PathVariable(value = "id") Long addressId, Principal principal) {
-        return ResponseEntity.ok(addressService.setDefaultAddress(addressId, principal));
+        return ResponseEntity.ok(addressService.setDefault(addressId, principal));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
@@ -66,6 +66,6 @@ public class AddressController {
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteAddress(@PathVariable(value = "id") Long addressId, Principal principal) {
-        return ResponseEntity.ok(addressService.deleteAddress(addressId, principal));
+        return ResponseEntity.ok(addressService.delete(addressId, principal));
     }
 }

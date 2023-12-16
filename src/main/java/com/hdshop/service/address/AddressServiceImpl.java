@@ -6,7 +6,7 @@ import com.hdshop.entity.User;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.AddressRepository;
-import com.hdshop.repository.UserRepository;
+import com.hdshop.service.user.UserService;
 import com.hdshop.utils.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AddressServiceImpl implements AddressService {
     private final AddressRepository addressRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final MessageSource messageSource;
     private final ModelMapper modelMapper;
 
@@ -37,11 +37,10 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public AddressDTO addAddress(AddressDTO addressDTO, Principal principal) {
-        validateAddress(addressDTO);
+        validate(addressDTO);
 
         String username = principal.getName();
-
-        User user = getUserByUsername(username);
+        User user = userService.findByUsername(username);
 
         Address address = modelMapper.map(addressDTO, Address.class);
         address.setUser(user);
@@ -53,30 +52,9 @@ public class AddressServiceImpl implements AddressService {
         return mapEntityToDTO(newAddress);
     }
 
-    private void validateAddress(AddressDTO address) {
-        if (address.getFullName().isBlank()) {
-            throw new InvalidException(getMessage("fullname-must-not-be-empty"));
-        }
-        if (address.getPhoneNumber().isBlank()) {
-            throw new InvalidException(getMessage("phone-number-must-not-be-empty"));
-        }
-        if (!PhoneNumberUtils.isValidPhoneNumber(address.getPhoneNumber())) {
-            throw new InvalidException(getMessage("invalid-phone-number"));
-        }
-        if (address.getCity().isBlank()) {
-            throw new InvalidException(getMessage("city-must-not-be-empty"));
-        }
-        if (address.getDistrict().isBlank()) {
-            throw new InvalidException(getMessage("district-must-not-be-empty"));
-        }
-        if (address.getWard().isBlank()) {
-            throw new InvalidException(getMessage("ward-must-not-be-empty"));
-        }
-    }
-
     @Override
     public AddressDTO updateAddress(AddressDTO address, Long addressId) {
-        Address existingAddress = getAddressById(addressId);
+        Address existingAddress = findById(addressId);
 
         // Cập nhật các trường từ addressDTO vào existingAddress
         existingAddress.setFullName(address.getFullName());
@@ -93,19 +71,19 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public AddressDTO getOneAddress(Long addressId) {
-        Address address = getAddressById(addressId);
+    public AddressDTO getOne(Long addressId) {
+        Address address = findById(addressId);
         return mapEntityToDTO(address);
     }
 
     @Override
-    public List<AddressDTO> setDefaultAddress(Long addressId, Principal principal) {
+    public List<AddressDTO> setDefault(Long addressId, Principal principal) {
         String username = principal.getName();
 
         // find the address
-        Address newDefaultAddress = getAddressById(addressId);
+        Address newDefaultAddress = findById(addressId);
 
-        User user = getUserByUsername(username);
+        User user = userService.findByUsername(username);
 
         // check the user's current default address
         Address currentDefaultAddress = user.getAddresses().stream()
@@ -130,7 +108,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public String deleteAddress(Long addressId, Principal principal) {
+    public String delete(Long addressId, Principal principal) {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("address-not-found")));
         address.setIsDeleted(true);
@@ -139,14 +117,32 @@ public class AddressServiceImpl implements AddressService {
         return getMessage("deleted-successfully");
     }
 
-    private Address getAddressById(Long addressId) {
-        return addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("retrieving-address-information-failed")));
+    @Override
+    public Address findById(Long addressId) {
+        return addressRepository.findById(addressId).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("retrieving-address-information-failed"))
+        );
     }
 
-    private User getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
+    private void validate(AddressDTO address) {
+        if (address.getFullName().isBlank()) {
+            throw new InvalidException(getMessage("fullname-must-not-be-empty"));
+        }
+        if (address.getPhoneNumber().isBlank()) {
+            throw new InvalidException(getMessage("phone-number-must-not-be-empty"));
+        }
+        if (!PhoneNumberUtils.isValidPhoneNumber(address.getPhoneNumber())) {
+            throw new InvalidException(getMessage("invalid-phone-number"));
+        }
+        if (address.getCity().isBlank()) {
+            throw new InvalidException(getMessage("city-must-not-be-empty"));
+        }
+        if (address.getDistrict().isBlank()) {
+            throw new InvalidException(getMessage("district-must-not-be-empty"));
+        }
+        if (address.getWard().isBlank()) {
+            throw new InvalidException(getMessage("ward-must-not-be-empty"));
+        }
     }
 
     private AddressDTO mapEntityToDTO(Address address) {

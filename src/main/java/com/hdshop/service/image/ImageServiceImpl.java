@@ -60,7 +60,7 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     public String uploadAvatar(MultipartFile file, Principal principal) {
-        User user = userService.getUserByUsername(principal.getName());
+        User user = userService.findByUsername(principal.getName());
         this.deleteByPath(user.getAvatarUrl());
 
         String imageUrl = (String) this.upload(file).get("secure_url");

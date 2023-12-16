@@ -7,6 +7,9 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 @Component
 public class AppUtils {
     @Autowired
@@ -44,6 +47,17 @@ public class AppUtils {
         return stars != null && stars >= 1 && stars <= 5;
     }
 
+    public static String decodeIfEncoded(String input) {
+        try {
+            // Kiểm tra xem chuỗi có phải đã được encode hay không
+            if (input.contains("%")) {
+                return URLDecoder.decode(input, "UTF-8");
+            }
+        } catch (UnsupportedEncodingException e) {
+        }
+
+        return input;
+    }
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }

@@ -77,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
             String token = jwtTokenProvider.generateToken(authentication);
 
             // Get user from token
-            UserDTO user = userService.getUserByUsernameOrEmail(loginDTO.getUsernameOrEmail());
+            UserDTO user = userService.getByUsernameOrEmail(loginDTO.getUsernameOrEmail());
 
             // Check if user is enabled
             if (!user.getIsEnabled()) {

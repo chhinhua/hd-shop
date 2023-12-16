@@ -29,13 +29,13 @@ public class UserController {
     @Operation(summary = "Get a user by id")
     @GetMapping("/id/{id}")
     public ResponseEntity<UserDTO> getSingleUser(@PathVariable(value = "id") Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+        return ResponseEntity.ok(userService.getById(id));
     }
 
     @Operation(summary = "Get a user by username or by email")
     @GetMapping("/{usernameOrEmail}")
     public ResponseEntity<UserDTO> getSingleUserByUsernameOrEamil(@PathVariable(value = "usernameOrEmail") String usernameOrEmail) {
-        return ResponseEntity.ok(userService.getUserByUsernameOrEmail(usernameOrEmail));
+        return ResponseEntity.ok(userService.getByUsernameOrEmail(usernameOrEmail));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
@@ -43,7 +43,7 @@ public class UserController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PutMapping("/password/change")
     public ResponseEntity<String> changePasswordOfCurrentUser(@RequestBody ChangePassReq request, Principal principal) {
-        String result = userService.changePasswordOfCurrentUser(request, principal);
+        String result = userService.changePassword(request, principal);
         return ResponseEntity.ok(result);
     }
 
@@ -70,7 +70,7 @@ public class UserController {
     @PutMapping("/profile/{userId}")
     public ResponseEntity<UserDTO> updateProfileByUserId(@RequestBody @Valid UserProfile profile,
                                                          @PathVariable Long userId) {
-        return ResponseEntity.ok(userService.updateProfileByUserId(profile, userId));
+        return ResponseEntity.ok(userService.updateProfileById(profile, userId));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
@@ -91,7 +91,7 @@ public class UserController {
             @RequestParam(value = "pageSize", required = false,
                     defaultValue = "${paging.default.page-size}") int pageSize
     ) {
-        return ResponseEntity.ok(userService.getAllUsers(pageNo, pageSize));
+        return ResponseEntity.ok(userService.getAll(pageNo, pageSize));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
