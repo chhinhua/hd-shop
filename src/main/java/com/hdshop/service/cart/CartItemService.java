@@ -5,5 +5,5 @@ import com.hdshop.dto.cart.CartItemResponse;
 public interface CartItemService {
     CartItemResponse changeQuantity(final Long cartItemId, final int quantity);
 
-    void deleteOneCartItem(final Long cartItemId);
+    void delete(final Long cartItemId);
 }

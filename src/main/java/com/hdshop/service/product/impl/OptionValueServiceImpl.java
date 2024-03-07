@@ -22,12 +22,6 @@ public class OptionValueServiceImpl implements OptionValueService {
          return optionValueRepository.findByValueNameAndOption_ProductProductId(valueName, productId);
     }
 
-    @Override
-    public OptionValue finById(Long valueId) {
-        return optionValueRepository.findById(valueId).orElseThrow(() ->
-                new ResourceNotFoundException(getMessage("option-value-not-found")));
-    }
-
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }

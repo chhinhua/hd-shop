@@ -15,7 +15,6 @@ import com.hdshop.service.user.UserService;
 import com.hdshop.utils.OtpUtils;
 import com.hdshop.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.MailException;
@@ -52,7 +51,6 @@ public class AuthServiceImpl implements AuthService {
     private final UserService userService;
     private final MessageSource messageSource;
     private final UserValidator userValidator;
-    private final ModelMapper modelMapper;
 
     /**
      * Handles user login based on the provided login credentials.
@@ -103,7 +101,7 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse loginAdmin(LoginDTO loginDTO) {
         Optional<User> user = userRepository.findByUsernameOrEmail(loginDTO.getUsernameOrEmail(), loginDTO.getUsernameOrEmail());
         if (user.isPresent()) {
-            if (!user.get().getRoles().stream().anyMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
+            if (user.get().getRoles().stream().noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
                 throw new RuntimeException(getMessage("username-or-password-incorrect"));
             }
         }
@@ -234,7 +232,7 @@ public class AuthServiceImpl implements AuthService {
             return messsage;
         } catch (MailException e) {
             e.printStackTrace();
-            return getMessage("otp-send-failed");
+            throw new APIException(getMessage("otp-send-failed"));
         }
     }
 
@@ -249,7 +247,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidException(getMessage("otp-code-incorrect"));
         }
 
-        if (Duration.between(user.getOtpCreatedTime(), LocalDateTime.now()).toMinutes() > 5) {
+        if (Duration.between(user.getOtpCreatedTime(), LocalDateTime.now()).toMinutes() > 15) {
             throw new InvalidException(String.format("%s, %s"
                     ,getMessage("otp-code-has-expired")
                     ,getMessage("please-require-resend-otp")));

@@ -10,21 +10,21 @@ import java.security.Principal;
 import java.util.List;
 
 public interface OrderService {
-    OrderResponse addOrder(final OrderDTO order, final Principal principal);
+    OrderResponse create(final OrderDTO order, final Principal principal);
 
-    OrderResponse createOrderFromUserCart(final OrderDTO order, final Principal principal);
+    OrderResponse createFromCart(final OrderDTO order, final Principal principal);
 
-    OrderResponse createOrderWithVNPay(final OrderDTO order, final String username, final String vnp_TxnRef);
+    OrderResponse createWithVNPay(final OrderDTO order, final String username, final String vnp_TxnRef);
 
-    OrderResponse getOrderById(final Long orderId);
+    OrderResponse getById(final Long orderId);
 
     Order findById(final Long orderId);
 
     Order findByItemId(final Long itemId);
 
-    String isDeletedOrderById(final Long orderId);
+    String isDeletedById(final Long orderId);
 
-    String deleteOrderById(final Long orderId);
+    String deleteById(final Long orderId);
 
     OrderResponse updateStatus(final Long orderId, final String statusValue);
 
@@ -32,19 +32,14 @@ public interface OrderService {
 
     List<OrderResponse> getOrdersByUserId(final Long userId);
 
-    List<OrderResponse> findForUserByStatus(final String value, final Principal principal);
+    List<OrderResponse> findYourOrderByStatus(final String value, final Principal principal);
 
-    List<OrderResponse> findByStatus(final String value);
-
-    List<OrderResponse> getListOrderByCurrentUser(final Principal principal);
-
-    OrderPageResponse getAllOrders(final int pageNo, final int pageSize);
+    List<OrderResponse> getYourOrders(final Principal principal);
 
     CheckOutDTO getDataFromUserInfor(final Principal principal);
 
     void paymentCompleted(final String vnp_TxnRef);
 
-    void paymentFailed(final String vnp_TxnRef);
 
     OrderPageResponse filter(
             String statusValue,

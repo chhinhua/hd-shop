@@ -15,7 +15,7 @@ import java.util.List;
 @Hidden
 @Schema(description = "User Response Information")
 public class UserResponse {
-    @Schema(description = "Category Content")
+    @Schema(description = "User Content")
     private List<UserDTO> content;
 
     @Schema(description = "Page Number")
