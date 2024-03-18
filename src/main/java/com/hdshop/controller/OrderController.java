@@ -124,8 +124,35 @@ public class OrderController {
             @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
             @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize
     ) {
-        OrderPageResponse searchResponse = orderService.filter(
+        OrderPageResponse searchResponse = orderService.adminFilter(
                 statusValue, key, sortCriteria, pageNo, pageSize
+        );
+        return ResponseEntity.ok(searchResponse);
+    }
+
+    /**
+     * @day 18/3/2024
+     * @author Chhin Hua
+     * @param statusValue
+     * @param key
+     * @param pageNo
+     * @param pageSize
+     * @param principal
+     * @return list orders pagination
+     */
+    @SecurityRequirement(name = "Bear Authentication")
+    @Operation(summary = "Search, filter orders for user")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/user/search")
+    public ResponseEntity<OrderPageResponse> clientSearch(
+            @RequestParam(name = "status", required = false) String statusValue,
+            @RequestParam(name = "key", required = false) String key,
+            @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize,
+            Principal principal
+    ) {
+        OrderPageResponse searchResponse = orderService.userFilter(
+                statusValue, key, pageNo, pageSize, principal
         );
         return ResponseEntity.ok(searchResponse);
     }

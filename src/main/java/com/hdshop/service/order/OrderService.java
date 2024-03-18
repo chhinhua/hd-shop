@@ -41,12 +41,20 @@ public interface OrderService {
     void paymentCompleted(final String vnp_TxnRef);
 
 
-    OrderPageResponse filter(
+    OrderPageResponse adminFilter(
             String statusValue,
             String key,
             List<String> sortCriteria,
             int pageNo,
             int pageSize
+    );
+
+    OrderPageResponse userFilter(
+            String statusValue,
+            String key,
+            int pageNo,
+            int pageSize,
+            final Principal principal
     );
 
     OrderResponse makePaymentForCOD(final OrderDTO order, final Long orderId);

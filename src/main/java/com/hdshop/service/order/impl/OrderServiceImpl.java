@@ -147,6 +147,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * Admin delete order by orderId
+     *
      * @param orderId
      * @return result message
      */
@@ -317,9 +318,9 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
         clearItems(cart);
     }
-    
+
     @Override
-    public OrderPageResponse filter(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize) {
+    public OrderPageResponse adminFilter(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize) {
         try {
             // follow Pageable instances
             Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
@@ -330,6 +331,41 @@ public class OrderServiceImpl implements OrderService {
             }
 
             Page<Order> orderPage = orderRepository.filter(status, key, sortCriteria, pageable);
+
+            // get content for page object
+            List<Order> orderList = orderPage.getContent();
+
+            List<OrderResponse> content = orderList.stream()
+                    .map(this::mapEntityToResponse)
+                    .collect(Collectors.toList());
+
+            // set data to the product response
+            OrderPageResponse pageResponse = new OrderPageResponse();
+            pageResponse.setContent(content);
+            pageResponse.setPageNo(orderPage.getNumber() + 1);
+            pageResponse.setPageSize(orderPage.getSize());
+            pageResponse.setTotalPages(orderPage.getTotalPages());
+            pageResponse.setTotalElements(orderPage.getTotalElements());
+            pageResponse.setLast(orderPage.isLast());
+
+            return pageResponse;
+        } catch (Exception e) {
+            throw new InvalidException(getMessage("list-order-is-empty"));
+        }
+    }
+
+    @Override
+    public OrderPageResponse userFilter(String statusValue, String key, int pageNo, int pageSize, Principal principal) {
+        try {
+            // follow Pageable instances
+            Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+            EnumOrderStatus status = null;
+            if (statusValue != null) {
+                status = appUtils.getOrderStatus(statusValue);
+            }
+
+            Page<Order> orderPage = orderRepository.userFilter(status, key, principal.getName(), pageable);
 
             // get content for page object
             List<Order> orderList = orderPage.getContent();

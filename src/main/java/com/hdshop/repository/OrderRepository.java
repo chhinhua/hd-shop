@@ -27,8 +27,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o JOIN o.orderItems oi WHERE oi.id = :itemId")
     Optional<Order> findByItemId(Long itemId);
 
-    List<Order> findByStatusOrderByCreatedDate(EnumOrderStatus status);
-
     List<Order> findAllByStatusAndUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(EnumOrderStatus status, String username);
 
     @Query("SELECT DISTINCT o FROM Order o JOIN o.user u JOIN o.orderItems oi " +
@@ -90,4 +88,17 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "JOIN oi.order o " +
             "where o.status = 'DELIVERED'")
     Long countAllSold();
+
+    @Query("SELECT DISTINCT o FROM Order o JOIN o.user u JOIN o.orderItems oi " +
+            "WHERE o.isDeleted = false " +
+            "AND (LOWER(u.username) = :username)" +
+            "AND (:status IS NULL OR o.status = :status) " +
+            "AND ((:key IS NOT NULL AND (LOWER(oi.product.name) LIKE %:key%) " +
+            "OR (:key IS NULL))) " +
+            "ORDER BY o.createdDate DESC ")
+    Page<Order> userFilter(
+            @Param("status") EnumOrderStatus status,
+            @Param("key") String key,
+            @Param("username") String username,
+            Pageable pageable);
 }
