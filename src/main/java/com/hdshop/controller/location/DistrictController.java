@@ -25,4 +25,11 @@ public class DistrictController {
         return ResponseEntity.ok(districtService.getAll(pageNo, pageSize));
     }
 
+    @GetMapping("/getByProvince")
+    public ResponseEntity<DistrictResponse> getByProvince(
+            @RequestParam(value = "provinceCode") String provinceCode,
+            @RequestParam(value = "pageNo", required = false, defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "${paging.default.page-size}") int pageSize) {
+        return ResponseEntity.ok(districtService.getByProvince(provinceCode, pageNo, pageSize));
+    }
 }
