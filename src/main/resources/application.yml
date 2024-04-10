@@ -38,6 +38,7 @@ spring:
 #                    from: Duck Shop
 #                    starttls:
 #                        enable: true
+
     http:
         encoding:
             charset: UTF-8
