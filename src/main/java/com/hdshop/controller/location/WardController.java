@@ -25,8 +25,8 @@ public class WardController {
         return ResponseEntity.ok(wardService.getAll(pageNo, pageSize));
     }
 
-    @GetMapping("/getByProvince")
-    public ResponseEntity<WardResponse> getByProvince(
+    @GetMapping("/getByDistrict")
+    public ResponseEntity<WardResponse> getByDistrict(
             @RequestParam(value = "districtCode") String districtCode,
             @RequestParam(value = "pageNo", required = false, defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false, defaultValue = "${paging.default.page-size}") int pageSize) {

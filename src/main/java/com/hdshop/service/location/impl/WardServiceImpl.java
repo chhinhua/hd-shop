@@ -48,6 +48,30 @@ public class WardServiceImpl implements WardService {
 
     @Override
     public WardResponse getByDistrict(String districtCode, int pageNo, int pageSize) {
-        return null;
+        // Check if pageSize is -1, if so, get all data for one page
+        Pageable pageable;
+        if (pageSize == -1) {
+            // Get all data for one page
+            pageable = Pageable.unpaged();
+        } else {
+            // Follow Pageable instances
+            pageable = PageRequest.of(pageNo - 1, pageSize);
+        }
+
+        Page<Ward> wardPage = wardRepository.findAllByDistrictCode(districtCode, pageable);
+
+        // get content for page object
+        List<Ward> wardList = wardPage.getContent();
+
+        // set data to the ward response
+        WardResponse wardResponse = new WardResponse();
+        wardResponse.setContent(wardList);
+        wardResponse.setPageNo(wardPage.getNumber() + 1);
+        wardResponse.setPageSize(wardPage.getSize());
+        wardResponse.setTotalPages(wardPage.getTotalPages());
+        wardResponse.setTotalElements(wardPage.getTotalElements());
+        wardResponse.setLast(wardPage.isLast());
+
+        return wardResponse;
     }
 }
