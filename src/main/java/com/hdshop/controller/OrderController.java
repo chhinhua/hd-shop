@@ -31,7 +31,7 @@ public class OrderController {
     @SecurityRequirement(name = "Bear Authentication")
     @PostMapping("/create")
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
-        OrderResponse newOrder = orderService.addOrder(orderDTO, principal);
+        OrderResponse newOrder = orderService.create(orderDTO, principal);
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 
@@ -40,7 +40,7 @@ public class OrderController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping
     public ResponseEntity<OrderResponse> createOrderFromCart(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
-        OrderResponse newOrder = orderService.createOrderFromUserCart(orderDTO, principal);
+        OrderResponse newOrder = orderService.createFromCart(orderDTO, principal);
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 
@@ -49,7 +49,7 @@ public class OrderController {
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/isdeleted/{id}")
     public ResponseEntity<String> isDeletedOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.isDeletedOrderById(id));
+        return ResponseEntity.ok(orderService.isDeletedById(id));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
@@ -57,14 +57,14 @@ public class OrderController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.deleteOrderById(id));
+        return ResponseEntity.ok(orderService.deleteById(id));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Get single order by id")
     @GetMapping("/{id}")
     public ResponseEntity<?> getOrderById(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.getOrderById(id));
+        return ResponseEntity.ok(orderService.getById(id));
     }
 
     @Operation(
@@ -87,7 +87,7 @@ public class OrderController {
     @Operation(summary = "Get list order of user by token")
     @GetMapping("/token")
     public ResponseEntity<List<OrderResponse>> getOrdersByToken(Principal principal) {
-        return ResponseEntity.ok(orderService.getListOrderByCurrentUser(principal));
+        return ResponseEntity.ok(orderService.getYourOrders(principal));
     }
 
     @Operation(summary = "Get list order of user by userId")
@@ -105,28 +105,12 @@ public class OrderController {
     }
 
     @SecurityRequirement(name = "Bear Authentication")
-    @Operation(
-            summary = "Get all orders",
-            description = "Get all orders via REST API with pagination"
-    )
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public ResponseEntity<OrderPageResponse> getAllOrders(
-            @RequestParam(value = "pageNo", required = false,
-                    defaultValue = "${paging.default.page-number}") int pageNo,
-            @RequestParam(value = "pageSize", required = false,
-                    defaultValue = "${paging.default.page-size}") int pageSize
-    ) {
-        return ResponseEntity.ok(orderService.getAllOrders(pageNo, pageSize));
-    }
-
-    @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Search your order by status")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/search")
     public ResponseEntity<List<OrderResponse>> searchYourOrder(
             @RequestParam(value = "status", required = false) String statusValue, Principal principal) {
-        return ResponseEntity.ok(orderService.findForUserByStatus(statusValue, principal));
+        return ResponseEntity.ok(orderService.findYourOrderByStatus(statusValue, principal));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
@@ -140,8 +124,35 @@ public class OrderController {
             @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
             @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize
     ) {
-        OrderPageResponse searchResponse = orderService.filter(
+        OrderPageResponse searchResponse = orderService.adminFilter(
                 statusValue, key, sortCriteria, pageNo, pageSize
+        );
+        return ResponseEntity.ok(searchResponse);
+    }
+
+    /**
+     * @day 18/3/2024
+     * @author Chhin Hua
+     * @param statusValue
+     * @param key
+     * @param pageNo
+     * @param pageSize
+     * @param principal
+     * @return list orders pagination
+     */
+    @SecurityRequirement(name = "Bear Authentication")
+    @Operation(summary = "Search, filter orders for user")
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/user/search")
+    public ResponseEntity<OrderPageResponse> clientSearch(
+            @RequestParam(name = "status", required = false) String statusValue,
+            @RequestParam(name = "key", required = false) String key,
+            @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "20") int pageSize,
+            Principal principal
+    ) {
+        OrderPageResponse searchResponse = orderService.userFilter(
+                statusValue, key, pageNo, pageSize, principal
         );
         return ResponseEntity.ok(searchResponse);
     }

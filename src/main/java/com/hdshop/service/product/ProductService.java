@@ -18,15 +18,15 @@ public interface ProductService {
 
     ProductDTO update(final ProductDTO productDTO, final Long productId);
 
-    ProductDTO toggleActiveStatus(final Long productId);
+    ProductDTO toggleActive(final Long productId);
 
-    ProductDTO toggleSellingStatus(final Long productId);
+    ProductDTO toggleSelling(final Long productId);
 
     void delete(final Long id);
 
     ProductDTO addQuantity(final Long product_id, final Integer quantity);
 
-    ProductResponse searchSortAndFilterProducts(
+    ProductResponse filter(
             Boolean sell,
             String searchTerm,
             List<String> cateName,
@@ -35,7 +35,7 @@ public interface ProductService {
             int pageSize
     );
 
-    ProductResponse filter(
+    ProductResponse filterForUser(
             Boolean sell,
             String searchTerm,
             List<String> cateNames,

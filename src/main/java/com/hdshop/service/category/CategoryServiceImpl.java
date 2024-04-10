@@ -37,7 +37,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @return CategoryDTO instance
      */
     @Override
-    public CategoryDTO getCategoryByIdOrSlug(String identifier) {
+    public CategoryDTO findByIdOrSlug(String identifier) {
         Category category;
         try {
             Long id = Long.parseLong(identifier.trim());
@@ -59,7 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @return categoryDTO instance
      */
     @Override
-    public CategoryDTO createCategory(CategoryDTO dto) {
+    public CategoryDTO create(CategoryDTO dto) {
         // check category name exists in database
         if (categoryRepository.existsCategoryByName(dto.getName())) {
             throw new APIException(HttpStatus.BAD_REQUEST, getMessage("category-name-already-exists"));
@@ -90,7 +90,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @return categoryDTO instance have been updated
      */
     @Override
-    public CategoryDTO updateCategory(Long id, CategoryDTO dto) {
+    public CategoryDTO update(Long id, CategoryDTO dto) {
         // check existing category by id
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
@@ -122,7 +122,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @param id
      */
     @Override
-    public void deleteCategory(Long id) {
+    public void delete(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
 

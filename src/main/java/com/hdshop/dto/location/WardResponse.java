@@ -1,6 +1,6 @@
-package com.hdshop.dto.user;
+package com.hdshop.dto.location;
 
-import com.hdshop.dto.category.CategoryDTO;
+import com.hdshop.entity.location.Ward;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -13,10 +13,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Hidden
-@Schema(description = "User Response Information")
-public class UserResponse {
-    @Schema(description = "User Content")
-    private List<UserDTO> content;
+@Schema(description = "Ward Response Information")
+public class WardResponse {
+    @Schema(description = "Ward Data")
+    private List<Ward> content;
 
     @Schema(description = "Page Number")
     private int pageNo;
@@ -24,7 +24,7 @@ public class UserResponse {
     @Schema(description = "Page Size")
     private int pageSize;
 
-    @Schema(description = "Total category")
+    @Schema(description = "Total ward")
     private long totalElements;
 
     @Schema(description = "Total Pages")

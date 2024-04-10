@@ -25,7 +25,7 @@ public class AddressController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping
     public ResponseEntity<List<AddressDTO>> getMyAddress(Principal principal) {
-        return ResponseEntity.ok(addressService.getAllAddressForUser(principal));
+        return ResponseEntity.ok(addressService.getYourAdresses(principal));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
@@ -41,7 +41,7 @@ public class AddressController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping
     public ResponseEntity<AddressDTO> create(@RequestBody AddressDTO addressDTO, Principal principal) {
-        return ResponseEntity.ok(addressService.addAddress(addressDTO, principal));
+        return ResponseEntity.ok(addressService.add(addressDTO, principal));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
@@ -50,7 +50,7 @@ public class AddressController {
     @PutMapping("/{id}")
     public ResponseEntity<AddressDTO> updateAddress(@PathVariable(value = "id") Long addressId,
                                                     @RequestBody AddressDTO addressDTO) {
-        return ResponseEntity.ok(addressService.updateAddress(addressDTO, addressId));
+        return ResponseEntity.ok(addressService.update(addressDTO, addressId));
     }
 
     @SecurityRequirement(name = "Bear Authentication")

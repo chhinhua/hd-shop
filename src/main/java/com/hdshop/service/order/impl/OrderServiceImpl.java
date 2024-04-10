@@ -49,7 +49,7 @@ public class OrderServiceImpl implements OrderService {
     private final ReviewRepository reviewRepository;
 
     @Override
-    public OrderResponse addOrder(OrderDTO orderDTO, Principal principal) {
+    public OrderResponse create(OrderDTO orderDTO, Principal principal) {
         String username = principal.getName();
 
         User user = getUserByUsername(username);
@@ -65,7 +65,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderResponse createOrderFromUserCart(OrderDTO orderDTO, Principal principal) {
+    public OrderResponse createFromCart(OrderDTO orderDTO, Principal principal) {
         String username = principal.getName();
 
         // retrieve data
@@ -106,7 +106,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderResponse createOrderWithVNPay(OrderDTO orderDTO, String username, String vnp_TxnRef) {
+    public OrderResponse createWithVNPay(OrderDTO orderDTO, String username, String vnp_TxnRef) {
         // retrieve data
         User user = getUserByUsername(username);
         Cart cart = getCartByUsername(username);
@@ -137,7 +137,7 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
-    public String isDeletedOrderById(Long orderId) {
+    public String isDeletedById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
         order.setIsDeleted(true);
@@ -147,11 +147,12 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * Admin delete order by orderId
+     *
      * @param orderId
      * @return result message
      */
     @Override
-    public String deleteOrderById(Long orderId) {
+    public String deleteById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
         orderRepository.delete(order);
@@ -165,7 +166,7 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
-    public OrderResponse getOrderById(Long orderId) {
+    public OrderResponse getById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
@@ -289,7 +290,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderResponse> getListOrderByCurrentUser(Principal principal) {
+    public List<OrderResponse> getYourOrders(Principal principal) {
         String username = principal.getName();
 
         List<Order> orderList = orderRepository.findAllByUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(username);
@@ -319,14 +320,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void paymentFailed(String vnp_TxnRef) {
-        Order order = orderRepository.findByVnpTxnRef(vnp_TxnRef)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
-        orderRepository.delete(order);
-    }
-
-    @Override
-    public OrderPageResponse filter(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize) {
+    public OrderPageResponse adminFilter(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize) {
         try {
             // follow Pageable instances
             Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
@@ -337,6 +331,41 @@ public class OrderServiceImpl implements OrderService {
             }
 
             Page<Order> orderPage = orderRepository.filter(status, key, sortCriteria, pageable);
+
+            // get content for page object
+            List<Order> orderList = orderPage.getContent();
+
+            List<OrderResponse> content = orderList.stream()
+                    .map(this::mapEntityToResponse)
+                    .collect(Collectors.toList());
+
+            // set data to the product response
+            OrderPageResponse pageResponse = new OrderPageResponse();
+            pageResponse.setContent(content);
+            pageResponse.setPageNo(orderPage.getNumber() + 1);
+            pageResponse.setPageSize(orderPage.getSize());
+            pageResponse.setTotalPages(orderPage.getTotalPages());
+            pageResponse.setTotalElements(orderPage.getTotalElements());
+            pageResponse.setLast(orderPage.isLast());
+
+            return pageResponse;
+        } catch (Exception e) {
+            throw new InvalidException(getMessage("list-order-is-empty"));
+        }
+    }
+
+    @Override
+    public OrderPageResponse userFilter(String statusValue, String key, int pageNo, int pageSize, Principal principal) {
+        try {
+            // follow Pageable instances
+            Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+
+            EnumOrderStatus status = null;
+            if (statusValue != null) {
+                status = appUtils.getOrderStatus(statusValue);
+            }
+
+            Page<Order> orderPage = orderRepository.userFilter(status, key, principal.getName(), pageable);
 
             // get content for page object
             List<Order> orderList = orderPage.getContent();
@@ -395,33 +424,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderPageResponse getAllOrders(int pageNo, int pageSize) {
-        // follow Pageable instances
-        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
-
-        Page<Order> oderPage = orderRepository.findAll(pageable);
-
-        // get content for page object
-        List<Order> orderList = oderPage.getContent();
-
-        List<OrderResponse> content = orderList.stream()
-                .map(this::mapEntityToResponse)
-                .collect(Collectors.toList());
-
-        // set data to the order response
-        OrderPageResponse orderResponse = new OrderPageResponse();
-        orderResponse.setContent(content);
-        orderResponse.setPageNo(oderPage.getNumber() + 1);
-        orderResponse.setPageSize(oderPage.getSize());
-        orderResponse.setTotalPages(oderPage.getTotalPages());
-        orderResponse.setTotalElements(oderPage.getTotalElements());
-        orderResponse.setLast(oderPage.isLast());
-
-        return orderResponse;
-    }
-
-    @Override
-    public List<OrderResponse> findForUserByStatus(String value, Principal principal) {
+    public List<OrderResponse> findYourOrderByStatus(String value, Principal principal) {
         String username = principal.getName();
         List<Order> orderList;
 
@@ -432,22 +435,6 @@ public class OrderServiceImpl implements OrderService {
             EnumOrderStatus status = appUtils.getOrderStatus(value);
             orderList = orderRepository
                     .findAllByStatusAndUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(status, username);
-        }
-
-        return orderList.stream()
-                .map(this::mapEntityToResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<OrderResponse> findByStatus(String value) {
-        List<Order> orderList;
-
-        if (value == null) {
-            orderList = orderRepository.findAll();
-        } else {
-            EnumOrderStatus status = appUtils.getOrderStatus(value);
-            orderList = orderRepository.findByStatusOrderByCreatedDate(status);
         }
 
         return orderList.stream()

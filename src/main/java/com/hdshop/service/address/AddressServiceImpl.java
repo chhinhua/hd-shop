@@ -27,7 +27,7 @@ public class AddressServiceImpl implements AddressService {
     private final ModelMapper modelMapper;
 
     @Override
-    public List<AddressDTO> getAllAddressForUser(Principal principal) {
+    public List<AddressDTO> getYourAdresses(Principal principal) {
         String username = principal.getName();
         return addressRepository.findAllByUserUsernameAndIsDeletedIsFalse(username)
                 .stream()
@@ -36,7 +36,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public AddressDTO addAddress(AddressDTO addressDTO, Principal principal) {
+    public AddressDTO add(AddressDTO addressDTO, Principal principal) {
         validate(addressDTO);
 
         String username = principal.getName();
@@ -53,7 +53,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public AddressDTO updateAddress(AddressDTO address, Long addressId) {
+    public AddressDTO update(AddressDTO address, Long addressId) {
         Address existingAddress = findById(addressId);
 
         // Cập nhật các trường từ addressDTO vào existingAddress

@@ -52,7 +52,7 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    public void deleteOneCartItem(Long cartItemId) {
+    public void delete(Long cartItemId) {
         CartItem item = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-item-not-found")));
         cartItemRepository.delete(item);

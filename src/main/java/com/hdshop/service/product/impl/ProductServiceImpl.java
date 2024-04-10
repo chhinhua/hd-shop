@@ -223,7 +223,7 @@ public class ProductServiceImpl implements ProductService {
      * @date 01-11-2023
      */
     @Override
-    public ProductDTO toggleActiveStatus(Long productId) {
+    public ProductDTO toggleActive(Long productId) {
         Product existingProduct = findById(productId);
 
         existingProduct.setIsActive(!existingProduct.getIsActive());
@@ -242,7 +242,7 @@ public class ProductServiceImpl implements ProductService {
      * @date 01-11-2023
      */
     @Override
-    public ProductDTO toggleSellingStatus(Long productId) {
+    public ProductDTO toggleSelling(Long productId) {
         Product existingProduct = findById(productId);
 
         existingProduct.setIsSelling(!existingProduct.getIsSelling());
@@ -272,7 +272,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse searchSortAndFilterProducts(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
+    public ProductResponse filter(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
@@ -334,8 +334,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse filter(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) {
-        ProductResponse response = searchSortAndFilterProducts(
+    public ProductResponse filterForUser(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) {
+        ProductResponse response = filter(
                 sell, searchTerm, cateNames, sortCriteria, pageNo, pageSize
         );
         if (username == null) {

@@ -2,7 +2,6 @@ package com.hdshop.controller;
 
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;
-import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.service.category.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -32,7 +31,7 @@ public class CategoryController {
     @Operation(summary = "Get single categories")
     @GetMapping("/{identifier}")
     public ResponseEntity<CategoryDTO> getSingleCategory(@PathVariable String identifier) {
-        return ResponseEntity.ok(categoryService.getCategoryByIdOrSlug(identifier));
+        return ResponseEntity.ok(categoryService.findByIdOrSlug(identifier));
     }
 
     @Operation(summary = "Add new category")
@@ -40,7 +39,7 @@ public class CategoryController {
     @SecurityRequirement(name = "Bear Authentication")
     @PostMapping
     public ResponseEntity<CategoryDTO> addNewCategory(@Valid @RequestBody CategoryDTO categoryDTO) {
-        CategoryDTO saveCategory = categoryService.createCategory(categoryDTO);
+        CategoryDTO saveCategory = categoryService.create(categoryDTO);
         return new ResponseEntity<>(saveCategory, HttpStatus.CREATED);
     }
 
@@ -50,7 +49,7 @@ public class CategoryController {
     @PutMapping("/{id}")
     public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id,
                                                       @Valid @RequestBody CategoryDTO categoryDTO) {
-        return ResponseEntity.ok(categoryService.updateCategory(id, categoryDTO));
+        return ResponseEntity.ok(categoryService.update(id, categoryDTO));
     }
 
     @Operation(summary = "Delete a category by id")
@@ -58,7 +57,7 @@ public class CategoryController {
     @SecurityRequirement(name = "Bear Authentication")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
-        categoryService.deleteCategory(id);
+        categoryService.delete(id);
         String successMessage = messageSource.getMessage("deleted-successfully", null, LocaleContextHolder.getLocale());
         return ResponseEntity.ok(successMessage);
     }
