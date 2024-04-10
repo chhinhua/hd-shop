@@ -19,5 +19,5 @@ public class Ward {
     private String name;
     private String type;
     private String code;
-    private String district_code;
+    private String districtCode;
 }
