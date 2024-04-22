@@ -1,7 +1,9 @@
 package com.hdshop.service.order.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.config.VNPayConfig;
 import com.hdshop.dto.address.AddressDTO;
+import com.hdshop.dto.ghn.ShippingOrder;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderPageResponse;
@@ -12,6 +14,7 @@ import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
 import com.hdshop.service.cart.CartService;
+import com.hdshop.service.ghn.GhnService;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.utils.AppUtils;
@@ -47,6 +50,19 @@ public class OrderServiceImpl implements OrderService {
     private final AppUtils appUtils;
     private final ProductRepository productRepository;
     private final ReviewRepository reviewRepository;
+    private final GhnService ghnService;
+
+    @Override
+    public OrderResponse createOrder(OrderDTO orderDto, Principal principal) throws JsonProcessingException {
+        OrderResponse response = createFromCart(orderDto, principal); // create order data to duckshop service
+        Order order = findById(response.getId());
+
+        // TODO ********************************
+        ShippingOrder shippingOrder = ghnService.buildShippingOrder(order);
+        ghnService.createOrder(shippingOrder); // create order data to GHN service
+
+        return response;
+    }
 
     @Override
     public OrderResponse create(OrderDTO orderDTO, Principal principal) {
@@ -512,7 +528,6 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalItems(orderItems.size());
 
         orderItems.forEach(orderItem -> orderItem.setOrder(order));
-
         orderRepository.save(order);
     }
 

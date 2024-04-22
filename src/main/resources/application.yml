@@ -72,6 +72,9 @@ vnpay:
     api-url: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
     return-url: /api/v1/vnpay/vnpay-payment
 
+ghn:
+    shop-id: 192001
+    token: 91b6b238-00c8-11ef-a6e6-e60958111f48
 
 
 
