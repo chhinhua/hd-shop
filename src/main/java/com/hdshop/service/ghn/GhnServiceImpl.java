@@ -2,16 +2,17 @@ package com.hdshop.service.ghn;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hdshop.dto.ghn.ShippingItem;
-import com.hdshop.dto.ghn.ShippingOrder;
+import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.hdshop.dto.ghn.CreateGhnOrderResponse;
+import com.hdshop.dto.ghn.GhnItem;
+import com.hdshop.dto.ghn.GhnOrder;
 import com.hdshop.entity.Address;
 import com.hdshop.entity.Order;
-import com.hdshop.utils.AppUtils;
+import com.hdshop.utils.EnumPaymentType;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -19,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class GhnServiceImpl implements GhnService {
     @Autowired
@@ -27,7 +29,7 @@ public class GhnServiceImpl implements GhnService {
     private static final String CREATE_ORDER_URL = "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/create";
 
     @Override
-    public ShippingOrder createOrder(ShippingOrder order) throws RestClientException, JsonProcessingException {
+    public CreateGhnOrderResponse createOrder(GhnOrder order) throws RestClientException, JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("shop_id", "192001");
@@ -38,17 +40,30 @@ public class GhnServiceImpl implements GhnService {
 
         HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
 
-        restTemplate.postForEntity(CREATE_ORDER_URL, entity, Void.class);
+        // Capture the response entity
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(CREATE_ORDER_URL, entity, String.class);
 
-        return null;
+        if (responseEntity.getStatusCodeValue() == HttpStatus.OK.value()) {
+
+            log.info("Status code: " + responseEntity.getStatusCode());
+            log.info("Response: " + responseEntity.getBody());
+
+            // Use ObjectMapper to convert JSON to object
+           // CreateGhnOrderResponse responseObject = mapper.readValue(responseEntity.getBody(), CreateGhnOrderResponse.class);
+
+            return null;
+        } else {
+            log.error("Failed to create GHN order. Status code:" + responseEntity.getStatusCode(), responseEntity.getBody());
+            return null;
+        }
     }
 
     @Override
-    public ShippingOrder buildShippingOrder(Order order) {
+    public GhnOrder buildShippingOrder(Order order) {
         Address address = order.getAddress();
 
-        List<ShippingItem> items = order.getOrderItems().stream()
-                .map(orderItem -> ShippingItem.builder()
+        List<GhnItem> items = order.getOrderItems().stream()
+                .map(orderItem -> GhnItem.builder()
                         .name(orderItem.getProduct().getName())
                         .code(orderItem.getProduct().getSlug())
                         .quantity(orderItem.getQuantity().longValue())
@@ -57,7 +72,7 @@ public class GhnServiceImpl implements GhnService {
                         .build())
                 .collect(Collectors.toList());
 
-        return ShippingOrder.builder()
+        return GhnOrder.builder()
                 .payment_type_id(Long.valueOf(2))
                 .note(order.getNote())
                 .required_note("CHOXEMHANGKHONGTHU")
@@ -67,7 +82,9 @@ public class GhnServiceImpl implements GhnService {
                 .to_ward_name(address.getWard())
                 .to_district_name(address.getDistrict())
                 .to_province_name(address.getCity())
-                .cod_amount(order.getPaymentType().getKey().toLowerCase().equals("cod") ? order.getTotal().longValue() : 0L)
+                .cod_amount(
+                        order.getPaymentType().equals(EnumPaymentType.COD) ? order.getTotal().longValue() : 0L
+                )
                 .weight(200L * items.size())  // TODO write method to calculate weight length width height from order item data
                 .length(25L * items.size())
                 .width(25L * items.size())

@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class ShippingOrder {
+public class GhnOrder {
     private Long payment_type_id; // Required
     private String note; // Optional
     private String required_note; // Required (Include: CHOTHUHANG, CHOXEMHANGKHONGTHU, KHONGCHOXEMHANG)
@@ -42,7 +42,7 @@ public class ShippingOrder {
     private Long deliver_station_id;
     private Long insurance_value;
     private Long service_id;
-    private List<ShippingItem> items;
+    private List<GhnItem> items;
     private Long cod_failed_amount;
     private Long pickup_time;
     private List<Integer> pick_shift;

@@ -3,7 +3,8 @@ package com.hdshop.service.order.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.config.VNPayConfig;
 import com.hdshop.dto.address.AddressDTO;
-import com.hdshop.dto.ghn.ShippingOrder;
+import com.hdshop.dto.ghn.CreateGhnOrderResponse;
+import com.hdshop.dto.ghn.GhnOrder;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderPageResponse;
@@ -57,9 +58,8 @@ public class OrderServiceImpl implements OrderService {
         OrderResponse response = createFromCart(orderDto, principal); // create order data to duckshop service
         Order order = findById(response.getId());
 
-        // TODO ********************************
-        ShippingOrder shippingOrder = ghnService.buildShippingOrder(order);
-        ghnService.createOrder(shippingOrder); // create order data to GHN service
+        GhnOrder shippingOrder = ghnService.buildShippingOrder(order);
+        CreateGhnOrderResponse result = ghnService.createOrder(shippingOrder); // create order data to GHN service
 
         return response;
     }

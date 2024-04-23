@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class ShippingItem {
+public class GhnItem {
     private String name;
     private String code;
     private Long quantity;

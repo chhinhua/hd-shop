@@ -3,6 +3,12 @@ logging:
         org:
             springframework:
                 security: debug
+    file:
+        name: log/dev.log
+    group:
+        tomcat: org.apache.catalina, org.apache.coyote, org.apache.tomcat
+    pattern:
+        level: INFO
 
 spring:
     application:
@@ -75,8 +81,5 @@ vnpay:
 ghn:
     shop-id: 192001
     token: 91b6b238-00c8-11ef-a6e6-e60958111f48
-
-
-
 
 
