@@ -1,5 +1,6 @@
 package com.hdshop.service.order;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderPageResponse;
@@ -10,6 +11,8 @@ import java.security.Principal;
 import java.util.List;
 
 public interface OrderService {
+    OrderResponse createOrder(final OrderDTO order, final Principal principal) throws JsonProcessingException;
+
     OrderResponse create(final OrderDTO order, final Principal principal);
 
     OrderResponse createFromCart(final OrderDTO order, final Principal principal);

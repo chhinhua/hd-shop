@@ -1,5 +1,6 @@
 package com.hdshop.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderPageResponse;
@@ -39,8 +40,8 @@ public class OrderController {
     @Operation(summary = "Create follow order from user cart")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrderFromCart(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
-        OrderResponse newOrder = orderService.createFromCart(orderDTO, principal);
+    public ResponseEntity<OrderResponse> createOrderFromCart(@Valid @RequestBody OrderDTO orderDTO, Principal principal) throws JsonProcessingException {
+        OrderResponse newOrder = orderService.createOrder(orderDTO, principal);
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 
