@@ -27,8 +27,7 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TODO add ordercode attribute (tuong ung voi order cua shipping order tra ve)
-    // private String orderCode;
+    private String orderCode;
 
     private String vnpTxnRef;
 

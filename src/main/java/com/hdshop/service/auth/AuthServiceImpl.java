@@ -14,7 +14,9 @@ import com.hdshop.service.opt.OtpService;
 import com.hdshop.service.user.UserService;
 import com.hdshop.utils.OtpUtils;
 import com.hdshop.validator.UserValidator;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.MailException;
@@ -41,16 +43,17 @@ import java.util.regex.Pattern;
  */
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthServiceImpl implements AuthService {
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final OtpService otpService;
-    private final UserService userService;
-    private final MessageSource messageSource;
-    private final UserValidator userValidator;
+    UserRepository userRepository;
+    RoleRepository roleRepository;
+    PasswordEncoder passwordEncoder;
+    AuthenticationManager authenticationManager;
+    JwtTokenProvider jwtTokenProvider;
+    OtpService otpService;
+    UserService userService;
+    MessageSource messageSource;
+    UserValidator userValidator;
 
     /**
      * Handles user login based on the provided login credentials.

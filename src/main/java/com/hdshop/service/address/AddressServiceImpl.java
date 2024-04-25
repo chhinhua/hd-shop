@@ -8,7 +8,9 @@ import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.AddressRepository;
 import com.hdshop.service.user.UserService;
 import com.hdshop.utils.PhoneNumberUtils;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -20,11 +22,12 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AddressServiceImpl implements AddressService {
-    private final AddressRepository addressRepository;
-    private final UserService userService;
-    private final MessageSource messageSource;
-    private final ModelMapper modelMapper;
+    AddressRepository addressRepository;
+    UserService userService;
+    MessageSource messageSource;
+    ModelMapper modelMapper;
 
     @Override
     public List<AddressDTO> getYourAdresses(Principal principal) {

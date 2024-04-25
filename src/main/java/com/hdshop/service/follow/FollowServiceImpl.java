@@ -9,7 +9,9 @@ import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.FollowRepository;
 import com.hdshop.repository.ProductRepository;
 import com.hdshop.repository.UserRepository;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -25,12 +27,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FollowServiceImpl implements FollowService {
-    private final FollowRepository followRepository;
-    private final ProductRepository productRepository;
-    private final UserRepository userRepository;
-    private final MessageSource messageSource;
-    private final ModelMapper modelMapper;
+    FollowRepository followRepository;
+    ProductRepository productRepository;
+    UserRepository userRepository;
+    MessageSource messageSource;
+    ModelMapper modelMapper;
 
     @Override
     public FollowDTO follow(Long productId, Principal principal) {

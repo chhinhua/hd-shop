@@ -8,7 +8,9 @@ import com.hdshop.exception.APIException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.CategoryRepository;
 import com.hdshop.repository.ProductRepository;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -23,12 +25,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CategoryServiceImpl implements CategoryService {
-    private final CategoryRepository categoryRepository;
-    private final ModelMapper modelMapper;
-    private final UniqueSlugGenerator slugGenerator;
-    private final MessageSource messageSource;
-    private final ProductRepository productRepository;
+    CategoryRepository categoryRepository;
+    ModelMapper modelMapper;
+    UniqueSlugGenerator slugGenerator;
+    MessageSource messageSource;
+    ProductRepository productRepository;
 
     /**
      * Get a single category by id or slug

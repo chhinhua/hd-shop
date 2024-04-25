@@ -2,7 +2,8 @@ package com.hdshop.service.ghn;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.hdshop.dto.ghn.CreateGhnOrderResponse;
 import com.hdshop.dto.ghn.GhnItem;
 import com.hdshop.dto.ghn.GhnOrder;
@@ -10,7 +11,6 @@ import com.hdshop.entity.Address;
 import com.hdshop.entity.Order;
 import com.hdshop.utils.EnumPaymentType;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -25,11 +25,10 @@ import java.util.stream.Collectors;
 public class GhnServiceImpl implements GhnService {
     @Autowired
     private RestTemplate restTemplate;
-
     private static final String CREATE_ORDER_URL = "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/create";
 
     @Override
-    public CreateGhnOrderResponse createOrder(GhnOrder order) throws RestClientException, JsonProcessingException {
+    public String createGhnOrder(GhnOrder order) throws RestClientException, JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("shop_id", "192001");
@@ -43,15 +42,21 @@ public class GhnServiceImpl implements GhnService {
         // Capture the response entity
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(CREATE_ORDER_URL, entity, String.class);
 
-        if (responseEntity.getStatusCodeValue() == HttpStatus.OK.value()) {
+        Gson gson = new Gson();
+        JsonObject responseJson = gson.fromJson(responseEntity.getBody(), JsonObject.class);
 
+        // Access the data object
+        JsonObject data = responseJson.get("data").getAsJsonObject();
+
+        // Extract the order_code
+        String orderCode = data.get("order_code").getAsString();
+        log.info(orderCode);
+
+
+        if (responseEntity.getStatusCodeValue() == HttpStatus.OK.value()) {
             log.info("Status code: " + responseEntity.getStatusCode());
             log.info("Response: " + responseEntity.getBody());
-
-            // Use ObjectMapper to convert JSON to object
-           // CreateGhnOrderResponse responseObject = mapper.readValue(responseEntity.getBody(), CreateGhnOrderResponse.class);
-
-            return null;
+            return orderCode;
         } else {
             log.error("Failed to create GHN order. Status code:" + responseEntity.getStatusCode(), responseEntity.getBody());
             return null;
@@ -82,9 +87,7 @@ public class GhnServiceImpl implements GhnService {
                 .to_ward_name(address.getWard())
                 .to_district_name(address.getDistrict())
                 .to_province_name(address.getCity())
-                .cod_amount(
-                        order.getPaymentType().equals(EnumPaymentType.COD) ? order.getTotal().longValue() : 0L
-                )
+                .cod_amount(order.getPaymentType().equals(EnumPaymentType.COD) ? order.getTotal().longValue() : 0L)
                 .weight(200L * items.size())  // TODO write method to calculate weight length width height from order item data
                 .length(25L * items.size())
                 .width(25L * items.size())

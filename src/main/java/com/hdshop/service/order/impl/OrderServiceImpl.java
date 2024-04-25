@@ -21,7 +21,9 @@ import com.hdshop.service.product.ProductService;
 import com.hdshop.utils.AppUtils;
 import com.hdshop.utils.EnumOrderStatus;
 import com.hdshop.utils.EnumPaymentType;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -38,20 +40,33 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
-    private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final AddressRepository addressRepository;
-    private final ModelMapper modelMapper;
-    private final MessageSource messageSource;
-    private final CartItemRepository cartItemRepository;
-    private final CartRepository cartRepository;
-    private final CartService cartService;
-    private final ProductService productService;
-    private final AppUtils appUtils;
-    private final ProductRepository productRepository;
-    private final ReviewRepository reviewRepository;
-    private final GhnService ghnService;
+    OrderRepository orderRepository;
+    UserRepository userRepository;
+    AddressRepository addressRepository;
+    ModelMapper modelMapper;
+    MessageSource messageSource;
+    CartItemRepository cartItemRepository;
+    CartRepository cartRepository;
+    CartService cartService;
+    ProductService productService;
+    AppUtils appUtils;
+    ProductRepository productRepository;
+    ReviewRepository reviewRepository;
+    GhnService ghnService;
+
+    /**
+     * Set order_code value after created ghn_order
+     * @param orderId
+     * @param orderCode
+     */
+    @Override
+    public void updateOrderCode(Long orderId, String orderCode) {
+        Order order = findById(orderId);
+        order.setOrderCode(orderCode);
+        orderRepository.save(order);
+    }
 
     @Override
     public OrderResponse createOrder(OrderDTO orderDto, Principal principal) throws JsonProcessingException {
@@ -59,7 +74,9 @@ public class OrderServiceImpl implements OrderService {
         Order order = findById(response.getId());
 
         GhnOrder shippingOrder = ghnService.buildShippingOrder(order);
-        CreateGhnOrderResponse result = ghnService.createOrder(shippingOrder); // create order data to GHN service
+        String orderCode = ghnService.createGhnOrder(shippingOrder); // create order data to GHN service
+
+        updateOrderCode(response.getId(), orderCode);
 
         return response;
     }

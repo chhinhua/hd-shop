@@ -6,7 +6,7 @@ import com.hdshop.dto.ghn.GhnOrder;
 import com.hdshop.entity.Order;
 
 public interface GhnService {
-    CreateGhnOrderResponse createOrder(final GhnOrder order) throws JsonProcessingException;
+    String createGhnOrder(final GhnOrder order) throws JsonProcessingException;
 
     GhnOrder buildShippingOrder(final Order order);
 }

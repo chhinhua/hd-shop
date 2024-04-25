@@ -7,7 +7,9 @@ import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
 import com.hdshop.service.cart.CartItemService;
 import com.hdshop.service.cart.CartService;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -18,11 +20,12 @@ import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CartItemServiceImpl implements CartItemService {
-    private final CartItemRepository cartItemRepository;
-    private final CartService cartService;
-    private final MessageSource messageSource;
-    private final ModelMapper modelMapper;
+    CartItemRepository cartItemRepository;
+    CartService cartService;
+    MessageSource messageSource;
+    ModelMapper modelMapper;
 
     /**
      * Overrides the method to change the quantity of a CartItem.
