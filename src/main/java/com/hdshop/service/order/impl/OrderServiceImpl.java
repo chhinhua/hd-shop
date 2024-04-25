@@ -3,7 +3,6 @@ package com.hdshop.service.order.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.config.VNPayConfig;
 import com.hdshop.dto.address.AddressDTO;
-import com.hdshop.dto.ghn.CreateGhnOrderResponse;
 import com.hdshop.dto.ghn.GhnOrder;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
@@ -58,6 +57,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * Set order_code value after created ghn_order
+     *
      * @param orderId
      * @param orderCode
      */
@@ -211,9 +211,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order findById(Long orderId) {
-        return orderRepository
-                .findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
+        return orderRepository.findById(orderId).orElseThrow(
+                () -> new ResourceNotFoundException(getMessage("order-not-found"))
+        );
     }
 
     @Override
@@ -228,39 +228,49 @@ public class OrderServiceImpl implements OrderService {
      *
      * @param orderId
      * @param statusValue
-     * @return OrderDTO
+     * @return Order Response object
      */
     @Override
-    public OrderResponse updateStatus(Long orderId, String statusValue) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+    public OrderResponse updateStatus(Long orderId, String statusValue) throws JsonProcessingException {
+        Order order = findById(orderId);
 
-        // thay đổi nếu trạng thái khác trạng thái hiện tại
-        String orderStatusKey = order.getStatus().getValue();
-        if (!orderStatusKey.equals(statusValue)) {
-            EnumOrderStatus newStatus = appUtils.getOrderStatus(statusValue);
-            order.setStatus(newStatus);
-            orderRepository.save(order);
-
-            // hoàn trả lại số lượng sản phẩm nếu hủy đơn
-            giveBackProductSoldIfCancle(order, newStatus);
+        if (order.getStatus().getValue().equals(statusValue)) {
+            return mapEntityToResponse(order); // No change in status, return existing order
         }
+
+        EnumOrderStatus newStatus = appUtils.getOrderStatus(statusValue);
+
+        // Handle cancel `GHN` order specifically
+        if (newStatus.equals(EnumOrderStatus.CANCELED)) {
+            handleCancelOrder(order);
+        }
+
+        order.setStatus(newStatus);
+        orderRepository.save(order);
 
         return mapEntityToResponse(order);
     }
 
-    private void giveBackProductSoldIfCancle(Order order, EnumOrderStatus status) {
-        if (status == EnumOrderStatus.CANCELED) {
-            order.getOrderItems().forEach(item -> {
-                Product product = item.getProduct();
-                int itemQuantity = item.getQuantity();
-                int sold = product.getSold();
-                int quantityAvalable = product.getQuantityAvailable();
-                product.setSold(sold - itemQuantity);
-                product.setQuantityAvailable(quantityAvalable + itemQuantity);
-                productRepository.save(product);
-            });
+    private void handleCancelOrder(Order order) throws JsonProcessingException {
+        if (order.getOrderCode() != null) {
+            String ghnOrderStatus = ghnService.getOrderStatus(order.getOrderCode());
+            if (ghnOrderStatus != null && ghnService.getEnumStatus(ghnOrderStatus).equals(EnumOrderStatus.ORDERED)) {
+                ghnService.cancelGhnOrder(order.getOrderCode());
+            }
         }
+        giveBackProductSoldIfCancle(order);
+    }
+
+    private void giveBackProductSoldIfCancle(Order order) {
+        order.getOrderItems().forEach(item -> {
+            Product product = item.getProduct();
+            int itemQuantity = item.getQuantity();
+            int sold = product.getSold();
+            int quantityAvalable = product.getQuantityAvailable();
+            product.setSold(sold - itemQuantity);
+            product.setQuantityAvailable(quantityAvalable + itemQuantity);
+            productRepository.save(product);
+        });
     }
 
     /**

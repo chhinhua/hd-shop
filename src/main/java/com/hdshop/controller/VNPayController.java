@@ -6,6 +6,7 @@ import com.hdshop.service.order.OrderService;
 import com.hdshop.service.vnpay.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
@@ -25,6 +26,7 @@ import java.util.Locale;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/vnpay")
+@Slf4j
 public class VNPayController {
     private final VNPayService vnPayService;
     private final MessageSource messageSource;
@@ -72,7 +74,7 @@ public class VNPayController {
         String orderInfor = messageSource.getMessage("pay-for-purchases-on-duck-shop", null, LocaleContextHolder.getLocale());
         String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
         String vnpayUrl = vnPayService.createOrder(orderTotal, orderInfor, baseUrl);
-        System.out.println(vnpayUrl);
+        log.info(vnpayUrl);
 
         String decodedNote = URLDecoder.decode(note, StandardCharsets.UTF_8);
 

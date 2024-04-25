@@ -31,7 +31,7 @@ public interface OrderService {
 
     String deleteById(final Long orderId);
 
-    OrderResponse updateStatus(final Long orderId, final String statusValue);
+    OrderResponse updateStatus(final Long orderId, final String statusValue) throws JsonProcessingException;
 
     List<OrderResponse> getOrdersByUsername(final String username);
 

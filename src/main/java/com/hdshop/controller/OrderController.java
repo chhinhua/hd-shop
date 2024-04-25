@@ -75,7 +75,7 @@ public class OrderController {
     @SecurityRequirement(name = "Bear Authentication")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PutMapping("{id}/status")
-    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam String status) {
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam String status) throws JsonProcessingException {
         return ResponseEntity.ok(orderService.updateStatus(id, status));
     }
 
