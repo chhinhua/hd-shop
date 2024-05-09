@@ -11,6 +11,8 @@ import java.security.Principal;
 import java.util.List;
 
 public interface OrderService {
+    OrderResponse createV2(final OrderDTO order, final Principal principal);
+
     void updateOrderCode(final Long orderId, final String orderCode);
 
     OrderResponse createOrder(final OrderDTO order, final Principal principal) throws JsonProcessingException;

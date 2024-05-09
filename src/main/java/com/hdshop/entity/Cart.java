@@ -1,10 +1,8 @@
 package com.hdshop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
@@ -17,20 +15,21 @@ import java.util.List;
 @AllArgsConstructor
 @DynamicUpdate
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "carts")
 public class Cart extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
 
-    private Integer totalItems;
+    Integer totalItems;
 
-    private BigDecimal totalPrice;
+    BigDecimal totalPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    User user;
 
     @OneToMany(mappedBy = "cart", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<CartItem> cartItems = new ArrayList<>();
+    List<CartItem> cartItems = new ArrayList<>();
 }

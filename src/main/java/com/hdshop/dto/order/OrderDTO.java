@@ -23,6 +23,9 @@ public class OrderDTO {
     @NotBlank
     private String paymentType;
 
+    private BigDecimal subTotal;
+    private BigDecimal shippingFee;
+
     @NotNull(message = "Total price must be not null and larger or equal to zero")
     private BigDecimal total;
 

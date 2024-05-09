@@ -1,10 +1,8 @@
 package com.hdshop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,24 +12,25 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "options")
 public class Option {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long optionId;
+    Long optionId;
 
     @Column(nullable = false)
-    private String optionName;
+    String optionName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
-    private Product product;
+    Product product;
 
     @OneToMany(
             mappedBy = "option",
             cascade = {CascadeType.PERSIST, CascadeType.REMOVE}
     )
-    private List<OptionValue> values = new ArrayList<>();
+    List<OptionValue> values = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {

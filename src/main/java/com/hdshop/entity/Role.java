@@ -1,10 +1,8 @@
 package com.hdshop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
 
 @Getter
@@ -13,15 +11,16 @@ import org.hibernate.annotations.DynamicUpdate;
 @AllArgsConstructor
 @DynamicUpdate
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "roles")
 public class Role extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    String name;
 
     @Column(columnDefinition = "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-    private String description;
+    String description;
 }

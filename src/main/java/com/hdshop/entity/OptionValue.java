@@ -1,10 +1,8 @@
 package com.hdshop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.util.ArrayList;
@@ -16,23 +14,24 @@ import java.util.List;
 @AllArgsConstructor
 @DynamicUpdate
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "option_values")
 public class OptionValue {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long valueId;
+    Long valueId;
 
     @Column(nullable = false)
-    private String valueName;
+    String valueName;
 
     @Column(name = "image_url") // for color
-    private String imageUrl;
+    String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "option_id")
-    private Option option;
+    Option option;
 
     @ManyToMany(mappedBy = "optionValues", cascade = CascadeType.ALL)
-    private List<ProductSku> productSkus = new ArrayList<>();
+    List<ProductSku> productSkus = new ArrayList<>();
 }
 

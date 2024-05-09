@@ -56,13 +56,18 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public void delete(Long cartItemId) {
-        CartItem item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-item-not-found")));
+        CartItem item = findById(cartItemId);
         cartItemRepository.delete(item);
 
         // update cart totals
         Cart cart = item.getCart();
         cartService.updateCartTotals(cart);
+    }
+
+    @Override
+    public CartItem findById(Long cartItemId) {
+       return cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-item-not-found")));
     }
 
     private CartItemResponse mapToItemResponse(CartItem entity) {

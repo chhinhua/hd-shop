@@ -2,10 +2,8 @@ package com.hdshop.entity;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
 
 @Getter
@@ -15,28 +13,29 @@ import org.hibernate.annotations.DynamicUpdate;
 @DynamicUpdate
 @Hidden
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
 
-    private String fullName;
+    String fullName;
 
-    private String phoneNumber;
+    String phoneNumber;
 
-    private String city;
+    String city;
 
-    private String district;
+    String district;
 
-    private String ward;
+    String ward;
 
-    private String orderDetails;
+    String orderDetails;
 
-    private Boolean isDefault;
+    Boolean isDefault;
 
-    private Boolean isDeleted;
+    Boolean isDeleted;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    User user;
 }

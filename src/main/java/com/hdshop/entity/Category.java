@@ -1,10 +1,8 @@
 package com.hdshop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -18,35 +16,36 @@ import java.util.List;
 @AllArgsConstructor
 @DynamicUpdate
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "categories")
 public class Category extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    String name;
 
-    private String slug;
+    String slug;
 
-    private Boolean isDeleted;
+    Boolean isDeleted;
 
     @Column(columnDefinition = "LONGTEXT")
-    private String description;
+    String description;
 
     @CreatedBy
-    private String createdBy;
+    String createdBy;
 
     @LastModifiedBy
-    private String lastModifiedBy;
+    String lastModifiedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
-    private Category parent;
+    Category parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.PERSIST)
-    private List<Category> children = new ArrayList<>();
+    List<Category> children = new ArrayList<>();
 
     @OneToMany(mappedBy = "category", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
-    private List<Product> products = new ArrayList<>();
+    List<Product> products = new ArrayList<>();
 }

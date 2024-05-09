@@ -8,6 +8,7 @@ import com.hdshop.dto.ghn.GhnItem;
 import com.hdshop.dto.ghn.GhnOrder;
 import com.hdshop.entity.Address;
 import com.hdshop.entity.Order;
+import com.hdshop.exception.APIException;
 import com.hdshop.utils.EnumOrderStatus;
 import com.hdshop.utils.EnumPaymentType;
 import lombok.AccessLevel;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -62,7 +64,7 @@ public class GhnServiceImpl implements GhnService {
         log.info(orderCode);
 
 
-        if (responseEntity.getStatusCode() == HttpStatus.OK) {
+        if (responseEntity.getStatusCode().is2xxSuccessful()) {
             log.info("Status code: " + responseEntity.getStatusCode());
             log.info("Response: " + responseEntity.getBody());
             return orderCode;
@@ -74,7 +76,7 @@ public class GhnServiceImpl implements GhnService {
     }
 
     @Override
-    public GhnOrder buildShippingOrder(Order order) {
+    public GhnOrder buildGhnOrder(Order order) {
         Address address = order.getAddress();
 
         List<GhnItem> items = order.getOrderItems().stream()
@@ -111,7 +113,7 @@ public class GhnServiceImpl implements GhnService {
     }
 
     @Override
-    public void cancelGhnOrder(String orderCode) {
+    public void cancelGhnOrder(String orderCode) throws JsonProcessingException {
         // Tạo request body JSON
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("order_codes", new String[]{orderCode});
@@ -122,19 +124,17 @@ public class GhnServiceImpl implements GhnService {
         headers.add("shop_id", SHOP_ID);
         headers.add("token", TOKEN);
 
-        // Gửi request và nhận response
-        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
-        ResponseEntity<Map> responseEntity = restTemplate.exchange(CANCEL_ORDER_URL, HttpMethod.POST, requestEntity, Map.class);
+        ObjectMapper mapper = new ObjectMapper();
+        String requestJson = mapper.writeValueAsString(requestBody);
+
+        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+
+        // Capture the response entity
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(CANCEL_ORDER_URL, entity, String.class);
 
         // Xử lý response
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
-            Map<String, Object> responseMap = responseEntity.getBody();
-            if ((boolean) responseMap.get("success")) {
-                log.info("Cancel order successfuly, order_code: " + orderCode);
-            } else {
-                log.warn("Cancel order failed, order_code: " + orderCode);
-                log.error("Error: " + responseMap.get("error"));
-            }
+            log.info("Cancel order successfuly, order_code: " + orderCode);
         } else {
             log.error("Cancel order failed, order_code: " + orderCode + responseEntity.getStatusCode());
         }
@@ -142,26 +142,43 @@ public class GhnServiceImpl implements GhnService {
 
     @Override
     public EnumOrderStatus getEnumStatus(String ghnOrderStatus) {
-        // TODO continue write this method
         switch (ghnOrderStatus) {
-            case "đã đặt hàng":
-                return EnumOrderStatus.ORDERED;
-            case "đang sử lý":
-                return EnumOrderStatus.PROCESSING;
-            case "đang giao":
-                return EnumOrderStatus.SHIPPING;
-            case "đã giao":
-                return EnumOrderStatus.DELIVERED;
-            case "đã hủy":
-                return EnumOrderStatus.CANCELED;
+            case "ready_to_pick":
+                return EnumOrderStatus.ORDERED; // đã đặt/mới tạo đơn
+            case "picking":
+            case "money_collect_picking":
+            case "picked":
+            case "storing":
+            case "sorting":
+            case "transporting":
+                return EnumOrderStatus.PROCESSING; // đang xử lý
+            case "delivering":
+            case "money_collect_delivering":
+                return EnumOrderStatus.SHIPPING; // đang giao
+            case "delivered":
+                return EnumOrderStatus.DELIVERED; // đã giao/hoàn thành
+            case "waiting_to_return":
+            case "return":
+            case "return_transporting":
+            case "return_sorting":
+            case "returning":
+            case "return_fail":
+            case "returned":
+                return EnumOrderStatus.RETURN_REFUND; // trả hàng/hoàn tiền
+            case "cancel":
+                return EnumOrderStatus.CANCELED; // hủy
+            case "exception":
+            case "damage":
+            case "lost":
+                return null;
             default:
                 log.error("Unexpected value: " + ghnOrderStatus);
-                return EnumOrderStatus.RETURN_REFUND;
+                return null;
         }
     }
 
     @Override
-    public Object getOrderDetail(String orderCode) {
+    public JsonObject getOrderDetail(String orderCode) throws JsonProcessingException {
         // Tạo request body JSON
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("order_code", orderCode);
@@ -171,16 +188,21 @@ public class GhnServiceImpl implements GhnService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("token", TOKEN);
 
-        // Gửi request và nhận response
-        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
-        ResponseEntity<Map> responseEntity = restTemplate.exchange(GET_ORDER_DETAIL_URL, HttpMethod.GET, requestEntity, Map.class);
+        ObjectMapper mapper = new ObjectMapper();
+        String requestJson = mapper.writeValueAsString(requestBody);
+
+        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+
+        // Capture the response entity
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(GET_ORDER_DETAIL_URL, entity, String.class);
 
         // Xử lý response
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
-            Map<String, Object> responseMap = responseEntity.getBody();
+            Gson gson = new Gson();
+            JsonObject responseJson = gson.fromJson(responseEntity.getBody(), JsonObject.class);
             Object responseObject = responseEntity.getBody();
             log.info("Response: " + responseObject);
-            return responseObject;
+            return responseJson;
         } else {
             log.error("Get GHN order detail failed: " + responseEntity.getStatusCode());
             return null;
@@ -189,20 +211,11 @@ public class GhnServiceImpl implements GhnService {
 
     @Override
     public String getOrderStatus(String orderCode) {
-        Object response = getOrderDetail(orderCode);
-        if (response != null) {
-            // Check if the response is a Map (assuming the return type is still Object)
-            if (response instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> responseMap = (Map<String, Object>) response;
-                String status = (String) responseMap.get("status");
-                return status;
-            } else {
-                log.error("Unexpected response type. Expected Map.");
-                return null;
-            }
-        } else {
-            log.error("Get order detail failed, order_code: " + orderCode);
+        try {
+            JsonObject response = getOrderDetail(orderCode);
+            return response.get("data").getAsJsonObject().get("status").getAsString();
+        } catch (Exception e) {
+            log.error("Error getting order status, order_code: " + orderCode + "Message: " + e.getMessage());
             return null;
         }
     }

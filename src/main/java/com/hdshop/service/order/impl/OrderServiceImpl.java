@@ -4,19 +4,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.config.VNPayConfig;
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.ghn.GhnOrder;
-import com.hdshop.dto.order.CheckOutDTO;
-import com.hdshop.dto.order.OrderDTO;
-import com.hdshop.dto.order.OrderPageResponse;
-import com.hdshop.dto.order.OrderResponse;
+import com.hdshop.dto.order.*;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
+import com.hdshop.service.address.AddressService;
+import com.hdshop.service.cart.CartItemService;
 import com.hdshop.service.cart.CartService;
 import com.hdshop.service.ghn.GhnService;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.service.product.ProductService;
+import com.hdshop.service.product.ProductSkuService;
+import com.hdshop.service.user.UserService;
 import com.hdshop.utils.AppUtils;
 import com.hdshop.utils.EnumOrderStatus;
 import com.hdshop.utils.EnumPaymentType;
@@ -41,19 +42,71 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
-    OrderRepository orderRepository;
-    UserRepository userRepository;
-    AddressRepository addressRepository;
-    ModelMapper modelMapper;
-    MessageSource messageSource;
+    AddressService addressService;
+    AppUtils appUtils;
     CartItemRepository cartItemRepository;
     CartRepository cartRepository;
     CartService cartService;
+    CartItemService cartItemService;
+    GhnService ghnService;
+    MessageSource messageSource;
+    ModelMapper modelMapper;
+    OrderRepository orderRepository;
+    UserService userService;
     ProductService productService;
-    AppUtils appUtils;
     ProductRepository productRepository;
     ReviewRepository reviewRepository;
-    GhnService ghnService;
+    ProductSkuService skuService;
+
+    @Override
+    public OrderResponse createV2(OrderDTO orderDTO, Principal principal) {
+        // retrive data from request
+        User user = getUser(principal.getName());
+        Address address = getAddress(orderDTO.getAddressId());
+        List<OrderItem> orderItems = getOrderItems(orderDTO.getOrderItems());
+        EnumPaymentType paymentType = appUtils.getPaymentType(orderDTO.getPaymentType());
+
+        // build order
+        Order order = Order.builder()
+                .status(EnumOrderStatus.ORDERED)
+                .isDeleted(false)
+                .isPaidBefore(false)
+                .note(orderDTO.getNote())
+                .subTotal(orderDTO.getSubTotal())
+                .shippingFee(orderDTO.getShippingFee())
+                .total(orderDTO.getTotal())
+                .user(user)
+                .address(address)
+                .orderItems(orderItems)
+                .paymentType(paymentType)
+                .totalItems(orderItems.size())
+                .build();
+
+        orderItems.forEach(orderItem -> orderItem.setOrder(order));
+
+        // save the order
+        Order newOrder = orderRepository.save(order);
+        return mapEntityToResponse(newOrder);
+    }
+
+    private List<OrderItem> getOrderItems(List<OrderItemDTO> itemDTOS) {
+        return itemDTOS
+                .stream()
+                .map(dto -> {
+                    OrderItem orderItem = modelMapper.map(dto, OrderItem.class);
+                    Product product = productService.findById(dto.getProductId());
+                    ProductSku sku = skuService.findById(dto.getSkuId());
+
+                    // Thiết lập SKU & Product cho orderItem
+                    orderItem.setId(null);
+                    orderItem.setSku(sku);
+                    orderItem.setProduct(product);
+
+                    return orderItem;
+                })
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * Set order_code value after created ghn_order
@@ -73,7 +126,7 @@ public class OrderServiceImpl implements OrderService {
         OrderResponse response = createFromCart(orderDto, principal); // create order data to duckshop service
         Order order = findById(response.getId());
 
-        GhnOrder shippingOrder = ghnService.buildShippingOrder(order);
+        GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
         String orderCode = ghnService.createGhnOrder(shippingOrder); // create order data to GHN service
 
         updateOrderCode(response.getId(), orderCode);
@@ -83,10 +136,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse create(OrderDTO orderDTO, Principal principal) {
-        String username = principal.getName();
-
-        User user = getUserByUsername(username);
-        Address address = getAddressById(orderDTO.getAddressId());
+        User user = getUser(principal.getName());
+        Address address = getAddress(orderDTO.getAddressId());
 
         Order order = buildOrder(orderDTO, user, address);
         List<OrderItem> orderItems = convertCartItemIdsToOrderItems(orderDTO.getCartItemIds());
@@ -102,9 +153,9 @@ public class OrderServiceImpl implements OrderService {
         String username = principal.getName();
 
         // retrieve data
-        User user = getUserByUsername(username);
+        User user = getUser(username);
         Cart cart = getCartByUsername(username);
-        Address address = getAddressById(orderDTO.getAddressId());
+        Address address = getAddress(orderDTO.getAddressId());
 
         // check items exist in cart
         checkCartItems(cart);
@@ -141,9 +192,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponse createWithVNPay(OrderDTO orderDTO, String username, String vnp_TxnRef) {
         // retrieve data
-        User user = getUserByUsername(username);
+        User user = getUser(username);
         Cart cart = getCartByUsername(username);
-        Address address = getAddressById(orderDTO.getAddressId());
+        Address address = getAddress(orderDTO.getAddressId());
 
         // check items exist in cart
         checkCartItems(cart);
@@ -251,11 +302,16 @@ public class OrderServiceImpl implements OrderService {
         return mapEntityToResponse(order);
     }
 
-    private void handleCancelOrder(Order order) throws JsonProcessingException {
+    private void  handleCancelOrder(Order order) throws JsonProcessingException {
         if (order.getOrderCode() != null) {
             String ghnOrderStatus = ghnService.getOrderStatus(order.getOrderCode());
-            if (ghnOrderStatus != null && ghnService.getEnumStatus(ghnOrderStatus).equals(EnumOrderStatus.ORDERED)) {
-                ghnService.cancelGhnOrder(order.getOrderCode());
+            if (ghnOrderStatus != null) {
+                EnumOrderStatus status = ghnService.getEnumStatus(ghnOrderStatus);
+                if (status != null) {
+                    if (status.equals(EnumOrderStatus.ORDERED)) {
+                        ghnService.cancelGhnOrder(order.getOrderCode());
+                    }
+                }
             }
         }
         giveBackProductSoldIfCancle(order);
@@ -310,7 +366,7 @@ public class OrderServiceImpl implements OrderService {
         String username = principal.getName();
 
         // retrieve the data from username
-        User currentUser = getUserByUsername(username);
+        User currentUser = getUser(username);
         Cart userCart = getCartByUsername(username);
 
         BigDecimal cartTotal = userCart.getTotalPrice();
@@ -436,7 +492,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse makePaymentForCOD(OrderDTO dto, Long orderId) {
         // TODO must test & debug
         Order order = findById(orderId);
-        Address newAddress = getAddressById(dto.getAddressId());
+        Address newAddress = getAddress(dto.getAddressId());
 
         // set fields
         order.setTotal(dto.getTotal());
@@ -454,7 +510,7 @@ public class OrderServiceImpl implements OrderService {
         // TODO must test & debug
         // retrieve data
         Order order = findById(orderId);
-        Address newAddress = getAddressById(dto.getAddressId());
+        Address newAddress = getAddress(dto.getAddressId());
 
         // set fields
         order.setTotal(dto.getTotal());
@@ -507,16 +563,12 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
-    private Address getAddressById(Long addressId) {
-        return addressRepository.findById(addressId).orElseThrow(() ->
-                new ResourceNotFoundException(getMessage("no-delivery-address-found"))
-        );
+    private Address getAddress(Long addressId) {
+        return addressService.findById(addressId);
     }
 
-    private User getUserByUsername(String username) {
-        return userRepository.findByUsername(username).orElseThrow(() ->
-                new ResourceNotFoundException(getMessage("user-not-found"))
-        );
+    private User getUser(String username) {
+        return userService.findByUsername(username);
     }
 
     public Order buildOrder(OrderDTO orderDTO, User user, Address address) {
@@ -584,8 +636,7 @@ public class OrderServiceImpl implements OrderService {
         return cartItemIds
                 .stream()
                 .map(idCartItem -> {
-                    CartItem cartItem = cartItemRepository.findById(idCartItem)
-                            .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-item-not-found")));
+                    CartItem cartItem = cartItemService.findById(idCartItem);
 
                     OrderItem orderItem = modelMapper.map(cartItem, OrderItem.class);
                     orderItem.setId(null);

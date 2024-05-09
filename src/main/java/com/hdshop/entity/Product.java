@@ -1,10 +1,8 @@
 package com.hdshop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -19,74 +17,75 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @DynamicUpdate
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "products")
 public class Product extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productId;
+    Long productId;
 
     @Column(nullable = false)
-    private String name;
+    String name;
 
     @Column(columnDefinition = "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-    private String description;
+    String description;
 
-    private String slug;
+    String slug;
 
-    private BigDecimal price;
+    BigDecimal price;
 
-    private BigDecimal promotionalPrice;
+    BigDecimal promotionalPrice;
 
-    private Integer quantity;
+    Integer quantity;
 
-    private Integer quantityAvailable;
+    Integer quantityAvailable;
 
-    private Integer sold;
+    Integer sold;
 
-    private Float rating;
+    Float rating;
 
-    private Integer numberOfRatings;
+    Integer numberOfRatings;
 
-    private Integer favoriteCount;
+    Integer favoriteCount;
 
-    private Boolean isActive;
+    Boolean isActive;
 
-    private Boolean isSelling;
+    Boolean isSelling;
 
     @CreatedBy
-    private String createdBy;
+    String createdBy;
 
     @LastModifiedBy
-    private String lastModifiedBy;
+    String lastModifiedBy;
 
     @ElementCollection
     @Column(name = "imageUrl")
-    private List<String> listImages = new ArrayList<>();
+    List<String> listImages = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    private Category category;
+    Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.REMOVE)
-    private List<Review> reviews = new ArrayList<>();
+    List<Review> reviews = new ArrayList<>();
 
     @OneToMany(mappedBy = "product")
-    private List<OrderItem> orderItems = new ArrayList<>();
+    List<OrderItem> orderItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<CartItem> cartItems = new ArrayList<>();
+    List<CartItem> cartItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "product")
-    private List<Follow> userFollowProducts = new ArrayList<>();
+    List<Follow> userFollowProducts = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "product",
             cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}
     )
-    private List<Option> options;
+    List<Option> options;
 
     @OneToMany(
             mappedBy = "product",
             cascade = {CascadeType.REMOVE})
-    private List<ProductSku> skus;
+    List<ProductSku> skus;
 }

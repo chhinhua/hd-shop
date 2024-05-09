@@ -25,6 +25,10 @@ public class OrderResponse {
 
     private Integer totalItems;
 
+    private BigDecimal subTotal;
+
+    private BigDecimal shippingFee;
+
     private BigDecimal total;
 
     private String note;
