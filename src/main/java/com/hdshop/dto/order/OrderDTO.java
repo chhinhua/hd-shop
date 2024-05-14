@@ -17,31 +17,19 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderDTO {
     private Long id;
-
     private String status;
-
     @NotBlank
     private String paymentType;
-
     private BigDecimal subTotal;
     private BigDecimal shippingFee;
-
     @NotNull(message = "Total price must be not null and larger or equal to zero")
     private BigDecimal total;
-
     private String note;
-
     private Boolean isPaidBefore;
-
     private String createdBy;
-
     private String lastModifiedBy;
-
     private Long userId;
-
     private Long addressId;
-
     private List<OrderItemDTO> orderItems;
-
     private List<Long> cartItemIds;
 }

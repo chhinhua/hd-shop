@@ -6,6 +6,8 @@ import java.math.BigDecimal;
 import java.security.Principal;
 
 public interface VNPayService {
+    String createOrder(BigDecimal total, String orderInfor, String urlReturn, String orderId);
+
     String createOrder(BigDecimal total, String orderInfor, String urlReturn);
 
     int orderReturn(HttpServletRequest request);

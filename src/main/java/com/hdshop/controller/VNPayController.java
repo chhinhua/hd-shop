@@ -1,7 +1,9 @@
 package com.hdshop.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.config.VNPayConfig;
 import com.hdshop.dto.order.OrderDTO;
+import com.hdshop.entity.Order;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.service.vnpay.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,6 +39,27 @@ public class VNPayController {
         return "index";
     }
 
+    @GetMapping("/submit-order-v2")
+    public String submitOrderV2(@RequestParam("orderId") Long orderId, HttpServletRequest request) {
+        Order order = orderService.findById(orderId);
+
+        String orderInfor = messageSource.getMessage("pay-for-purchases-on-duck-shop", null, LocaleContextHolder.getLocale());
+        String vnp_TxnRef = order.getId().toString();
+        String baseUrl = null;
+
+        if (request != null) {
+            baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        }
+
+        String vnpayUrl = vnPayService.createOrder(order.getTotal(), orderInfor, baseUrl, vnp_TxnRef);
+        log.info("vnpay url: " + vnpayUrl);
+
+        // follow order
+        orderService.createWithVNPayV2(order.getId(), vnp_TxnRef);
+
+        return "redirect:" + vnpayUrl;
+    }
+
     @GetMapping("/submit-order")
     public String submitOrder(@RequestParam("amount") BigDecimal orderTotal,
                               @RequestParam("addressId") Long addressId,
@@ -44,9 +67,12 @@ public class VNPayController {
                               @RequestParam(name = "note", required = false) String note,
                               HttpServletRequest request) {
         String orderInfor = messageSource.getMessage("pay-for-purchases-on-duck-shop", null, LocaleContextHolder.getLocale());
-        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        String baseUrl = null;
+        if (request != null) {
+            baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        }
         String vnpayUrl = vnPayService.createOrder(orderTotal, orderInfor, baseUrl);
-        System.out.println(vnpayUrl);
+        log.info("vnpay url: " + vnpayUrl);
 
         // TODO move this logic to service
         String decodedNote = URLDecoder.decode(note, StandardCharsets.UTF_8);
@@ -73,25 +99,27 @@ public class VNPayController {
         // TODO must test & debug
         String orderInfor = messageSource.getMessage("pay-for-purchases-on-duck-shop", null, LocaleContextHolder.getLocale());
         String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-        String vnpayUrl = vnPayService.createOrder(orderTotal, orderInfor, baseUrl);
+        String vnp_TxnRef = orderId.toString();
+        String vnpayUrl = vnPayService.createOrder(orderTotal, orderInfor, baseUrl, vnp_TxnRef);
         log.info(vnpayUrl);
 
         String decodedNote = URLDecoder.decode(note, StandardCharsets.UTF_8);
 
         // build order from request
         OrderDTO order = new OrderDTO();
+        order.setId(orderId);
         order.setNote(decodedNote);
         order.setAddressId(addressId);
         order.setTotal(orderTotal);
 
         // make payment
-        orderService.makePaymentForVNPAY(order, orderId);
+        orderService.makePaymentForVNPAY(order);
 
         return "redirect:" + vnpayUrl;
     }
 
     @GetMapping("/vnpay-payment")
-    public String GetMapping(HttpServletRequest request, Model model) {
+    public String GetMapping(HttpServletRequest request, Model model) throws JsonProcessingException {
         int paymentStatus = vnPayService.orderReturn(request);
 
         String orderInfo = request.getParameter("vnp_OrderInfo");
@@ -117,13 +145,9 @@ public class VNPayController {
         model.addAttribute("paymentTime", formatedPaymentTime);
         model.addAttribute("transactionId", transactionId);
 
-        // TODO lưu transaction
-        // TODO xóa items trong giỏ hàng
-
         if (paymentStatus == 1) {
             orderService.paymentCompleted(vnp_TxnRef);
         }  //orderService.paymentFailed(vnp_TxnRef);
-
 
         return paymentStatus == 1 ? "ordersuccess" : "orderfail";
     }

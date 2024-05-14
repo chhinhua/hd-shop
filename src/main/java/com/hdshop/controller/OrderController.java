@@ -51,7 +51,7 @@ public class OrderController {
     @Operation(summary = "Create follow order from user cart")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrderFromCart(@Valid @RequestBody OrderDTO orderDTO, Principal principal) throws JsonProcessingException {
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderDTO orderDTO, Principal principal) throws JsonProcessingException {
         OrderResponse newOrder = orderService.createOrder(orderDTO, principal);
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
@@ -173,7 +173,7 @@ public class OrderController {
     @Operation(summary = "Make payment with COD")
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/pay-cod")
-    public ResponseEntity<OrderResponse> makePaymentForCOD(@RequestBody OrderDTO order, @RequestParam("orderId") Long orderId) {
+    public ResponseEntity<OrderResponse> makePaymentForCOD(@RequestBody OrderDTO order, @RequestParam("orderId") Long orderId) throws JsonProcessingException {
         return ResponseEntity.ok(orderService.makePaymentForCOD(order, orderId));
     }
 }

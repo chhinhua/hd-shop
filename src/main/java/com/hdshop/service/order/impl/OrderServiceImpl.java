@@ -1,10 +1,15 @@
 package com.hdshop.service.order.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.hdshop.config.VNPayConfig;
+import com.hdshop.controller.VNPayController;
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.ghn.GhnOrder;
 import com.hdshop.dto.order.*;
+import com.hdshop.dto.vnpay.SubmitOrderRequest;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.InvalidException;
@@ -24,22 +29,34 @@ import com.hdshop.utils.EnumPaymentType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
     AddressService addressService;
@@ -57,20 +74,48 @@ public class OrderServiceImpl implements OrderService {
     ProductRepository productRepository;
     ReviewRepository reviewRepository;
     ProductSkuService skuService;
+    RestTemplate restTemplate;
+    static String VNPAY_SUBMIT_ORDER = "http://localhost:8080/api/v1/vnpay/submit-order-v2";
 
     @Override
+    public void callVNPaySubmitOrder(Long orderId, BigDecimal amount, Long addressId, String username, String note) throws JsonProcessingException {
+        // Tạo request body JSON
+        SubmitOrderRequest orderRequest = new SubmitOrderRequest(
+                orderId, amount, addressId, username, note
+        );
+
+        // Tạo request headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ObjectMapper mapper = new ObjectMapper();
+        String requestJson = mapper.writeValueAsString(orderRequest);
+
+        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+
+        // Capture the response entity
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(VNPAY_SUBMIT_ORDER, entity, String.class);
+    }
+
+    @Override
+    public Order findByVnpTxnRef(String vnp_TxnRef) {
+        return orderRepository.findByVnpTxnRef(vnp_TxnRef).orElseThrow(
+                () -> new ResourceNotFoundException(getMessage("order-not-found"))
+        );
+    }
+
+    @Override
+    @Transactional
     public OrderResponse createV2(OrderDTO orderDTO, Principal principal) {
         // retrive data from request
         User user = getUser(principal.getName());
         Address address = getAddress(orderDTO.getAddressId());
         List<OrderItem> orderItems = getOrderItems(orderDTO.getOrderItems());
         EnumPaymentType paymentType = appUtils.getPaymentType(orderDTO.getPaymentType());
+        EnumOrderStatus status = paymentType.equals(EnumPaymentType.COD) ? EnumOrderStatus.ORDERED : EnumOrderStatus.WAIT_FOR_PAY;
 
         // build order
         Order order = Order.builder()
-                .status(EnumOrderStatus.ORDERED)
-                .isDeleted(false)
-                .isPaidBefore(false)
                 .note(orderDTO.getNote())
                 .subTotal(orderDTO.getSubTotal())
                 .shippingFee(orderDTO.getShippingFee())
@@ -79,13 +124,17 @@ public class OrderServiceImpl implements OrderService {
                 .address(address)
                 .orderItems(orderItems)
                 .paymentType(paymentType)
+                .status(status)
                 .totalItems(orderItems.size())
+                .isDeleted(false)
+                .isPaidBefore(false)
                 .build();
 
         orderItems.forEach(orderItem -> orderItem.setOrder(order));
 
         // save the order
         Order newOrder = orderRepository.save(order);
+
         return mapEntityToResponse(newOrder);
     }
 
@@ -123,15 +172,20 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse createOrder(OrderDTO orderDto, Principal principal) throws JsonProcessingException {
-        OrderResponse response = createFromCart(orderDto, principal); // create order data to duckshop service
+        OrderResponse response = createV2(orderDto, principal); // create order data to duckshop service
         Order order = findById(response.getId());
 
-        GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
-        String orderCode = ghnService.createGhnOrder(shippingOrder); // create order data to GHN service
+        if (order.getPaymentType().equals(EnumPaymentType.COD)) {
+            // build and create GHN order
+            GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
+            String orderCode = ghnService.createGhnOrder(shippingOrder);
+            order.setOrderCode(orderCode); // update order code
+            orderRepository.save(order);
+        }
 
-        updateOrderCode(response.getId(), orderCode);
+        // TODO xóa các item khỏi giỏ hàng
 
-        return response;
+        return mapEntityToResponse(order);
     }
 
     @Override
@@ -212,6 +266,13 @@ public class OrderServiceImpl implements OrderService {
         clearItems(cart);
 
         return mapEntityToResponse(order);
+    }
+
+    @Override
+    public OrderResponse createWithVNPayV2(Long orderId, String vnp_TxnRef) {
+        Order order = findById(orderId);
+        order.setVnpTxnRef(vnp_TxnRef);
+        return mapEntityToResponse(orderRepository.save(order));
     }
 
     /**
@@ -302,7 +363,7 @@ public class OrderServiceImpl implements OrderService {
         return mapEntityToResponse(order);
     }
 
-    private void  handleCancelOrder(Order order) throws JsonProcessingException {
+    private void handleCancelOrder(Order order) throws JsonProcessingException {
         if (order.getOrderCode() != null) {
             String ghnOrderStatus = ghnService.getOrderStatus(order.getOrderCode());
             if (ghnOrderStatus != null) {
@@ -402,20 +463,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public void paymentCompleted(String vnp_TxnRef) {
-        // TODO must optimize code here
-        Order order = orderRepository.findByVnpTxnRef(vnp_TxnRef)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
+    public void paymentCompleted(String vnp_TxnRef) throws JsonProcessingException {
+        Order order = findByVnpTxnRef(vnp_TxnRef);
 
-        // update status
+        // build and create GHN order
+        GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
+        String orderCode = ghnService.createGhnOrder(shippingOrder);
+
         order.setStatus(EnumOrderStatus.ORDERED);
         order.setIsPaidBefore(true);
-        orderRepository.save(order);
+        order.setOrderCode(orderCode); // update order code
 
-        // clear cart items
-        Cart cart = cartRepository.findByUser_Username(order.getUser().getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
-        clearItems(cart);
+        orderRepository.save(order);
     }
 
     @Override
@@ -489,34 +548,40 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse makePaymentForCOD(OrderDTO dto, Long orderId) {
+    public OrderResponse makePaymentForCOD(OrderDTO dto, Long orderId) throws JsonProcessingException {
         // TODO must test & debug
         Order order = findById(orderId);
-        Address newAddress = getAddress(dto.getAddressId());
+        Address address = getAddress(dto.getAddressId());
 
         // set fields
+        BigDecimal shippingFee = BigDecimal.valueOf(order.getTotal().longValue() - order.getSubTotal().longValue());
+        order.setShippingFee(shippingFee);
         order.setTotal(dto.getTotal());
         order.setNote(dto.getNote());
-        order.setAddress(newAddress);
+        order.setAddress(address);
         order.setStatus(EnumOrderStatus.ORDERED);
         order.setPaymentType(EnumPaymentType.COD);
 
-        Order makePayment = orderRepository.save(order);
-        return mapEntityToResponse(makePayment);
+        // build and create GHN order
+        GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
+        String orderCode = ghnService.createGhnOrder(shippingOrder);
+
+        order.setOrderCode(orderCode);
+        return mapEntityToResponse(orderRepository.save(order));
     }
 
     @Override
-    public void makePaymentForVNPAY(OrderDTO dto, Long orderId) {
+    public void makePaymentForVNPAY(OrderDTO dto) {
         // TODO must test & debug
         // retrieve data
-        Order order = findById(orderId);
-        Address newAddress = getAddress(dto.getAddressId());
+        Order order = findById(dto.getId());
+        Address address = getAddress(dto.getAddressId());
 
         // set fields
         order.setTotal(dto.getTotal());
         order.setNote(dto.getNote());
-        order.setAddress(newAddress);
-        order.setVnpTxnRef(VNPayConfig.vnp_TxnRef);
+        order.setAddress(address);
+        order.setVnpTxnRef(dto.getId().toString());
 
         // save the order
         orderRepository.save(order);

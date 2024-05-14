@@ -57,7 +57,7 @@ public class CartController {
 
     @Operation(summary = "Clear cart items")
     @PreAuthorize("hasRole('USER')")
-    @DeleteMapping("/remove")
+    @DeleteMapping("/remove-items")
     public ResponseEntity<CartResponse> removeListItems(@RequestBody List<Long> itemIds, Principal principal) {
         String username = principal.getName();
         CartResponse response = cartService.removeListItems(username, itemIds);
