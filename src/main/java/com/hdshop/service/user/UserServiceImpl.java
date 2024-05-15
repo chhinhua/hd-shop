@@ -10,7 +10,9 @@ import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.validator.ProductValidator;
 import com.hdshop.validator.UserValidator;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -28,13 +30,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserServiceImpl implements UserService {
-    private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
-    private final MessageSource messageSource;
-    private final PasswordEncoder passwordEncoder;
-    private final UserValidator userValidator;
-    private final ProductValidator appValidator;
+    UserRepository userRepository;
+    ModelMapper modelMapper;
+    MessageSource messageSource;
+    PasswordEncoder passwordEncoder;
+    UserValidator userValidator;
+    ProductValidator appValidator;
 
     @Override
     public UserDTO getById(Long id) {

@@ -5,12 +5,13 @@ import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
-import com.hdshop.repository.OptionValueRepository;
 import com.hdshop.repository.ProductRepository;
 import com.hdshop.repository.ProductSkuRepository;
 import com.hdshop.service.product.OptionValueService;
 import com.hdshop.service.product.ProductSkuService;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -24,12 +25,12 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProductSkuServiceImpl implements ProductSkuService {
-    private final ProductSkuRepository productSkuRepository;
-    private final OptionValueService optionValueService;
-    private final ProductRepository productRepository;
-    private final MessageSource messageSource;
-    private final OptionValueRepository optionValueRepository;
+    ProductSkuRepository productSkuRepository;
+    OptionValueService optionValueService;
+    ProductRepository productRepository;
+    MessageSource messageSource;
 
     /**
      * Save or update list productSku information
@@ -88,18 +89,23 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         if (valueNames.isEmpty()) {
             throw new InvalidException("value-names-must-not-be-empty");
         }
-        ProductSku sku;
         try {
-            sku = productSkuRepository.findByProductIdAndValueNames(productId, valueNames, valueNames.size()).get();
+            return productSkuRepository.findByProductIdAndValueNames(productId, valueNames, valueNames.size()).get();
         } catch (Exception e) {
             throw new ResourceNotFoundException(getMessage("sku-not-found-please-choose-anorther-style"));
         }
-        return sku;
+    }
+
+    @Override
+    public ProductSku findById(Long skuId) {
+        return productSkuRepository.findById(skuId).orElseThrow(
+                () -> new ResourceNotFoundException(getMessage("sku-not-found"))
+        );
     }
 
     private List<String> getValueNames(List<OptionValue> values) {
         return values.stream()
-                .map(value -> value.getValueName())
+                .map(OptionValue::getValueName)
                 .collect(Collectors.toList());
     }
 
@@ -127,9 +133,9 @@ public class ProductSkuServiceImpl implements ProductSkuService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
     }
 
-    private Optional<ProductSku> getProductSkuBySkuAndProductId(String sku, Long productId) {
-        return productSkuRepository.findBySkuAndProduct_ProductId(sku, productId);
-    }
+//    private Optional<ProductSku> getProductSkuBySkuAndProductId(String sku, Long productId) {
+//        return productSkuRepository.findBySkuAndProduct_ProductId(sku, productId);
+//    }
 
     private void updateExistingSku(ProductSku existingProductSku, ProductSku newProductSku) {
         if (newProductSku.getPrice() != null && newProductSku.getPrice().compareTo(BigDecimal.ZERO) > 0) {
@@ -150,7 +156,9 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         List<OptionValue> valueList = new ArrayList<>();
 
         for (OptionValue value : optionValues) {
-            OptionValue existingOptionValue = optionValueService.findByValueNameAndProductId(value.getValueName(), productId).get();
+            OptionValue existingOptionValue = optionValueService
+                    .findByValueNameAndProductId(value.getValueName(), productId)
+                    .get();
             valueList.add(existingOptionValue);
         }
 

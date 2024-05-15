@@ -16,7 +16,9 @@ import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
 import com.hdshop.utils.AppUtils;
 import com.hdshop.validator.ProductValidator;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -36,18 +38,19 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProductServiceImpl implements ProductService {
-    private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
-    private final FollowRepository followRepository;
-    private final ProductSkuService productSkuService;
-    private final CategoryService categoryService;
-    private final OptionService optionService;
-    private final UniqueSlugGenerator slugGenerator;
-    private final ProductValidator productValidator;
-    private final MessageSource messageSource;
-    private final ModelMapper modelMapper;
-    private final Slugify slugify;
+    ProductRepository productRepository;
+    CategoryRepository categoryRepository;
+    FollowRepository followRepository;
+    ProductSkuService productSkuService;
+    CategoryService categoryService;
+    OptionService optionService;
+    UniqueSlugGenerator slugGenerator;
+    ProductValidator productValidator;
+    MessageSource messageSource;
+    ModelMapper modelMapper;
+    Slugify slugify;
 
     /**
      * Create a new product.

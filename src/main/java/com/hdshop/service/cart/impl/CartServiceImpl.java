@@ -11,7 +11,9 @@ import com.hdshop.repository.ProductRepository;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.service.cart.CartService;
 import com.hdshop.service.product.ProductSkuService;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -26,14 +28,15 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CartServiceImpl implements CartService {
-    private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
-    private final UserRepository userRepository;
-    private final ProductRepository productRepository;
-    private final ModelMapper modelMapper;
-    private final MessageSource messageSource;
-    private final ProductSkuService skuService;
+    CartRepository cartRepository;
+    CartItemRepository cartItemRepository;
+    UserRepository userRepository;
+    ProductRepository productRepository;
+    ModelMapper modelMapper;
+    MessageSource messageSource;
+    ProductSkuService skuService;
 
     /**
      * Retrieves the cart associated with the provided username.
@@ -46,6 +49,13 @@ public class CartServiceImpl implements CartService {
     public CartResponse getCartByUsername(String username) {
         Cart cart = getCartByUsernameOrElseCreateNew(username);
         return modelMapper.map(cart, CartResponse.class);
+    }
+
+    @Override
+    public Cart findByUsername(String username) {
+        return cartRepository.findByUser_Username(username).orElseThrow(
+                () -> new ResourceNotFoundException(getMessage("cart-not-found"))
+        );
     }
 
     @Override
@@ -276,11 +286,13 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Cart updateCartTotals(Cart cart) {
-        cart.setTotalItems(cart.getCartItems().size());
-        cart.setTotalPrice(cart.getCartItems().stream()
+        int totalItems = cart.getCartItems().size();
+        BigDecimal totalPrice = cart.getCartItems().stream()
                 .map(CartItem::getSubTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-        );
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        cart.setTotalItems(totalItems);
+        cart.setTotalPrice(totalPrice);
         return cartRepository.save(cart);
     }
 

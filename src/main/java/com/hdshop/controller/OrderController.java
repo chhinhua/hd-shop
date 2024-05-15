@@ -30,8 +30,18 @@ public class OrderController {
     @Operation(summary = "Create new order by list cartItem")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @SecurityRequirement(name = "Bear Authentication")
+    @PostMapping("/create-v2")
+    public ResponseEntity<OrderResponse> createV2(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
+        OrderResponse newOrder = orderService.createV2(orderDTO, principal);
+        return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
+    }
+
+    @SecurityRequirement(name = "Bear Authentication")
+    @Operation(summary = "Create new order by list cartItem")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @SecurityRequirement(name = "Bear Authentication")
     @PostMapping("/create")
-    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
+    public ResponseEntity<OrderResponse> create(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
         OrderResponse newOrder = orderService.create(orderDTO, principal);
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
@@ -40,7 +50,7 @@ public class OrderController {
     @Operation(summary = "Create follow order from user cart")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrderFromCart(@Valid @RequestBody OrderDTO orderDTO, Principal principal) throws JsonProcessingException {
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderDTO orderDTO, Principal principal) throws JsonProcessingException {
         OrderResponse newOrder = orderService.createOrder(orderDTO, principal);
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
@@ -75,7 +85,7 @@ public class OrderController {
     @SecurityRequirement(name = "Bear Authentication")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PutMapping("{id}/status")
-    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam String status) {
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam String status) throws JsonProcessingException {
         return ResponseEntity.ok(orderService.updateStatus(id, status));
     }
 
@@ -162,7 +172,7 @@ public class OrderController {
     @Operation(summary = "Make payment with COD")
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/pay-cod")
-    public ResponseEntity<OrderResponse> makePaymentForCOD(@RequestBody OrderDTO order, @RequestParam("orderId") Long orderId) {
+    public ResponseEntity<OrderResponse> makePaymentForCOD(@RequestBody OrderDTO order, @RequestParam("orderId") Long orderId) throws JsonProcessingException {
         return ResponseEntity.ok(orderService.makePaymentForCOD(order, orderId));
     }
 }

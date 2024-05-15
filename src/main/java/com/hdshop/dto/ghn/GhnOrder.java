@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @Builder
 public class GhnOrder {
-    private Long payment_type_id; // Required
+    private int payment_type_id; // Required
     private String note; // Optional
     private String required_note; // Required (Include: CHOTHUHANG, CHOXEMHANGKHONGTHU, KHONGCHOXEMHANG)
     private String to_name; // Required

@@ -1,16 +1,26 @@
 package com.hdshop.service.order;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.JsonObject;
 import com.hdshop.dto.order.CheckOutDTO;
 import com.hdshop.dto.order.OrderDTO;
 import com.hdshop.dto.order.OrderPageResponse;
 import com.hdshop.dto.order.OrderResponse;
 import com.hdshop.entity.Order;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
 
 public interface OrderService {
+    void callVNPaySubmitOrder(final Long orderId, final BigDecimal amount, final Long addressId, final String username, final String note) throws JsonProcessingException;
+
+    Order findByVnpTxnRef(final String vnp_TxnRef);
+
+    OrderResponse createV2(final OrderDTO order, final Principal principal);
+
+    void updateOrderCode(final Long orderId, final String orderCode);
+
     OrderResponse createOrder(final OrderDTO order, final Principal principal) throws JsonProcessingException;
 
     OrderResponse create(final OrderDTO order, final Principal principal);
@@ -18,6 +28,8 @@ public interface OrderService {
     OrderResponse createFromCart(final OrderDTO order, final Principal principal);
 
     OrderResponse createWithVNPay(final OrderDTO order, final String username, final String vnp_TxnRef);
+
+    OrderResponse createWithVNPayV2(final Long orderId, final String vnp_TxnRef);
 
     OrderResponse getById(final Long orderId);
 
@@ -29,7 +41,7 @@ public interface OrderService {
 
     String deleteById(final Long orderId);
 
-    OrderResponse updateStatus(final Long orderId, final String statusValue);
+    OrderResponse updateStatus(final Long orderId, final String statusValue) throws JsonProcessingException;
 
     List<OrderResponse> getOrdersByUsername(final String username);
 
@@ -41,7 +53,7 @@ public interface OrderService {
 
     CheckOutDTO getDataFromUserInfor(final Principal principal);
 
-    void paymentCompleted(final String vnp_TxnRef);
+    void paymentCompleted(final String vnp_TxnRef) throws JsonProcessingException;
 
 
     OrderPageResponse adminFilter(
@@ -60,7 +72,7 @@ public interface OrderService {
             final Principal principal
     );
 
-    OrderResponse makePaymentForCOD(final OrderDTO order, final Long orderId);
+    OrderResponse makePaymentForCOD(final OrderDTO order, final Long orderId) throws JsonProcessingException;
 
-    void makePaymentForVNPAY(final OrderDTO dto, final Long orderId);
+    void makePaymentForVNPAY(final OrderDTO dto);
 }

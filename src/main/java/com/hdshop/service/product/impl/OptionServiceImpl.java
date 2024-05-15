@@ -6,7 +6,9 @@ import com.hdshop.repository.OptionRepository;
 import com.hdshop.repository.OptionValueRepository;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.OptionValueService;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +19,11 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OptionServiceImpl implements OptionService {
-    private final OptionRepository optionRepository;
-    private final OptionValueService valueService;
-    private final OptionValueRepository valueRepository;
+    OptionRepository optionRepository;
+    OptionValueService valueService;
+    OptionValueRepository valueRepository;
 
     /**
      * Lưu danh sách option ứng vs product vào database

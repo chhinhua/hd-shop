@@ -1,75 +1,220 @@
 package com.hdshop.service.order.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.hdshop.config.VNPayConfig;
+import com.hdshop.controller.VNPayController;
 import com.hdshop.dto.address.AddressDTO;
-import com.hdshop.dto.ghn.CreateGhnOrderResponse;
 import com.hdshop.dto.ghn.GhnOrder;
-import com.hdshop.dto.order.CheckOutDTO;
-import com.hdshop.dto.order.OrderDTO;
-import com.hdshop.dto.order.OrderPageResponse;
-import com.hdshop.dto.order.OrderResponse;
+import com.hdshop.dto.order.*;
+import com.hdshop.dto.vnpay.SubmitOrderRequest;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
 import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
+import com.hdshop.service.address.AddressService;
+import com.hdshop.service.cart.CartItemService;
 import com.hdshop.service.cart.CartService;
 import com.hdshop.service.ghn.GhnService;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.service.product.ProductService;
+import com.hdshop.service.product.ProductSkuService;
+import com.hdshop.service.user.UserService;
 import com.hdshop.utils.AppUtils;
 import com.hdshop.utils.EnumOrderStatus;
 import com.hdshop.utils.EnumPaymentType;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
-    private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final AddressRepository addressRepository;
-    private final ModelMapper modelMapper;
-    private final MessageSource messageSource;
-    private final CartItemRepository cartItemRepository;
-    private final CartRepository cartRepository;
-    private final CartService cartService;
-    private final ProductService productService;
-    private final AppUtils appUtils;
-    private final ProductRepository productRepository;
-    private final ReviewRepository reviewRepository;
-    private final GhnService ghnService;
+    AppUtils appUtils;
+    ModelMapper modelMapper;
+    MessageSource messageSource;
+    CartRepository cartRepository;
+    OrderRepository orderRepository;
+    ReviewRepository reviewRepository;
+    ProductRepository productRepository;
+    CartItemRepository cartItemRepository;
+    GhnService ghnService;
+    CartService cartService;
+    UserService userService;
+    ProductSkuService skuService;
+    AddressService addressService;
+    ProductService productService;
+    CartItemService cartItemService;
+    RestTemplate restTemplate;
+    static String VNPAY_SUBMIT_ORDER = "http://localhost:8080/api/v1/vnpay/submit-order-v2";
 
     @Override
+    public void callVNPaySubmitOrder(Long orderId, BigDecimal amount, Long addressId, String username, String note) throws JsonProcessingException {
+        // Tạo request body JSON
+        SubmitOrderRequest orderRequest = new SubmitOrderRequest(
+                orderId, amount, addressId, username, note
+        );
+
+        // Tạo request headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ObjectMapper mapper = new ObjectMapper();
+        String requestJson = mapper.writeValueAsString(orderRequest);
+
+        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+
+        // Capture the response entity
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(VNPAY_SUBMIT_ORDER, entity, String.class);
+    }
+
+    @Override
+    public Order findByVnpTxnRef(String vnp_TxnRef) {
+        return orderRepository.findByVnpTxnRef(vnp_TxnRef).orElseThrow(
+                () -> new ResourceNotFoundException(getMessage("order-not-found"))
+        );
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse createV2(OrderDTO orderDTO, Principal principal) {
+        // retrive data from request
+        User user = getUser(principal.getName());
+        Address address = getAddress(orderDTO.getAddressId());
+        List<OrderItem> orderItems = getOrderItems(orderDTO.getOrderItems());
+        EnumPaymentType paymentType = appUtils.getPaymentType(orderDTO.getPaymentType());
+        EnumOrderStatus status = paymentType.equals(EnumPaymentType.COD) ? EnumOrderStatus.ORDERED : EnumOrderStatus.WAIT_FOR_PAY;
+
+        // build order
+        Order order = Order.builder()
+                .note(orderDTO.getNote())
+                .subTotal(orderDTO.getSubTotal())
+                .shippingFee(orderDTO.getShippingFee())
+                .total(orderDTO.getTotal())
+                .user(user)
+                .address(address)
+                .orderItems(orderItems)
+                .paymentType(paymentType)
+                .status(status)
+                .totalItems(orderItems.size())
+                .isDeleted(false)
+                .isPaidBefore(false)
+                .build();
+
+        orderItems.forEach(orderItem -> orderItem.setOrder(order));
+
+        // save the order
+        Order newOrder = orderRepository.save(order);
+
+        return mapEntityToResponse(newOrder);
+    }
+
+    private List<OrderItem> getOrderItems(List<OrderItemDTO> itemDTOS) {
+        return itemDTOS
+                .stream()
+                .map(dto -> {
+                    OrderItem orderItem = modelMapper.map(dto, OrderItem.class);
+                    Product product = productService.findById(dto.getProductId());
+                    ProductSku sku = skuService.findById(dto.getSkuId());
+
+                    // Thiết lập SKU & Product cho orderItem
+                    orderItem.setId(null);
+                    orderItem.setSku(sku);
+                    orderItem.setProduct(product);
+
+                    return orderItem;
+                })
+                .collect(Collectors.toList());
+    }
+
+
+    /**
+     * Set order_code value after created ghn_order
+     *
+     * @param orderId
+     * @param orderCode
+     */
+    @Override
+    public void updateOrderCode(Long orderId, String orderCode) {
+        Order order = findById(orderId);
+        order.setOrderCode(orderCode);
+        orderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
     public OrderResponse createOrder(OrderDTO orderDto, Principal principal) throws JsonProcessingException {
-        OrderResponse response = createFromCart(orderDto, principal); // create order data to duckshop service
+        OrderResponse response = createV2(orderDto, principal); // create order data to duckshop service
         Order order = findById(response.getId());
 
-        GhnOrder shippingOrder = ghnService.buildShippingOrder(order);
-        CreateGhnOrderResponse result = ghnService.createOrder(shippingOrder); // create order data to GHN service
+        if (order.getPaymentType().equals(EnumPaymentType.COD)) {
+            // build and create GHN order
+            GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
+            String orderCode = ghnService.createGhnOrder(shippingOrder);
+            order.setOrderCode(orderCode); // update order code
+            orderRepository.save(order);
+        }
 
-        return response;
+        // TODO chưa xóa được cart items 👨‍💻
+        cleanUpCartItems(order);
+
+        return mapEntityToResponse(order);
+    }
+
+    void cleanUpCartItems(Order order) {
+        List<Long> cartItemIds = extractCartItemIds(order);
+        cartItemService.deleteListItems(cartItemIds);
+
+        // reupdate cart
+        Cart cart = cartService.findByUsername(order.getUser().getUsername());
+        cartService.updateCartTotals(cart);
+    }
+
+    private List<Long> extractCartItemIds(Order order) {
+        List<Long> cartItemIds = order.getOrderItems()
+                .stream()
+                .map(item -> cartItemService.findByProductIdAndSkuId(item.getProduct().getProductId(), item.getSku().getSkuId()))
+                .collect(Collectors.toList())
+                .stream()
+                .map(cartItem -> cartItem.getId())
+                .distinct() // Remove duplicate IDs (optional)
+                .collect(Collectors.toList());
+        return cartItemIds;
     }
 
     @Override
     public OrderResponse create(OrderDTO orderDTO, Principal principal) {
-        String username = principal.getName();
-
-        User user = getUserByUsername(username);
-        Address address = getAddressById(orderDTO.getAddressId());
+        User user = getUser(principal.getName());
+        Address address = getAddress(orderDTO.getAddressId());
 
         Order order = buildOrder(orderDTO, user, address);
         List<OrderItem> orderItems = convertCartItemIdsToOrderItems(orderDTO.getCartItemIds());
@@ -85,9 +230,9 @@ public class OrderServiceImpl implements OrderService {
         String username = principal.getName();
 
         // retrieve data
-        User user = getUserByUsername(username);
+        User user = getUser(username);
         Cart cart = getCartByUsername(username);
-        Address address = getAddressById(orderDTO.getAddressId());
+        Address address = getAddress(orderDTO.getAddressId());
 
         // check items exist in cart
         checkCartItems(cart);
@@ -124,9 +269,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponse createWithVNPay(OrderDTO orderDTO, String username, String vnp_TxnRef) {
         // retrieve data
-        User user = getUserByUsername(username);
+        User user = getUser(username);
         Cart cart = getCartByUsername(username);
-        Address address = getAddressById(orderDTO.getAddressId());
+        Address address = getAddress(orderDTO.getAddressId());
 
         // check items exist in cart
         checkCartItems(cart);
@@ -144,6 +289,13 @@ public class OrderServiceImpl implements OrderService {
         clearItems(cart);
 
         return mapEntityToResponse(order);
+    }
+
+    @Override
+    public OrderResponse createWithVNPayV2(Long orderId, String vnp_TxnRef) {
+        Order order = findById(orderId);
+        order.setVnpTxnRef(vnp_TxnRef);
+        return mapEntityToResponse(orderRepository.save(order));
     }
 
     /**
@@ -194,9 +346,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order findById(Long orderId) {
-        return orderRepository
-                .findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
+        return orderRepository.findById(orderId).orElseThrow(
+                () -> new ResourceNotFoundException(getMessage("order-not-found"))
+        );
     }
 
     @Override
@@ -211,39 +363,54 @@ public class OrderServiceImpl implements OrderService {
      *
      * @param orderId
      * @param statusValue
-     * @return OrderDTO
+     * @return Order Response object
      */
     @Override
-    public OrderResponse updateStatus(Long orderId, String statusValue) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+    public OrderResponse updateStatus(Long orderId, String statusValue) throws JsonProcessingException {
+        Order order = findById(orderId);
 
-        // thay đổi nếu trạng thái khác trạng thái hiện tại
-        String orderStatusKey = order.getStatus().getValue();
-        if (!orderStatusKey.equals(statusValue)) {
-            EnumOrderStatus newStatus = appUtils.getOrderStatus(statusValue);
-            order.setStatus(newStatus);
-            orderRepository.save(order);
-
-            // hoàn trả lại số lượng sản phẩm nếu hủy đơn
-            giveBackProductSoldIfCancle(order, newStatus);
+        if (order.getStatus().getValue().equals(statusValue)) {
+            return mapEntityToResponse(order); // No change in status, return existing order
         }
+
+        EnumOrderStatus newStatus = appUtils.getOrderStatus(statusValue);
+
+        // Handle cancel `GHN` order specifically
+        if (newStatus.equals(EnumOrderStatus.CANCELED)) {
+            handleCancelOrder(order);
+        }
+
+        order.setStatus(newStatus);
+        orderRepository.save(order);
 
         return mapEntityToResponse(order);
     }
 
-    private void giveBackProductSoldIfCancle(Order order, EnumOrderStatus status) {
-        if (status == EnumOrderStatus.CANCELED) {
-            order.getOrderItems().forEach(item -> {
-                Product product = item.getProduct();
-                int itemQuantity = item.getQuantity();
-                int sold = product.getSold();
-                int quantityAvalable = product.getQuantityAvailable();
-                product.setSold(sold - itemQuantity);
-                product.setQuantityAvailable(quantityAvalable + itemQuantity);
-                productRepository.save(product);
-            });
+    private void handleCancelOrder(Order order) throws JsonProcessingException {
+        if (order.getOrderCode() != null) {
+            String ghnOrderStatus = ghnService.getOrderStatus(order.getOrderCode());
+            if (ghnOrderStatus != null) {
+                EnumOrderStatus status = ghnService.getEnumStatus(ghnOrderStatus);
+                if (status != null) {
+                    if (status.equals(EnumOrderStatus.ORDERED)) {
+                        ghnService.cancelGhnOrder(order.getOrderCode());
+                    }
+                }
+            }
         }
+        giveBackProductSoldIfCancle(order);
+    }
+
+    private void giveBackProductSoldIfCancle(Order order) {
+        order.getOrderItems().forEach(item -> {
+            Product product = item.getProduct();
+            int itemQuantity = item.getQuantity();
+            int sold = product.getSold();
+            int quantityAvalable = product.getQuantityAvailable();
+            product.setSold(sold - itemQuantity);
+            product.setQuantityAvailable(quantityAvalable + itemQuantity);
+            productRepository.save(product);
+        });
     }
 
     /**
@@ -283,7 +450,7 @@ public class OrderServiceImpl implements OrderService {
         String username = principal.getName();
 
         // retrieve the data from username
-        User currentUser = getUserByUsername(username);
+        User currentUser = getUser(username);
         Cart userCart = getCartByUsername(username);
 
         BigDecimal cartTotal = userCart.getTotalPrice();
@@ -319,20 +486,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public void paymentCompleted(String vnp_TxnRef) {
-        // TODO must optimize code here
-        Order order = orderRepository.findByVnpTxnRef(vnp_TxnRef)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
+    public void paymentCompleted(String vnp_TxnRef) throws JsonProcessingException {
+        Order order = findByVnpTxnRef(vnp_TxnRef);
 
-        // update status
+        // build and create GHN order
+        GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
+        String orderCode = ghnService.createGhnOrder(shippingOrder);
+
         order.setStatus(EnumOrderStatus.ORDERED);
         order.setIsPaidBefore(true);
-        orderRepository.save(order);
+        order.setOrderCode(orderCode); // update order code
 
-        // clear cart items
-        Cart cart = cartRepository.findByUser_Username(order.getUser().getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
-        clearItems(cart);
+        orderRepository.save(order);
     }
 
     @Override
@@ -406,34 +571,38 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse makePaymentForCOD(OrderDTO dto, Long orderId) {
-        // TODO must test & debug
+    public OrderResponse makePaymentForCOD(OrderDTO dto, Long orderId) throws JsonProcessingException {
         Order order = findById(orderId);
-        Address newAddress = getAddressById(dto.getAddressId());
+        Address address = getAddress(dto.getAddressId());
 
         // set fields
+        BigDecimal shippingFee = BigDecimal.valueOf(order.getTotal().longValue() - order.getSubTotal().longValue());
+        order.setShippingFee(shippingFee);
         order.setTotal(dto.getTotal());
         order.setNote(dto.getNote());
-        order.setAddress(newAddress);
+        order.setAddress(address);
         order.setStatus(EnumOrderStatus.ORDERED);
         order.setPaymentType(EnumPaymentType.COD);
 
-        Order makePayment = orderRepository.save(order);
-        return mapEntityToResponse(makePayment);
+        // build and create GHN order
+        GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
+        String orderCode = ghnService.createGhnOrder(shippingOrder);
+
+        order.setOrderCode(orderCode);
+        return mapEntityToResponse(orderRepository.save(order));
     }
 
     @Override
-    public void makePaymentForVNPAY(OrderDTO dto, Long orderId) {
-        // TODO must test & debug
+    public void makePaymentForVNPAY(OrderDTO dto) {
         // retrieve data
-        Order order = findById(orderId);
-        Address newAddress = getAddressById(dto.getAddressId());
+        Order order = findById(dto.getId());
+        Address address = getAddress(dto.getAddressId());
 
         // set fields
         order.setTotal(dto.getTotal());
         order.setNote(dto.getNote());
-        order.setAddress(newAddress);
-        order.setVnpTxnRef(VNPayConfig.vnp_TxnRef);
+        order.setAddress(address);
+        order.setVnpTxnRef(dto.getId().toString());
 
         // save the order
         orderRepository.save(order);
@@ -480,16 +649,12 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
-    private Address getAddressById(Long addressId) {
-        return addressRepository.findById(addressId).orElseThrow(() ->
-                new ResourceNotFoundException(getMessage("no-delivery-address-found"))
-        );
+    private Address getAddress(Long addressId) {
+        return addressService.findById(addressId);
     }
 
-    private User getUserByUsername(String username) {
-        return userRepository.findByUsername(username).orElseThrow(() ->
-                new ResourceNotFoundException(getMessage("user-not-found"))
-        );
+    private User getUser(String username) {
+        return userService.findByUsername(username);
     }
 
     public Order buildOrder(OrderDTO orderDTO, User user, Address address) {
@@ -557,8 +722,7 @@ public class OrderServiceImpl implements OrderService {
         return cartItemIds
                 .stream()
                 .map(idCartItem -> {
-                    CartItem cartItem = cartItemRepository.findById(idCartItem)
-                            .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-item-not-found")));
+                    CartItem cartItem = cartItemService.findById(idCartItem);
 
                     OrderItem orderItem = modelMapper.map(cartItem, OrderItem.class);
                     orderItem.setId(null);

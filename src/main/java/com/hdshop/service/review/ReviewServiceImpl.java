@@ -12,7 +12,9 @@ import com.hdshop.service.order.OrderService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.user.UserService;
 import com.hdshop.utils.AppUtils;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -27,15 +29,16 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ReviewServiceImpl implements ReviewService {
-    private final ReviewRepository reviewRepository;
-    private final UserService userService;
-    private final ProductService productService;
-    private final OrderService orderService;
-    private final OrderItemService orderItemService;
-    private final MessageSource messageSource;
-    private final ModelMapper modelMapper;
-    private final ProductRepository productRepository;
+    ReviewRepository reviewRepository;
+    UserService userService;
+    ProductService productService;
+    OrderService orderService;
+    OrderItemService orderItemService;
+    MessageSource messageSource;
+    ModelMapper modelMapper;
+    ProductRepository productRepository;
 
     @Override
     public ReviewDTO create(ReviewDTO dto, Principal principal) {

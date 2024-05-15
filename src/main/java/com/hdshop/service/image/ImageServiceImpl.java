@@ -8,7 +8,9 @@ import com.hdshop.repository.ProductRepository;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.user.UserService;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,13 +25,14 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ImageServiceImpl implements ImageService {
-    private final ProductRepository productRepository;
-    private final ProductService productService;
-    private final MessageSource messageSource;
-    private final UserService userService;
-    private final Cloudinary cloudinary;
-    private final UserRepository userRepository;
+    ProductRepository productRepository;
+    ProductService productService;
+    MessageSource messageSource;
+    UserService userService;
+    Cloudinary cloudinary;
+    UserRepository userRepository;
 
     @Override
     public Map upload(MultipartFile file) {
