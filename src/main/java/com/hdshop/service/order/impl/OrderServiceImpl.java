@@ -59,21 +59,21 @@ import java.util.stream.Collectors;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
-    AddressService addressService;
     AppUtils appUtils;
-    CartItemRepository cartItemRepository;
-    CartRepository cartRepository;
-    CartService cartService;
-    CartItemService cartItemService;
-    GhnService ghnService;
-    MessageSource messageSource;
     ModelMapper modelMapper;
+    MessageSource messageSource;
+    CartRepository cartRepository;
     OrderRepository orderRepository;
-    UserService userService;
-    ProductService productService;
-    ProductRepository productRepository;
     ReviewRepository reviewRepository;
+    ProductRepository productRepository;
+    CartItemRepository cartItemRepository;
+    GhnService ghnService;
+    CartService cartService;
+    UserService userService;
     ProductSkuService skuService;
+    AddressService addressService;
+    ProductService productService;
+    CartItemService cartItemService;
     RestTemplate restTemplate;
     static String VNPAY_SUBMIT_ORDER = "http://localhost:8080/api/v1/vnpay/submit-order-v2";
 
@@ -171,6 +171,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponse createOrder(OrderDTO orderDto, Principal principal) throws JsonProcessingException {
         OrderResponse response = createV2(orderDto, principal); // create order data to duckshop service
         Order order = findById(response.getId());
@@ -183,9 +184,31 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(order);
         }
 
-        // TODO xóa các item khỏi giỏ hàng
+        // TODO chưa xóa được cart items 👨‍💻
+        cleanUpCartItems(order);
 
         return mapEntityToResponse(order);
+    }
+
+    void cleanUpCartItems(Order order) {
+        List<Long> cartItemIds = extractCartItemIds(order);
+        cartItemService.deleteListItems(cartItemIds);
+
+        // reupdate cart
+        Cart cart = cartService.findByUsername(order.getUser().getUsername());
+        cartService.updateCartTotals(cart);
+    }
+
+    private List<Long> extractCartItemIds(Order order) {
+        List<Long> cartItemIds = order.getOrderItems()
+                .stream()
+                .map(item -> cartItemService.findByProductIdAndSkuId(item.getProduct().getProductId(), item.getSku().getSkuId()))
+                .collect(Collectors.toList())
+                .stream()
+                .map(cartItem -> cartItem.getId())
+                .distinct() // Remove duplicate IDs (optional)
+                .collect(Collectors.toList());
+        return cartItemIds;
     }
 
     @Override
@@ -549,7 +572,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse makePaymentForCOD(OrderDTO dto, Long orderId) throws JsonProcessingException {
-        // TODO must test & debug
         Order order = findById(orderId);
         Address address = getAddress(dto.getAddressId());
 
@@ -572,7 +594,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void makePaymentForVNPAY(OrderDTO dto) {
-        // TODO must test & debug
         // retrieve data
         Order order = findById(dto.getId());
         Address address = getAddress(dto.getAddressId());

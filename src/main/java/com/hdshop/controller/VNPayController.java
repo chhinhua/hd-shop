@@ -74,7 +74,6 @@ public class VNPayController {
         String vnpayUrl = vnPayService.createOrder(orderTotal, orderInfor, baseUrl);
         log.info("vnpay url: " + vnpayUrl);
 
-        // TODO move this logic to service
         String decodedNote = URLDecoder.decode(note, StandardCharsets.UTF_8);
 
         // build order from request
@@ -96,7 +95,6 @@ public class VNPayController {
                               @RequestParam("orderId") Long orderId,
                               @RequestParam(name = "note", required = false) String note,
                               HttpServletRequest request) {
-        // TODO must test & debug
         String orderInfor = messageSource.getMessage("pay-for-purchases-on-duck-shop", null, LocaleContextHolder.getLocale());
         String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
         String vnp_TxnRef = orderId.toString();

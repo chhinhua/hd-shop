@@ -90,7 +90,7 @@ public class GhnServiceImpl implements GhnService {
                         .build())
                 .collect(Collectors.toList());
 
-        String content = items.stream().map(GhnItem::getName).collect(Collectors.joining(", "));
+        String content = items.stream().map(GhnItem::getName).collect(Collectors.joining("; "));
         String recipientAddress = address.getOrderDetails() + ", " + address.getWard() + ", " + address.getDistrict() + ", " + address.getCity();
         Long cashOnDeliveryAmount = order.getPaymentType().equals(EnumPaymentType.COD) ? order.getSubTotal().longValue() : 0L;
         int paymentTypeId = order.getPaymentType().equals(EnumPaymentType.COD) ? 2 : 1; // 1. người bán trả phí ship - 2. người mua trả

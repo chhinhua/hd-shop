@@ -33,7 +33,6 @@ public class OrderController {
     @PostMapping("/create-v2")
     public ResponseEntity<OrderResponse> createV2(@Valid @RequestBody OrderDTO orderDTO, Principal principal) {
         OrderResponse newOrder = orderService.createV2(orderDTO, principal);
-        // TODO Auto-generated method stub
         return new ResponseEntity<>(newOrder, HttpStatus.CREATED);
     }
 

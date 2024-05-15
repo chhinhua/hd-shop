@@ -286,11 +286,13 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Cart updateCartTotals(Cart cart) {
-        cart.setTotalItems(cart.getCartItems().size());
-        cart.setTotalPrice(cart.getCartItems().stream()
+        int totalItems = cart.getCartItems().size();
+        BigDecimal totalPrice = cart.getCartItems().stream()
                 .map(CartItem::getSubTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-        );
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        cart.setTotalItems(totalItems);
+        cart.setTotalPrice(totalPrice);
         return cartRepository.save(cart);
     }
 
