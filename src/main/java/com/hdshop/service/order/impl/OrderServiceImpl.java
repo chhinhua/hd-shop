@@ -2,10 +2,6 @@ package com.hdshop.service.order.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.hdshop.config.VNPayConfig;
-import com.hdshop.controller.VNPayController;
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.ghn.GhnOrder;
 import com.hdshop.dto.order.*;
@@ -31,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -43,15 +38,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -184,7 +175,6 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(order);
         }
 
-        // TODO chưa xóa được cart items 👨‍💻
         cleanUpCartItems(order);
 
         return mapEntityToResponse(order);
@@ -203,9 +193,9 @@ public class OrderServiceImpl implements OrderService {
         List<Long> cartItemIds = order.getOrderItems()
                 .stream()
                 .map(item -> cartItemService.findByProductIdAndSkuId(item.getProduct().getProductId(), item.getSku().getSkuId()))
-                .collect(Collectors.toList())
+                .toList()
                 .stream()
-                .map(cartItem -> cartItem.getId())
+                .map(CartItem::getId)
                 .distinct() // Remove duplicate IDs (optional)
                 .collect(Collectors.toList());
         return cartItemIds;

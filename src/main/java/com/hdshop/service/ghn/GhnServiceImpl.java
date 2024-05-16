@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class GhnServiceImpl implements GhnService {
     static final String CANCEL_ORDER_URL = "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/switch-status/cancel";
     static final String CREATE_ORDER_URL = "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/create";
     static final String GET_ORDER_DETAIL_URL = "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/detail";
+    //static final String CALCULATE_FEE_URL = "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee";
 
     @Override
     public String createGhnOrder(GhnOrder order) throws RestClientException, JsonProcessingException {
@@ -93,6 +95,7 @@ public class GhnServiceImpl implements GhnService {
         String content = items.stream().map(GhnItem::getName).collect(Collectors.joining("; "));
         String recipientAddress = address.getOrderDetails() + ", " + address.getWard() + ", " + address.getDistrict() + ", " + address.getCity();
         Long cashOnDeliveryAmount = order.getPaymentType().equals(EnumPaymentType.COD) ? order.getSubTotal().longValue() : 0L;
+        Long codeFailedAmount = (long) (order.getSubTotal().longValue() < 200000 ? 20000:30000);
         int paymentTypeId = order.getPaymentType().equals(EnumPaymentType.COD) ? 2 : 1; // 1. người bán trả phí ship - 2. người mua trả
 
         return GhnOrder.builder()
@@ -105,12 +108,12 @@ public class GhnServiceImpl implements GhnService {
                 .to_district_name(address.getDistrict())
                 .to_province_name(address.getCity())
                 .cod_amount(cashOnDeliveryAmount)
+                .cod_failed_amount(codeFailedAmount)
                 .payment_type_id(paymentTypeId)
                 .weight(100L * items.size())  // TODO write method to calculate weight length width height from order item data
                 .length(25L * items.size())
                 .width(25L * items.size())
                 .height(7L * items.size())
-                .cod_failed_amount(order.getSubTotal().longValue())
                 .insurance_value(null)
                 .service_type_id(2L)
                 .coupon(null)
@@ -133,10 +136,8 @@ public class GhnServiceImpl implements GhnService {
 
         ObjectMapper mapper = new ObjectMapper();
         String requestJson = mapper.writeValueAsString(requestBody);
-
         HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
 
-        // Capture the response entity
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(CANCEL_ORDER_URL, entity, String.class);
 
         // Xử lý response
@@ -146,6 +147,11 @@ public class GhnServiceImpl implements GhnService {
             log.error("Cancel order failed, order_code: " + orderCode + responseEntity.getStatusCode());
             throw new APIException("Cancel order failed!");
         }
+    }
+
+    @Override
+    public BigDecimal calculateFee(Address address) {
+        return null;
     }
 
     @Override
@@ -192,10 +198,8 @@ public class GhnServiceImpl implements GhnService {
 
         ObjectMapper mapper = new ObjectMapper();
         String requestJson = mapper.writeValueAsString(requestBody);
-
         HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
 
-        // Capture the response entity
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(GET_ORDER_DETAIL_URL, entity, String.class);
 
         // Xử lý response
