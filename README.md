@@ -12,6 +12,7 @@ This is a RESTful API for managing Fashion E-commerce App build using the Spring
 - [Features](#features)
 - [Built With](#built-with)
 - [Authors](#authors)
+- [Project management](#project-management)
 
 ## Description
 
@@ -54,31 +55,48 @@ To run the tests, navigate to the project directory and execute the following co
    
 ## Features
 - User:
-    - Signup, signin, change password, recover password
+    - Auth: Signup, signin, change password, recover password
     - Search, filter product
-    - Add to cart, order, cancel order
-    - Checkout order by **COD or VNPAY** payment method, favorite & rating product, ...
-    - Management: personal information, delivery address, order
+    - Favorite & rating product, ...
+    - Cart management: add cart, vvv
+    - Order product, cancel order, repay the order
+    - Checkout order: support 2 payment methods
+          - VNPay
+          - COD (Cash on delivery)
+    - Management: profile, delivery address, order
 - Admin:
+    - Auth: Signin  
     - Order management: read, update order status, delete, search, filter order
     - Category management: create, read, update, delete, search, filter category
     - Product management: create, read, update, delete, search, filter product
     - User management: view, lock user account, search, filter user
     - Statistic: revenue statistic, new user statistic, order statistic
+- More features:
+    - Integrate with GHN delivery system 
 
 ## Built With
 
 - [Spring Boot](https://spring.io/projects/spring-boot) - The web framework used
 - [Spring Security](https://docs.spring.io/spring-security/reference/index.html) - The web security used
+- [Spring Data JPA](https://docs.spring.io/spring-data/jpa/reference/#auditing.annotations) 
 - [Spring Mail](https://docs.spring.io/spring-framework/reference/integration/email.html) - The email sending platform used
 - [Hinernate](https://hibernate.org/orm/documentation/6.4/) - The Object-Relational Mapping (ORM) platform used
 - [MySQL](https://dev.mysql.com/doc/mysql-getting-started/en/) - The Database Management System (DBMS) used
 - [Maven](https://maven.apache.org/) - Dependency management
 - [Swagger](https://swagger.io/) - API documentation
+- [Cloudinary](https://cloudinary.com/documentation) - Photo and video hosting platform
 
 ## Authors
 
 - Chau Chhin Hua - [Linkedin](https://www.linkedin.com/in/chhin-hua/)
+
+## Project management
+
+- ![jira](https://github.com/chhinhua/duck-shop/assets/86371524/4e35533e-af74-47d4-ab7d-770b6765b483)
+[Jira Software project](https://chhinhua02.atlassian.net/jira/software/projects/SCRUM/boards/1)
+- ![github](https://github.com/chhinhua/duck-shop/assets/86371524/cb7e8a0d-4101-4708-a1dc-450117a04dc5)
+ [Github project](https://github.com/users/chhinhua/projects/4)
+
 
    
 
