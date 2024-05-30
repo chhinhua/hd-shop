@@ -24,6 +24,7 @@ spring:
         show-sql: true
     profiles:
         active: prod
+
     http:
         encoding:
             charset: UTF-8
