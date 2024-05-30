@@ -93,10 +93,11 @@ public class GhnServiceImpl implements GhnService {
                 .collect(Collectors.toList());
 
         String content = items.stream().map(GhnItem::getName).collect(Collectors.joining("; "));
-        String recipientAddress = address.getOrderDetails() + ", " + address.getWard() + ", " + address.getDistrict() + ", " + address.getCity();
+        String recipientAddress = address.getOrderDetails() + ", " + address.getWard() + ", " + address.getDistrict() + ", " + address.getProvince();
         Long cashOnDeliveryAmount = order.getPaymentType().equals(EnumPaymentType.COD) ? order.getSubTotal().longValue() : 0L;
-        Long codeFailedAmount = (long) (order.getSubTotal().longValue() < 200000 ? 20000:30000);
+        Long codeFailedAmount = (long) (order.getSubTotal().longValue() < 200000 ? 20000 : 30000);
         int paymentTypeId = order.getPaymentType().equals(EnumPaymentType.COD) ? 2 : 1; // 1. người bán trả phí ship - 2. người mua trả
+        Long height = calculateHeight(items.size());
 
         return GhnOrder.builder()
                 .note(order.getNote())
@@ -106,20 +107,25 @@ public class GhnServiceImpl implements GhnService {
                 .to_address(recipientAddress)
                 .to_ward_name(address.getWard())
                 .to_district_name(address.getDistrict())
-                .to_province_name(address.getCity())
+                .to_province_name(address.getProvince())
                 .cod_amount(cashOnDeliveryAmount)
                 .cod_failed_amount(codeFailedAmount)
                 .payment_type_id(paymentTypeId)
-                .weight(100L * items.size())  // TODO write method to calculate weight length width height from order item data
-                .length(25L * items.size())
-                .width(25L * items.size())
-                .height(7L * items.size())
+                .weight(100L * items.size())
+                .length(25L)
+                .width(25L)
+                .height(height)
                 .insurance_value(null)
                 .service_type_id(2L)
                 .coupon(null)
                 .content(content)
                 .items(items)
                 .build();
+    }
+
+    @Override
+    public Long calculateHeight(int count) {
+        return (long) 2 * count + 3;
     }
 
     @Override

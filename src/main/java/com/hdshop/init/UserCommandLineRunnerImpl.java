@@ -4,12 +4,9 @@ import com.hdshop.entity.Address;
 import com.hdshop.entity.Role;
 import com.hdshop.entity.User;
 import com.hdshop.repository.UserRepository;
-import org.hibernate.mapping.Set;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-
-import java.util.HashSet;
 
 @Component
 public class UserCommandLineRunnerImpl implements CommandLineRunner {
@@ -94,7 +91,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		Address adminAddressddress = new Address();
 		adminAddressddress.setUser(admin);
 		adminAddressddress.setFullName("Admin");
-		adminAddressddress.setCity("TP. Hồ Chí Minh");
+		adminAddressddress.setProvince("TP. Hồ Chí Minh");
 		adminAddressddress.setDistrict("TP. Thủ Đức");
 		adminAddressddress.setWard("P. Linh Xuân");
 		adminAddressddress.setPhoneNumber("0326474614");
@@ -109,7 +106,7 @@ public class UserCommandLineRunnerImpl implements CommandLineRunner {
 		Address userAddress = new Address();
 		userAddress.setUser(user);
 		userAddress.setFullName("User");
-		userAddress.setCity("TP. Hồ Chí Minh");
+		userAddress.setProvince("TP. Hồ Chí Minh");
 		userAddress.setDistrict("TP. Thủ Đức");
 		userAddress.setWard("P. Linh Xuân");
 		userAddress.setPhoneNumber("0326474614");

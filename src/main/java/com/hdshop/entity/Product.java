@@ -42,11 +42,17 @@ public class Product extends BaseEntity {
 
     Integer sold;
 
-    Float rating;
-
     Integer numberOfRatings;
 
     Integer favoriteCount;
+
+    Integer productClicks;
+
+    Integer productViews;
+
+    Integer productCartAdds;
+
+    Float rating;
 
     Boolean isActive;
 

@@ -52,6 +52,23 @@ public class ProductServiceImpl implements ProductService {
     ModelMapper modelMapper;
     Slugify slugify;
 
+    @Override
+    public void productAnalysis(Long productId, String analysisType) {
+        Product product = findById(productId);
+        Integer clicks = product.getProductClicks();
+        Integer views = product.getProductViews();
+        Integer cart_adds = product.getProductCartAdds();
+        switch (analysisType.trim()) {
+            case "click" ->
+                    product.setProductClicks(clicks != null ? clicks + 1 : 1);
+            case "view" ->
+                    product.setProductViews(views != null ? views + 1 : 1);
+            case "add_cart" ->
+                    product.setProductCartAdds(cart_adds != null ? cart_adds + 1 : 1);
+        }
+        productRepository.save(product);
+    }
+
     /**
      * Create a new product.
      *
@@ -62,11 +79,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDTO create(Product product) {
-        // validate input product
-        productValidator.validate(product);
-
-        // find the product category based on its ID
-        Category category = categoryService.findByName(product.getCategory().getName());
+        productValidator.validate(product);  // validate input product
+        Category category = categoryService.findByName(product.getCategory().getName());    // find the product category based on its ID
 
         // build product
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
@@ -82,17 +96,11 @@ public class ProductServiceImpl implements ProductService {
         product.setQuantityAvailable(product.getQuantity());
         setProductForChildEntity(product);
 
-        // normalize product information
-        Product normalizedProduct = normalizeProduct(product);
+        Product normalizedProduct = normalizeProduct(product);  // normalize product information
+        Product newProduct = productRepository.save(normalizedProduct); // save the product to the database
+        productSkuService.saveSkusFromProduct(newProduct);  // save information about product variants (productSkus)
 
-        // save the product to the database
-        Product newProduct = productRepository.save(normalizedProduct);
-
-        // save information about product variants (productSkus)
-        productSkuService.saveSkusFromProduct(newProduct);
-
-        // convert the product to a ProductDTO object and return it
-        return mapToDTO(findById(newProduct.getProductId()));
+        return mapToDTO(findById(newProduct.getProductId()));   // convert the product to a ProductDTO object and return it
     }
 
     /**
@@ -181,8 +189,8 @@ public class ProductServiceImpl implements ProductService {
     /**
      * Update a product.
      *
-     * @param dto Updated product information.
-     * @param productId  Product ID to update.
+     * @param dto       Updated product information.
+     * @param productId Product ID to update.
      * @return Updated product DTO object.
      * @date 25-10-2023
      */
@@ -345,10 +353,7 @@ public class ProductServiceImpl implements ProductService {
             return response;
         }
         response.getContent().forEach((item) -> {
-                    boolean isLiked = followRepository
-                            .existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(
-                                    item.getId(), username
-                            );
+                    boolean isLiked = followRepository.existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(item.getId(), username);
                     item.setLiked(isLiked);
                 }
         );

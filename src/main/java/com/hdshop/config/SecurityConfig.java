@@ -42,6 +42,7 @@ public class SecurityConfig {
     private final CorsConfigurationSource configurationSource;
     private static final String[] WHITE_LIST_URL = {
             "/api/v1/image/**",
+            "/api/v1/products/analyze/**",
             "/api/v1/vnpay/**",
             "/vnpay-payment",
             "/api/v1/auth/**",

@@ -27,7 +27,13 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
     private final ProductSkuService skuService;
-    private final ImageService imageService;
+
+    @PostMapping("/analyze")
+    public ResponseEntity<?> productAnalysis(@RequestParam(value = "product_id") Long productId,
+                                @RequestParam(value = "type") String type) {
+        productService.productAnalysis(productId, type);
+        return ResponseEntity.ok("Successfully");
+    }
 
     @Operation(summary = "Create Product")
     @PreAuthorize("hasRole('ADMIN')")

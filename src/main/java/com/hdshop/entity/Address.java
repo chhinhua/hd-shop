@@ -13,6 +13,7 @@ import org.hibernate.annotations.DynamicUpdate;
 @DynamicUpdate
 @Hidden
 @Entity
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Address {
     @Id
@@ -20,19 +21,15 @@ public class Address {
     Long id;
 
     String fullName;
-
     String phoneNumber;
-
-    String city;
-
+    String province;
+    Integer provinceId;
     String district;
-
+    Integer districtId;
     String ward;
-
+    String wardCode;
     String orderDetails;
-
     Boolean isDefault;
-
     Boolean isDeleted;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -7,7 +7,9 @@ import com.hdshop.entity.Order;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.service.vnpay.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -29,10 +31,11 @@ import java.util.Locale;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/vnpay")
 @Slf4j
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class VNPayController {
-    private final VNPayService vnPayService;
-    private final MessageSource messageSource;
-    private final OrderService orderService;
+    VNPayService vnPayService;
+    MessageSource messageSource;
+    OrderService orderService;
 
     @GetMapping("")
     public String home() {

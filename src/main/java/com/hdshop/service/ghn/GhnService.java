@@ -23,4 +23,6 @@ public interface GhnService {
     EnumOrderStatus getEnumStatus(final String ghnOrderStatus);
 
     BigDecimal calculateFee(final Address address);
+
+    Long calculateHeight(final int itemCount);
 }

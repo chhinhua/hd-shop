@@ -58,18 +58,21 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressDTO update(AddressDTO address, Long addressId) {
         Address existingAddress = findById(addressId);
+        validate(address);
 
-        // Cập nhật các trường từ addressDTO vào existingAddress
+        // update
         existingAddress.setFullName(address.getFullName());
         existingAddress.setPhoneNumber(address.getPhoneNumber());
-        existingAddress.setCity(address.getCity());
+        existingAddress.setProvince(address.getProvince());
+        existingAddress.setProvinceId(address.getProvinceId());
         existingAddress.setDistrict(address.getDistrict());
+        existingAddress.setDistrictId(address.getDistrictId());
         existingAddress.setWard(address.getWard());
+        existingAddress.setWardCode(address.getWardCode());
         existingAddress.setOrderDetails(address.getOrderDetails());
 
-        // Lưu cập nhật vào cơ sở dữ liệu
+        // save change
         Address updatedAddress = addressRepository.save(existingAddress);
-
         return mapEntityToDTO(updatedAddress);
     }
 
@@ -137,14 +140,23 @@ public class AddressServiceImpl implements AddressService {
         if (!PhoneNumberUtils.isValidPhoneNumber(address.getPhoneNumber())) {
             throw new InvalidException(getMessage("invalid-phone-number"));
         }
-        if (address.getCity().isBlank()) {
-            throw new InvalidException(getMessage("city-must-not-be-empty"));
+        if (address.getProvince().isBlank()) {
+            throw new InvalidException(getMessage("province-must-not-be-empty"));
+        }
+        if (address.getProvinceId().toString().isBlank()) {
+            throw new InvalidException(getMessage("province-id-must-not-be-empty"));
         }
         if (address.getDistrict().isBlank()) {
             throw new InvalidException(getMessage("district-must-not-be-empty"));
         }
+        if (address.getDistrictId().toString().isBlank()) {
+            throw new InvalidException(getMessage("district-id-must-not-be-empty"));
+        }
         if (address.getWard().isBlank()) {
             throw new InvalidException(getMessage("ward-must-not-be-empty"));
+        }
+        if (address.getWardCode().isBlank()) {
+            throw new InvalidException(getMessage("ward-code-must-not-be-empty"));
         }
     }
 
