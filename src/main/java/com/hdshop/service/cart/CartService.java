@@ -14,6 +14,8 @@ public interface CartService {
 
     CartResponse getCartByUsername(final String username);
 
+    Cart findByUsername(final String username);
+
     CartResponse getCartById(final Long cartId);
 
     CartResponse clearItems(final String username);

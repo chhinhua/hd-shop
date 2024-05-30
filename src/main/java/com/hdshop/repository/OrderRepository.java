@@ -27,8 +27,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o JOIN o.orderItems oi WHERE oi.id = :itemId")
     Optional<Order> findByItemId(Long itemId);
 
-    List<Order> findByStatusOrderByCreatedDate(EnumOrderStatus status);
-
     List<Order> findAllByStatusAndUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(EnumOrderStatus status, String username);
 
     @Query("SELECT DISTINCT o FROM Order o JOIN o.user u JOIN o.orderItems oi " +
@@ -82,4 +80,25 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "AND YEAR(o.createdDate) = :year " +
             "AND MONTH(o.createdDate) = :month")
     BigDecimal getMonthlyTotalRevenue(@Param("month") int month, @Param("year") int year);
+
+    @Query("SELECT SUM(o.total) FROM Order o WHERE o.status = 'DELIVERED'")
+    BigDecimal getCountRevenue();
+
+    @Query("SELECT COUNT(oi) FROM OrderItem oi " +
+            "JOIN oi.order o " +
+            "where o.status = 'DELIVERED'")
+    Long countAllSold();
+
+    @Query("SELECT DISTINCT o FROM Order o JOIN o.user u JOIN o.orderItems oi " +
+            "WHERE o.isDeleted = false " +
+            "AND (LOWER(u.username) = :username)" +
+            "AND (:status IS NULL OR o.status = :status) " +
+            "AND ((:key IS NOT NULL AND (LOWER(oi.product.name) LIKE %:key%) " +
+            "OR (:key IS NULL))) " +
+            "ORDER BY o.createdDate DESC ")
+    Page<Order> userFilter(
+            @Param("status") EnumOrderStatus status,
+            @Param("key") String key,
+            @Param("username") String username,
+            Pageable pageable);
 }

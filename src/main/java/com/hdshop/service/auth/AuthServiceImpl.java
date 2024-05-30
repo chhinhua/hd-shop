@@ -14,8 +14,9 @@ import com.hdshop.service.opt.OtpService;
 import com.hdshop.service.user.UserService;
 import com.hdshop.utils.OtpUtils;
 import com.hdshop.validator.UserValidator;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
+import lombok.experimental.FieldDefaults;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.MailException;
@@ -42,17 +43,17 @@ import java.util.regex.Pattern;
  */
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthServiceImpl implements AuthService {
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final OtpService otpService;
-    private final UserService userService;
-    private final MessageSource messageSource;
-    private final UserValidator userValidator;
-    private final ModelMapper modelMapper;
+    UserRepository userRepository;
+    RoleRepository roleRepository;
+    PasswordEncoder passwordEncoder;
+    AuthenticationManager authenticationManager;
+    JwtTokenProvider jwtTokenProvider;
+    OtpService otpService;
+    UserService userService;
+    MessageSource messageSource;
+    UserValidator userValidator;
 
     /**
      * Handles user login based on the provided login credentials.
@@ -77,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
             String token = jwtTokenProvider.generateToken(authentication);
 
             // Get user from token
-            UserDTO user = userService.getUserByUsernameOrEmail(loginDTO.getUsernameOrEmail());
+            UserDTO user = userService.getByUsernameOrEmail(loginDTO.getUsernameOrEmail());
 
             // Check if user is enabled
             if (!user.getIsEnabled()) {
@@ -103,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse loginAdmin(LoginDTO loginDTO) {
         Optional<User> user = userRepository.findByUsernameOrEmail(loginDTO.getUsernameOrEmail(), loginDTO.getUsernameOrEmail());
         if (user.isPresent()) {
-            if (!user.get().getRoles().stream().anyMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
+            if (user.get().getRoles().stream().noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
                 throw new RuntimeException(getMessage("username-or-password-incorrect"));
             }
         }
@@ -234,7 +235,7 @@ public class AuthServiceImpl implements AuthService {
             return messsage;
         } catch (MailException e) {
             e.printStackTrace();
-            return getMessage("otp-send-failed");
+            throw new APIException(getMessage("otp-send-failed"));
         }
     }
 
@@ -249,7 +250,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidException(getMessage("otp-code-incorrect"));
         }
 
-        if (Duration.between(user.getOtpCreatedTime(), LocalDateTime.now()).toMinutes() > 5) {
+        if (Duration.between(user.getOtpCreatedTime(), LocalDateTime.now()).toMinutes() > 15) {
             throw new InvalidException(String.format("%s, %s"
                     ,getMessage("otp-code-has-expired")
                     ,getMessage("please-require-resend-otp")));

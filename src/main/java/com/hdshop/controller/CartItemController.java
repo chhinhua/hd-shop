@@ -35,7 +35,7 @@ public class CartItemController {
     @Operation(summary = "Delete one Cart item")
     @DeleteMapping("/{itemId}")
     public ResponseEntity<String> deteleOneCartItem(@PathVariable(value = "itemId") Long cartItemId) {
-        cartItemService.deleteOneCartItem(cartItemId);
+        cartItemService.delete(cartItemId);
         String successMessage = messageSource.getMessage("deleted-successfully", null, LocaleContextHolder.getLocale());
         return ResponseEntity.ok(successMessage);
     }

@@ -8,6 +8,8 @@ import java.security.Principal;
 import java.util.List;
 
 public interface ProductService {
+    void productAnalysis(final Long productId, final String analysisType);
+
     ProductDTO create(final Product product);
 
     ProductResponse getAllIsActive(final int pageNo, final int pageSize);
@@ -18,15 +20,15 @@ public interface ProductService {
 
     ProductDTO update(final ProductDTO productDTO, final Long productId);
 
-    ProductDTO toggleActiveStatus(final Long productId);
+    ProductDTO toggleActive(final Long productId);
 
-    ProductDTO toggleSellingStatus(final Long productId);
+    ProductDTO toggleSelling(final Long productId);
 
     void delete(final Long id);
 
     ProductDTO addQuantity(final Long product_id, final Integer quantity);
 
-    ProductResponse searchSortAndFilterProducts(
+    ProductResponse filter(
             Boolean sell,
             String searchTerm,
             List<String> cateName,
@@ -35,10 +37,10 @@ public interface ProductService {
             int pageSize
     );
 
-    ProductResponse filter(
+    ProductResponse filterForUser(
             Boolean sell,
             String searchTerm,
-            List<String> cateName,
+            List<String> cateNames,
             List<String> sortCriteria,
             int pageNo,
             int pageSize,

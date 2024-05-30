@@ -1,16 +1,25 @@
 package com.hdshop.utils;
 
 import com.hdshop.exception.InvalidException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
+
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class AppUtils {
     @Autowired
     private MessageSource messageSource;
+
+    @Value("${ghn.shop-id}")
+    public static String ghn_shop_id;
+
+    @Value("${ghn.token}")
+    public static String ghn_token;
 
     public EnumPaymentType getPaymentType(String input) {
         if ("VN_PAY".equals(input)) {
@@ -44,6 +53,14 @@ public class AppUtils {
         return stars != null && stars >= 1 && stars <= 5;
     }
 
+    public static String decodeIfEncoded(String input) {
+        // Kiểm tra xem chuỗi có phải đã được encode hay không
+        if (input.contains("%")) {
+            return URLDecoder.decode(input, StandardCharsets.UTF_8);
+        }
+
+        return input;
+    }
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }

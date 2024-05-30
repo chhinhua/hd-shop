@@ -7,9 +7,11 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -20,55 +22,61 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Hidden
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProductDTO {
-    private Long id;
+    Long id;
 
-    private String name;
+    String name;
 
-    private String description;
+    String description;
 
-    private BigDecimal price;
+    BigDecimal price;
 
-    private Integer quantity;
+    Integer quantity;
 
-    private int quantityAvailable;
+    Integer productClicks;
 
-    private Long categoryId;
+    Integer productViews;
 
-    private String categoryName;
+    Integer productCartAdds;
 
-    private String slug;
+    int quantityAvailable;
 
-    private BigDecimal promotionalPrice;
+    Long categoryId;
 
-    private int sold;
+    String categoryName;
 
-    private float rating;
+    String slug;
 
-    private int numberOfRatings;
+    BigDecimal promotionalPrice;
 
-    private int favoriteCount;
+    int sold;
 
-    private boolean liked;
+    float rating;
 
-    private Boolean isActive;
+    int numberOfRatings;
 
-    private Boolean isSelling;
+    int favoriteCount;
 
-    private String createdDate;
+    boolean liked;
 
-    private String lastModifiedDate;
+    Boolean isActive;
 
-    private CategoryDTO category;
+    Boolean isSelling;
 
+    String createdDate;
 
-    private String createdBy;
+    String lastModifiedDate;
 
-    private String lastModifiedBy;
+    CategoryDTO category;
 
-    private List<String> listImages = new ArrayList<>();
+    String createdBy;
 
-    private List<OptionDTO> options = new ArrayList<>();
+    String lastModifiedBy;
 
-    private List<ProductSkuDTO> skus = new ArrayList<>();
+    List<String> listImages = new ArrayList<>();
+
+    List<OptionDTO> options = new ArrayList<>();
+
+    List<ProductSkuDTO> skus = new ArrayList<>();
 }

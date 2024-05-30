@@ -3,10 +3,8 @@ package com.hdshop.entity;
 import com.hdshop.utils.EnumOrderStatus;
 import com.hdshop.utils.EnumPaymentType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -21,52 +19,60 @@ import java.util.List;
 @AllArgsConstructor
 @DynamicUpdate
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 @Table(name = "orders")
 public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
 
-    private String vnpTxnRef;
+    String orderCode;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private EnumOrderStatus status;
+    String vnpTxnRef;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private EnumPaymentType paymentType;
+    EnumOrderStatus status;
 
-    private Integer totalItems;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    EnumPaymentType paymentType;
 
-    private BigDecimal total;
+    Integer totalItems;
 
-    private String note;
+    BigDecimal subTotal;
 
-    private Boolean isPaidBefore;
+    BigDecimal shippingFee;
 
-    private Boolean isDeleted;
+    BigDecimal total;
+
+    String note;
+
+    Boolean isPaidBefore;
+
+    Boolean isDeleted;
 
     @CreatedBy
-    private String createdBy;
+    String createdBy;
 
     @LastModifiedBy
-    private String lastModifiedBy;
+    String lastModifiedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id")
-    private Address address;
+    Address address;
 
     @OneToMany(mappedBy = "order")
-    private List<Review> reviews = new ArrayList<>();
+    List<Review> reviews = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "order",
             cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE, CascadeType.DETACH}
     )
-    private List<OrderItem> orderItems = new ArrayList<>();
+    List<OrderItem> orderItems = new ArrayList<>();
 }

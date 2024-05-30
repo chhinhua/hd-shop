@@ -1,10 +1,8 @@
 package com.hdshop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -21,53 +19,54 @@ import java.util.Set;
 @AllArgsConstructor
 @DynamicUpdate
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "users")
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
 
     @Column(nullable = false, unique = true)
-    private String username;
+    String username;
 
     @Column(nullable = false)
-    private String password;
+    String password;
 
-    private String name;
+    String name;
 
     @Column(nullable = false, unique = true)
-    private String email;
+    String email;
 
     @Column(unique = true)
-    private String phoneNumber;
+    String phoneNumber;
 
-    private String gender;
+    String gender;
 
-    private String avatarUrl;
+    String avatarUrl;
 
-    private Boolean isEnabled;
+    Boolean isEnabled;
 
-    private boolean isLocked;
+    boolean isLocked;
 
-    private Boolean isEmailActive;
+    Boolean isEmailActive;
 
-    private Boolean isPhoneActive;
+    Boolean isPhoneActive;
 
-    private String otp;
+    String otp;
 
-    private LocalDateTime otpCreatedTime;
+    LocalDateTime otpCreatedTime;
 
     @CreatedBy
-    private String createdBy;
+    String createdBy;
 
     @LastModifiedBy
-    private String lastModifiedBy;
+    String lastModifiedBy;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Address> addresses = new ArrayList<>();
+    List<Address> addresses = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Review> reviews = new ArrayList<>();
+    List<Review> reviews = new ArrayList<>();
 
     @ManyToMany(
             fetch = FetchType.EAGER,
@@ -78,8 +77,8 @@ public class User extends BaseEntity {
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
     )
-    private Set<Role> roles = new HashSet<>();
+    Set<Role> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Follow> userFollowProducts = new ArrayList<>();
+    List<Follow> userFollowProducts = new ArrayList<>();
 }

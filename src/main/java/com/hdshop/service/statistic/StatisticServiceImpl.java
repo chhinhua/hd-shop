@@ -2,14 +2,17 @@ package com.hdshop.service.statistic;
 
 import com.hdshop.config.DateTimeConfig;
 import com.hdshop.dto.statistic.*;
-import com.hdshop.entity.User;
+import com.hdshop.dto.statistic.revenue.CountRevenueStatistic;
+import com.hdshop.dto.statistic.revenue.RevenueStatistic;
 import com.hdshop.repository.OrderRepository;
 import com.hdshop.repository.ProductRepository;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.service.follow.FollowService;
 import com.hdshop.service.user.UserService;
 import com.hdshop.utils.EnumOrderStatus;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -19,12 +22,13 @@ import java.time.ZonedDateTime;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class StatisticServiceImpl implements StatisticService {
-    private final UserRepository userRepository;
-    private final OrderRepository orderRepository;
-    private final UserService userService;
-    private final FollowService followService;
-    private final ProductRepository productRepository;
+    UserRepository userRepository;
+    OrderRepository orderRepository;
+    UserService userService;
+    FollowService followService;
+    ProductRepository productRepository;
 
     @Override
     public CountStatistic getCountStatistic() {
@@ -47,6 +51,13 @@ public class StatisticServiceImpl implements StatisticService {
         countStatistic.setDeliveredCount(deliveredCount);
 
         return countStatistic;
+    }
+
+    @Override
+    public CountRevenueStatistic getCountRevenueStatistic() {
+        BigDecimal countRevenue = orderRepository.getCountRevenue();
+        Long countSold = orderRepository.countAllSold();
+        return new CountRevenueStatistic(countRevenue, countSold);
     }
 
     @Override

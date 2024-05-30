@@ -14,8 +14,11 @@ import com.hdshop.service.category.CategoryService;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
+import com.hdshop.utils.AppUtils;
 import com.hdshop.validator.ProductValidator;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -27,28 +30,44 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProductServiceImpl implements ProductService {
-    private final ProductRepository productRepository;
-    private final OptionValueRepository valueRepository;
-    private final FollowRepository followRepository;
-    private final ProductSkuRepository skuRepository;
-    private final OptionRepository optionRepository;
-    private final ProductSkuService productSkuService;
-    private final CategoryService categoryService;
-    private final OptionService optionService;
-    private final UniqueSlugGenerator slugGenerator;
-    private final ProductValidator productValidator;
-    private final MessageSource messageSource;
-    private final ModelMapper modelMapper;
-    private final Slugify slugify;
+    ProductRepository productRepository;
+    CategoryRepository categoryRepository;
+    FollowRepository followRepository;
+    ProductSkuService productSkuService;
+    CategoryService categoryService;
+    OptionService optionService;
+    UniqueSlugGenerator slugGenerator;
+    ProductValidator productValidator;
+    MessageSource messageSource;
+    ModelMapper modelMapper;
+    Slugify slugify;
+
+    @Override
+    public void productAnalysis(Long productId, String analysisType) {
+        Product product = findById(productId);
+        Integer clicks = product.getProductClicks();
+        Integer views = product.getProductViews();
+        Integer cart_adds = product.getProductCartAdds();
+        switch (analysisType.trim()) {
+            case "click" ->
+                    product.setProductClicks(clicks != null ? clicks + 1 : 1);
+            case "view" ->
+                    product.setProductViews(views != null ? views + 1 : 1);
+            case "add_cart" ->
+                    product.setProductCartAdds(cart_adds != null ? cart_adds + 1 : 1);
+        }
+        productRepository.save(product);
+    }
 
     /**
      * Create a new product.
@@ -60,11 +79,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDTO create(Product product) {
-        // validate input product
-        productValidator.validate(product);
-
-        // find the product category based on its ID
-        Category category = categoryService.findByName(product.getCategory().getName());
+        productValidator.validate(product);  // validate input product
+        Category category = categoryService.findByName(product.getCategory().getName());    // find the product category based on its ID
 
         // build product
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
@@ -80,17 +96,11 @@ public class ProductServiceImpl implements ProductService {
         product.setQuantityAvailable(product.getQuantity());
         setProductForChildEntity(product);
 
-        // normalize product information
-        Product normalizedProduct = normalizeProduct(product);
+        Product normalizedProduct = normalizeProduct(product);  // normalize product information
+        Product newProduct = productRepository.save(normalizedProduct); // save the product to the database
+        productSkuService.saveSkusFromProduct(newProduct);  // save information about product variants (productSkus)
 
-        // save the product to the database
-        Product newProduct = productRepository.save(normalizedProduct);
-
-        // save information about product variants (productSkus)
-        productSkuService.saveSkusFromProduct(newProduct);
-
-        // convert the product to a ProductDTO object and return it
-        return mapToDTO(findById(newProduct.getProductId()));
+        return mapToDTO(findById(newProduct.getProductId()));   // convert the product to a ProductDTO object and return it
     }
 
     /**
@@ -162,11 +172,12 @@ public class ProductServiceImpl implements ProductService {
 
         // Sắp xếp danh sách SKU theo valueName của Option có tên "size"
         List<ProductSku> skus = product.getSkus();
-        skus.sort(Comparator.comparing(sku -> getValueNameForSizeOption(sku)));
+        skus.sort(Comparator.comparing(this::getValueNameForSizeOption));
         product.setSkus(skus);
 
         return product;
     }
+
     private String getValueNameForSizeOption(ProductSku sku) {
         return sku.getOptionValues().stream()
                 .filter(optionValue -> optionValue.getOption().getOptionName().equalsIgnoreCase("size"))
@@ -178,8 +189,8 @@ public class ProductServiceImpl implements ProductService {
     /**
      * Update a product.
      *
-     * @param dto Updated product information.
-     * @param productId  Product ID to update.
+     * @param dto       Updated product information.
+     * @param productId Product ID to update.
      * @return Updated product DTO object.
      * @date 25-10-2023
      */
@@ -214,80 +225,6 @@ public class ProductServiceImpl implements ProductService {
         return mapToDTO(findById(productId));
     }
 
-    private void updateOptionsAndValues(Product product, List<Option> options) {
-        List<Option> existingOptions = product.getOptions();
-
-        for (Option existingOption : existingOptions) {
-            boolean found = false;
-            for (Option updatedOption : options) {
-                if (existingOption.getOptionName().equals(updatedOption.getOptionName())) {
-                    found = true;
-
-                    // Update Option's details
-                    existingOption.setOptionName(updatedOption.getOptionName());
-
-                    // Update or create OptionValues
-                    updateOrCreateOptionValues(existingOption, updatedOption.getValues());
-
-                    break;
-                }
-            }
-
-            // If Option not found in updated list, remove it
-            if (!found) {
-                product.getOptions().remove(existingOption);
-                optionRepository.delete(existingOption);
-            }
-        }
-
-        // Save or create new Options
-        for (Option option : options) {
-            if (!existingOptions.contains(option)) {
-                Option persistedOption = optionRepository.save(option);
-                product.getOptions().add(persistedOption);
-
-                // Save or create OptionValues for new Options
-                updateOrCreateOptionValues(persistedOption, option.getValues());
-            }
-        }
-    }
-
-    private void updateOrCreateOptionValues(Option option, List<OptionValue> optionValues) {
-        List<OptionValue> existingValues = option.getValues();
-
-        for (OptionValue existingValue : existingValues) {
-            if (!optionValues.contains(existingValue)) {
-                valueRepository.delete(existingValue);
-            }
-        }
-
-        for (OptionValue value : optionValues) {
-            if (!existingValues.contains(value)) {
-                value.setOption(option);
-                valueRepository.save(value);
-            }
-        }
-    }
-
-    private void updateProductSkus(Product product, List<ProductSku> skus) {
-        List<ProductSku> existingSkus = product.getSkus();
-
-        for (ProductSku existingSku : existingSkus) {
-            if (!skus.contains(existingSku)) {
-                // Handle update or delete for existing SKU if necessary
-                // ...
-            }
-        }
-
-        for (ProductSku sku : skus) {
-            if (!existingSkus.contains(sku)) {
-                sku.setProduct(product);
-                skuRepository.save(sku);
-            }
-        }
-    }
-
-
     /**
      * Deactivate or activate a product based on its ID.
      *
@@ -297,7 +234,7 @@ public class ProductServiceImpl implements ProductService {
      * @date 01-11-2023
      */
     @Override
-    public ProductDTO toggleActiveStatus(Long productId) {
+    public ProductDTO toggleActive(Long productId) {
         Product existingProduct = findById(productId);
 
         existingProduct.setIsActive(!existingProduct.getIsActive());
@@ -316,7 +253,7 @@ public class ProductServiceImpl implements ProductService {
      * @date 01-11-2023
      */
     @Override
-    public ProductDTO toggleSellingStatus(Long productId) {
+    public ProductDTO toggleSelling(Long productId) {
         Product existingProduct = findById(productId);
 
         existingProduct.setIsSelling(!existingProduct.getIsSelling());
@@ -346,7 +283,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse searchSortAndFilterProducts(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
+    public ProductResponse filter(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
@@ -386,29 +323,37 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private List<String> getOnlyCateChild(List<String> cateNames) {
-        List<String> allCateNames = new ArrayList<>(cateNames);
+        List<String> allCateNames = trims(cateNames);
+
         for (String cateName : cateNames) {
-            Category category = categoryService.findByName(cateName);
-            if (category.getChildren().size() > 0) {
-                category.getChildren().forEach(child -> allCateNames.add(child.getName()));
+            Optional<Category> category = categoryRepository.findByName(cateName);
+            if (category.isPresent()) {
+                if (category.get().getChildren().size() > 0) {
+                    category.get().getChildren().forEach(child -> allCateNames.add(child.getName()));
+                }
             }
         }
-        return allCateNames;
+        return decodeUrl(allCateNames);
+    }
+
+    private List<String> decodeUrl(List<String> cateNames) {
+        return cateNames.stream().map(AppUtils::decodeIfEncoded).collect(Collectors.toList());
+    }
+
+    private List<String> trims(List<String> strings) {
+        return strings.stream().map(String::trim).collect(Collectors.toList());
     }
 
     @Override
-    public ProductResponse filter(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) {
-        ProductResponse response = searchSortAndFilterProducts(
+    public ProductResponse filterForUser(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) {
+        ProductResponse response = filter(
                 sell, searchTerm, cateNames, sortCriteria, pageNo, pageSize
         );
         if (username == null) {
             return response;
         }
         response.getContent().forEach((item) -> {
-                    boolean isLiked = followRepository
-                            .existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(
-                                    item.getId(), username
-                            );
+                    boolean isLiked = followRepository.existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(item.getId(), username);
                     item.setLiked(isLiked);
                 }
         );
@@ -416,21 +361,21 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Transactional
-    protected List<Option> saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
+    protected void saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
         List<Option> options = optionDTOList.stream()
                 .map(dto -> modelMapper.map(dto, Option.class))
                 .collect(Collectors.toList());
 
-        return optionService.saveOrUpdateOptions(existingProduct.getProductId(), options);
+        optionService.saveOrUpdateOptions(existingProduct.getProductId(), options);
     }
 
     @Transactional
-    protected List<ProductSku> saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
+    protected void saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
         List<ProductSku> skus = skuDTOList.stream()
                 .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
                 .collect(Collectors.toList());
 
-        return productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skus);
+        productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skus);
     }
 
     /**

@@ -1,10 +1,8 @@
 package com.hdshop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
@@ -15,32 +13,34 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @DynamicUpdate
 @Entity
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "order_items")
 public class OrderItem extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
 
-    private Integer quantity;
+    Integer quantity;
 
-    private BigDecimal price;
+    BigDecimal price;
 
-    private BigDecimal subTotal;
+    BigDecimal subTotal;
 
-    private String imageUrl;
+    String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
-    private Product product;
+    Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sku_id")
-    private ProductSku sku;
+    ProductSku sku;
 
     @OneToOne(mappedBy = "orderItem")
-    private Review review;
+    Review review;
 }

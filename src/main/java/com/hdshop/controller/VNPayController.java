@@ -1,24 +1,27 @@
 package com.hdshop.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.config.VNPayConfig;
 import com.hdshop.dto.order.OrderDTO;
-import com.hdshop.repository.OrderRepository;
+import com.hdshop.entity.Order;
 import com.hdshop.service.order.OrderService;
 import com.hdshop.service.vnpay.VNPayService;
-import com.hdshop.utils.AppUtils;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.print.DocFlavor;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
-import java.security.Principal;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,35 +30,54 @@ import java.util.Locale;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/vnpay")
+@Slf4j
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class VNPayController {
-    private final VNPayService vnPayService;
-    private final MessageSource messageSource;
-    private final OrderService orderService;
-    private final AppUtils appUtils;
-    private final OrderRepository orderRepository;
+    VNPayService vnPayService;
+    MessageSource messageSource;
+    OrderService orderService;
 
     @GetMapping("")
     public String home() {
         return "index";
     }
 
+    @GetMapping("/submit-order-v2")
+    public String submitOrderV2(@RequestParam("orderId") Long orderId, HttpServletRequest request) {
+        Order order = orderService.findById(orderId);
+
+        String orderInfor = messageSource.getMessage("pay-for-purchases-on-duck-shop", null, LocaleContextHolder.getLocale());
+        String vnp_TxnRef = order.getId().toString();
+        String baseUrl = null;
+
+        if (request != null) {
+            baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        }
+
+        String vnpayUrl = vnPayService.createOrder(order.getTotal(), orderInfor, baseUrl, vnp_TxnRef);
+        log.info("vnpay url: " + vnpayUrl);
+
+        // follow order
+        orderService.createWithVNPayV2(order.getId(), vnp_TxnRef);
+
+        return "redirect:" + vnpayUrl;
+    }
+
     @GetMapping("/submit-order")
     public String submitOrder(@RequestParam("amount") BigDecimal orderTotal,
                               @RequestParam("addressId") Long addressId,
                               @RequestParam("username") String username,
-                              @RequestParam(value = "note", required = false) String note,
+                              @RequestParam(name = "note", required = false) String note,
                               HttpServletRequest request) {
         String orderInfor = messageSource.getMessage("pay-for-purchases-on-duck-shop", null, LocaleContextHolder.getLocale());
-        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-        String vnpayUrl = vnPayService.createOrder(orderTotal, orderInfor, baseUrl);
-        System.out.println(vnpayUrl);
-
-        String decodedNote = "";
-        try {
-            decodedNote = URLDecoder.decode(note, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        String baseUrl = null;
+        if (request != null) {
+            baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
         }
+        String vnpayUrl = vnPayService.createOrder(orderTotal, orderInfor, baseUrl);
+        log.info("vnpay url: " + vnpayUrl);
+
+        String decodedNote = URLDecoder.decode(note, StandardCharsets.UTF_8);
 
         // build order from request
         OrderDTO order = new OrderDTO();
@@ -65,34 +87,40 @@ public class VNPayController {
         order.setTotal(orderTotal);
 
         // follow order
-        orderService.createOrderWithVNPay(order, username, VNPayConfig.vnp_TxnRef);
+        orderService.createWithVNPay(order, username, VNPayConfig.vnp_TxnRef);
 
         return "redirect:" + vnpayUrl;
     }
 
-    @PostMapping("/submit-order")
-    public String submitOrderV2(@RequestBody OrderDTO order,
-                                Principal principal,
-                                HttpServletRequest request) {
+    @GetMapping("/pay")
+    public String makePayment(@RequestParam("amount") BigDecimal orderTotal,
+                              @RequestParam("addressId") Long addressId,
+                              @RequestParam("orderId") Long orderId,
+                              @RequestParam(name = "note", required = false) String note,
+                              HttpServletRequest request) {
         String orderInfor = messageSource.getMessage("pay-for-purchases-on-duck-shop", null, LocaleContextHolder.getLocale());
         String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        String vnp_TxnRef = orderId.toString();
+        String vnpayUrl = vnPayService.createOrder(orderTotal, orderInfor, baseUrl, vnp_TxnRef);
+        log.info(vnpayUrl);
 
-        String vnpayUrl = null;
-        try {
-            //vnpayUrl = vnPayService.createOrder(order.getTotal().toBigInteger().intValue(), orderInfor, baseUrl);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        String decodedNote = URLDecoder.decode(note, StandardCharsets.UTF_8);
 
-        System.out.println(vnpayUrl);
+        // build order from request
+        OrderDTO order = new OrderDTO();
+        order.setId(orderId);
+        order.setNote(decodedNote);
+        order.setAddressId(addressId);
+        order.setTotal(orderTotal);
 
-        //orderService.createOrderWithVNPay(order, principal, VNPayConfig.vnp_TxnRef);
+        // make payment
+        orderService.makePaymentForVNPAY(order);
 
         return "redirect:" + vnpayUrl;
     }
 
     @GetMapping("/vnpay-payment")
-    public String GetMapping(HttpServletRequest request, Model model) {
+    public String GetMapping(HttpServletRequest request, Model model) throws JsonProcessingException {
         int paymentStatus = vnPayService.orderReturn(request);
 
         String orderInfo = request.getParameter("vnp_OrderInfo");
@@ -110,7 +138,7 @@ public class VNPayController {
             double totalPriceValue = Double.parseDouble(totalPrice) / 100;
             NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
             formattedTotalPrice = currencyFormat.format(totalPriceValue);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignored) {
         }
 
         model.addAttribute("orderId", orderInfo);
@@ -118,14 +146,9 @@ public class VNPayController {
         model.addAttribute("paymentTime", formatedPaymentTime);
         model.addAttribute("transactionId", transactionId);
 
-        // TODO lưu transaction
-        // TODO xóa items trong giỏ hàng
-
         if (paymentStatus == 1) {
             orderService.paymentCompleted(vnp_TxnRef);
-        } else {
-            //orderService.paymentFailed(vnp_TxnRef);
-        }
+        }  //orderService.paymentFailed(vnp_TxnRef);
 
         return paymentStatus == 1 ? "ordersuccess" : "orderfail";
     }

@@ -1,20 +1,23 @@
 package com.hdshop.service.address;
 
 import com.hdshop.dto.address.AddressDTO;
+import com.hdshop.entity.Address;
 
 import java.security.Principal;
 import java.util.List;
 
 public interface AddressService {
-    List<AddressDTO> getAllAddressForUser(final Principal principal);
+    AddressDTO getOne(final Long addressId);
 
-    AddressDTO addAddress(final AddressDTO address, final Principal principal);
+    Address findById(final Long id);
 
-    AddressDTO updateAddress(final AddressDTO address, final Long addressId);
+    List<AddressDTO> getYourAdresses(final Principal principal);
 
-    AddressDTO getOneAddress(final Long addressId);
+    List<AddressDTO> setDefault(final Long addressId, final Principal principal);
 
-    List<AddressDTO> setDefaultAddress(final Long addressId, final Principal principal);
+    AddressDTO add(final AddressDTO address, final Principal principal);
 
-    String deleteAddress(final Long addressId, final Principal principal);
+    AddressDTO update(final AddressDTO address, final Long addressId);
+
+    String delete(final Long addressId, final Principal principal);
 }

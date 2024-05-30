@@ -2,10 +2,8 @@ package com.hdshop.entity;
 
 import com.hdshop.component.SkuGenerator;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -16,20 +14,21 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "product_skus")
 public class ProductSku {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sku_id")
-    private Long skuId;
+    Long skuId;
 
-    private String sku;
+    String sku;
 
-    private BigDecimal price;
+    BigDecimal price;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
-    private Product product;
+    Product product;
 
     @ManyToMany
     @JoinTable(
@@ -37,7 +36,7 @@ public class ProductSku {
             joinColumns = @JoinColumn(name = "sku_id"), // Khóa ngoại của product_skus
             inverseJoinColumns = @JoinColumn(name = "value_id") // Khóa ngoại của option_values
     )
-    private List<OptionValue> optionValues = new ArrayList<>();
+    List<OptionValue> optionValues = new ArrayList<>();
 
     @PrePersist
     @PreUpdate

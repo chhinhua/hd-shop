@@ -2,19 +2,20 @@ package com.hdshop.service.category;
 
 import com.hdshop.dto.category.CategoryDTO;
 import com.hdshop.dto.category.CategoryResponse;
-import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Category;
 
 import java.util.List;
 
 public interface CategoryService {
-    CategoryDTO getCategoryByIdOrSlug(final String identifier);
+    Category findByName(final String cateName);
 
-    CategoryDTO createCategory(final CategoryDTO categoryDTO);
+    CategoryDTO findByIdOrSlug(final String identifier);
 
-    CategoryDTO updateCategory(final Long id, final CategoryDTO categoryDTO);
+    CategoryDTO create(final CategoryDTO categoryDTO);
 
-    void deleteCategory(final Long id);
+    CategoryDTO update(final Long id, final CategoryDTO categoryDTO);
+
+    void delete(final Long id);
 
     CategoryResponse getAll(int pageNo, int pageSize);
 
@@ -24,6 +25,4 @@ public interface CategoryService {
             int pageNo,
             int pageSize
     );
-
-    Category findByName(final String cateName);
 }

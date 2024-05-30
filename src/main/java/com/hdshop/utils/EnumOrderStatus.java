@@ -9,7 +9,8 @@ public enum EnumOrderStatus {
     SHIPPING("SHIPPING", "Đang giao"),
     DELIVERED("DELIVERED", "Đã giao"),
     CANCELED("CANCELED", "Đã hủy"),
-    WAIT_FOR_PAY("WAIT_FOR_PAY", "Chờ thanh toán");
+    WAIT_FOR_PAY("WAIT_FOR_PAY", "Chờ thanh toán"),
+    RETURN_REFUND("RETURN_REFUND", "Trả hàng/Hoàn tiền");
 
     private final String key;
 

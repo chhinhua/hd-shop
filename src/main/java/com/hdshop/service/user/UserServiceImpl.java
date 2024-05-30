@@ -10,7 +10,9 @@ import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.UserRepository;
 import com.hdshop.validator.ProductValidator;
 import com.hdshop.validator.UserValidator;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -28,30 +30,31 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserServiceImpl implements UserService {
-    private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
-    private final MessageSource messageSource;
-    private final PasswordEncoder passwordEncoder;
-    private final UserValidator userValidator;
-    private final ProductValidator appValidator;
+    UserRepository userRepository;
+    ModelMapper modelMapper;
+    MessageSource messageSource;
+    PasswordEncoder passwordEncoder;
+    UserValidator userValidator;
+    ProductValidator appValidator;
 
     @Override
-    public UserDTO getUserById(Long id) {
+    public UserDTO getById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy User có id là " + id));
         return mapToDTO(user);
     }
 
     @Override
-    public User getUserByUsername(String username) {
+    public User findByUsername(String username) {
         return userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
     }
 
     @Override
-    public UserDTO getUserByUsernameOrEmail(String usernameOrEmail) {
+    public UserDTO getByUsernameOrEmail(String usernameOrEmail) {
         User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
                 .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
         return mapToDTO(user);
@@ -77,7 +80,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO updateProfileByUserId(UserProfile profile, Long userId) {
+    public UserDTO updateProfileById(UserProfile profile, Long userId) {
         // retrieve user by id
         User updateUserProfile = userRepository
                 .findById(userId)
@@ -108,7 +111,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getAllUsers(int pageNo, int pageSize) {
+    public UserResponse getAll(int pageNo, int pageSize) {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
 
@@ -169,7 +172,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String changePasswordOfCurrentUser(ChangePassReq request, Principal principal) {
+    public String changePassword(ChangePassReq request, Principal principal) {
         validateChangePassRequest(request);
 
         User user = userRepository

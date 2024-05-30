@@ -2,7 +2,6 @@ package com.hdshop.controller;
 
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
-import com.hdshop.dto.product.RequestSku;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
 import com.hdshop.service.image.ImageService;
@@ -17,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.util.List;
@@ -29,7 +27,13 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
     private final ProductSkuService skuService;
-    private final ImageService imageService;
+
+    @PostMapping("/analyze")
+    public ResponseEntity<?> productAnalysis(@RequestParam(value = "product_id") Long productId,
+                                @RequestParam(value = "type") String type) {
+        productService.productAnalysis(productId, type);
+        return ResponseEntity.ok("Successfully");
+    }
 
     @Operation(summary = "Create Product")
     @PreAuthorize("hasRole('ADMIN')")
@@ -72,7 +76,7 @@ public class ProductController {
     @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("/{id}/active")
     public ResponseEntity<ProductDTO> toggleActiveProduct(@PathVariable(value = "id") Long productId) {
-        return ResponseEntity.ok(productService.toggleActiveStatus(productId));
+        return ResponseEntity.ok(productService.toggleActive(productId));
     }
 
     @Operation(summary = "Toggle Selling Status of a Product")
@@ -80,7 +84,7 @@ public class ProductController {
     @SecurityRequirement(name = "Bear Authentication")
     @PutMapping("/{id}/selling")
     public ResponseEntity<ProductDTO> toggleSellingProduct(@PathVariable(value = "id") Long productId) {
-        return ResponseEntity.ok(productService.toggleSellingStatus(productId));
+        return ResponseEntity.ok(productService.toggleSelling(productId));
     }
 
     @GetMapping("/search")
@@ -99,7 +103,7 @@ public class ProductController {
         if (principal != null) {
             username = principal.getName();
         }
-        ProductResponse searchResponse = productService.filter(
+        ProductResponse searchResponse = productService.filterForUser(
                 sell, key, cateNames, sortCriteria, pageNo, pageSize, username
         );
         return ResponseEntity.ok(searchResponse);

@@ -3,10 +3,8 @@ package com.hdshop.dto.order;
 import com.hdshop.dto.cart.ItemProductResponse;
 import com.hdshop.dto.product.ProductSkuDTO;
 import io.swagger.v3.oas.annotations.Hidden;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 
@@ -15,22 +13,23 @@ import java.math.BigDecimal;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderItemResponse {
-    private Long id;
+    Long id;
 
-    private Integer quantity;
+    Integer quantity;
 
-    private BigDecimal price;
+    BigDecimal price;
 
-    private BigDecimal subTotal;
+    BigDecimal subTotal;
 
-    private String imageUrl;
+    String imageUrl;
 
-    private Long orderId;
+    Long orderId;
 
-    private ItemProductResponse product;
+    ItemProductResponse product;
 
-    private ProductSkuDTO sku;
+    ProductSkuDTO sku;
 
-    private boolean hasReview;
+    boolean hasReview;
 }
