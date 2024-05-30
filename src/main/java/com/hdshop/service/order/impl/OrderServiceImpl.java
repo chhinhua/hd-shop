@@ -2,10 +2,7 @@ package com.hdshop.service.order.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.hdshop.config.VNPayConfig;
-import com.hdshop.controller.VNPayController;
+import com.hdshop.config.DateTimeConfig;
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.ghn.GhnOrder;
 import com.hdshop.dto.order.*;
@@ -31,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -43,15 +39,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.HashMap;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -184,7 +178,6 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(order);
         }
 
-        // TODO chưa xóa được cart items 👨‍💻
         cleanUpCartItems(order);
 
         return mapEntityToResponse(order);
@@ -203,9 +196,9 @@ public class OrderServiceImpl implements OrderService {
         List<Long> cartItemIds = order.getOrderItems()
                 .stream()
                 .map(item -> cartItemService.findByProductIdAndSkuId(item.getProduct().getProductId(), item.getSku().getSkuId()))
-                .collect(Collectors.toList())
+                .toList()
                 .stream()
-                .map(cartItem -> cartItem.getId())
+                .map(CartItem::getId)
                 .distinct() // Remove duplicate IDs (optional)
                 .collect(Collectors.toList());
         return cartItemIds;
@@ -475,9 +468,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderResponse> getYourOrders(Principal principal) {
         String username = principal.getName();
-
         List<Order> orderList = orderRepository.findAllByUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(username);
-
         return orderList
                 .stream()
                 .map(this::mapEntityToResponse)
@@ -488,6 +479,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void paymentCompleted(String vnp_TxnRef) throws JsonProcessingException {
         Order order = findByVnpTxnRef(vnp_TxnRef);
+        log.info(order.getClass().toString());
 
         // build and create GHN order
         GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
@@ -496,8 +488,8 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(EnumOrderStatus.ORDERED);
         order.setIsPaidBefore(true);
         order.setOrderCode(orderCode); // update order code
-
-        orderRepository.save(order);
+        order.setCreatedDate(DateTimeConfig.getCurrentDateTimeInTimeZone());
+        orderRepository.save(order); // save change
     }
 
     @Override
@@ -505,17 +497,14 @@ public class OrderServiceImpl implements OrderService {
         try {
             // follow Pageable instances
             Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
-
             EnumOrderStatus status = null;
             if (statusValue != null) {
                 status = appUtils.getOrderStatus(statusValue);
             }
-
             Page<Order> orderPage = orderRepository.filter(status, key, sortCriteria, pageable);
 
             // get content for page object
             List<Order> orderList = orderPage.getContent();
-
             List<OrderResponse> content = orderList.stream()
                     .map(this::mapEntityToResponse)
                     .collect(Collectors.toList());
@@ -550,7 +539,6 @@ public class OrderServiceImpl implements OrderService {
 
             // get content for page object
             List<Order> orderList = orderPage.getContent();
-
             List<OrderResponse> content = orderList.stream()
                     .map(this::mapEntityToResponse)
                     .collect(Collectors.toList());
@@ -577,6 +565,8 @@ public class OrderServiceImpl implements OrderService {
 
         // set fields
         BigDecimal shippingFee = BigDecimal.valueOf(order.getTotal().longValue() - order.getSubTotal().longValue());
+        ZonedDateTime now = DateTimeConfig.getCurrentDateTimeInTimeZone();
+        order.setCreatedDate(now);
         order.setShippingFee(shippingFee);
         order.setTotal(dto.getTotal());
         order.setNote(dto.getNote());
@@ -587,9 +577,8 @@ public class OrderServiceImpl implements OrderService {
         // build and create GHN order
         GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
         String orderCode = ghnService.createGhnOrder(shippingOrder);
-
         order.setOrderCode(orderCode);
-        return mapEntityToResponse(orderRepository.save(order));
+        return mapEntityToResponse(orderRepository.save(order)); // save change
     }
 
     @Override

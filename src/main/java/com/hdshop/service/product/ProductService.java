@@ -8,6 +8,8 @@ import java.security.Principal;
 import java.util.List;
 
 public interface ProductService {
+    void productAnalysis(final Long productId, final String analysisType);
+
     ProductDTO create(final Product product);
 
     ProductResponse getAllIsActive(final int pageNo, final int pageSize);
