@@ -1,5 +1,6 @@
 package com.hdshop.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Product;
@@ -98,7 +99,7 @@ public class ProductController {
             @RequestParam(value = "pageSize", required = false,
                     defaultValue = "${paging.default.page-size}") int pageSize,
             Principal principal
-    ) {
+    ) throws JsonProcessingException {
         String username = null;
         if (principal != null) {
             username = principal.getName();

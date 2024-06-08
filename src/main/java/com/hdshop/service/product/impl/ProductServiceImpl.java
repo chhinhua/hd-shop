@@ -1,5 +1,6 @@
 package com.hdshop.service.product.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.slugify.Slugify;
 import com.hdshop.component.UniqueSlugGenerator;
 import com.hdshop.dto.product.OptionDTO;
@@ -11,15 +12,19 @@ import com.hdshop.exception.InvalidException;
 import com.hdshop.exception.ResourceNotFoundException;
 import com.hdshop.repository.*;
 import com.hdshop.service.category.CategoryService;
+import com.hdshop.service.follow.FollowService;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
+import com.hdshop.service.redis.RedisProductService;
 import com.hdshop.utils.AppUtils;
 import com.hdshop.validator.ProductValidator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -42,8 +47,9 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     ProductRepository productRepository;
     CategoryRepository categoryRepository;
-    FollowRepository followRepository;
+    RedisProductService redisProductService;
     ProductSkuService productSkuService;
+    FollowService followService;
     CategoryService categoryService;
     OptionService optionService;
     UniqueSlugGenerator slugGenerator;
@@ -51,6 +57,7 @@ public class ProductServiceImpl implements ProductService {
     MessageSource messageSource;
     ModelMapper modelMapper;
     Slugify slugify;
+    static Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     @Override
     public void productAnalysis(Long productId, String analysisType) {
@@ -59,12 +66,9 @@ public class ProductServiceImpl implements ProductService {
         Integer views = product.getProductViews();
         Integer cart_adds = product.getProductCartAdds();
         switch (analysisType.trim()) {
-            case "click" ->
-                    product.setProductClicks(clicks != null ? clicks + 1 : 1);
-            case "view" ->
-                    product.setProductViews(views != null ? views + 1 : 1);
-            case "add_cart" ->
-                    product.setProductCartAdds(cart_adds != null ? cart_adds + 1 : 1);
+            case "click" -> product.setProductClicks(clicks != null ? clicks + 1 : 1);
+            case "view" -> product.setProductViews(views != null ? views + 1 : 1);
+            case "add_cart" -> product.setProductCartAdds(cart_adds != null ? cart_adds + 1 : 1);
         }
         productRepository.save(product);
     }
@@ -154,12 +158,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO getOne(Long productId, Principal principal) {
         Product product = findById(productId);
         ProductDTO dto = mapToDTO(product);
-
         if (principal == null) {
             return dto;
         }
-        boolean isLiked = followRepository
-                .existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(dto.getId(), principal.getName());
+        boolean isLiked = followService.isFollowed(principal.getName(), dto.getId());
         dto.setLiked(isLiked);
         return dto;
     }
@@ -197,31 +199,15 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDTO update(ProductDTO dto, Long productId) {
-        // validate product update data
-        productValidator.validateUpdate(dto);
-
-        // Kiểm tra nếu sản phẩm đã tồn tại
-        Product existingProduct = findById(productId);
-
-        // Kiểm tra nếu danh mục đã tồn tại
-        Category category = categoryService.findByName(dto.getCategory().getName());
-
-        // Cập nhật các trường thay đổi
-        setProductFields(dto, existingProduct, category);
-
-        // Chuẩn hóa dữ liệu sản phẩm đầu vào
-        Product normalizedProduct = normalizeProduct(existingProduct);
-
-        // Lưu sản phẩm đã cập nhật
-        existingProduct = productRepository.save(normalizedProduct);
-
-        // Lưu hoặc cập nhật Options và OptionValues
-        saveOrUpdateOptions(existingProduct, dto.getOptions());
-
-        // Lưu hoặc cập nhật ProductSkus
-        saveOrUpdateSkus(existingProduct, dto.getSkus());
-
-        // Trả về DTO của sản phẩm sau khi cập nhật
+        productValidator.validateUpdate(dto);  // validate product update data
+        Product existingProduct = findById(productId);  // Kiểm tra nếu sản phẩm đã tồn tại
+        Category category = categoryService.findByName(dto.getCategory().getName()); // Kiểm tra nếu danh mục đã tồn tại
+        setProductFields(dto, existingProduct, category);    // Cập nhật các trường thay đổi
+        Product normalizedProduct = normalizeProduct(existingProduct);  // Chuẩn hóa dữ liệu sản phẩm đầu vào
+        existingProduct = productRepository.save(normalizedProduct);    // Lưu sản phẩm đã cập nhật
+        saveOrUpdateOptions(existingProduct, dto.getOptions()); // Lưu hoặc cập nhật Options và OptionValues
+        saveOrUpdateSkus(existingProduct, dto.getSkus());  // Lưu hoặc cập nhật ProductSkus
+        redisProductService.clear(); // Xóa bộ nhớ đệm của Product
         return mapToDTO(findById(productId));
     }
 
@@ -283,27 +269,30 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse filter(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
+    public ProductResponse filter(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) throws JsonProcessingException {
         // follow Pageable instances
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
-
         // get all name of cate childs for this cate
         List<String> listCateNames = cateNames;
         if (cateNames != null && listCateNames.size() > 0) {
             listCateNames = getOnlyCateChild(cateNames);
         }
+        logger.info(String.format("keyword = %s, cate_names = %s, sort = %s, page_no = %d, page_size = %d",
+                key, cateNames, sortCriteria, pageNo, pageSize));
+
+        ProductResponse response = redisProductService.getAllProducts(key, cateNames, sortCriteria, pageNo, pageSize);
+        if (response != null && !response.getContent().isEmpty()) {
+            return response;
+        }
 
         Page<Product> productPage = productRepository.searchSortAndFilterProducts(
                 sell, key, listCateNames, sortCriteria, pageable
         );
-
         // get content for page object
         List<Product> productList = productPage.getContent();
-
         List<ProductDTO> content = productList.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
-
         // set data to the product response
         ProductResponse productResponse = new ProductResponse();
         long totalElements = productPage.getTotalElements();
@@ -313,11 +302,20 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setTotalPages(productPage.getTotalPages());
         productResponse.setTotalElements(productPage.getTotalElements());
         productResponse.setLast(productPage.isLast());
-
         long lastPageSize = totalElements % pageSize != 0 ?
                 totalElements % pageSize : totalElements != 0 ?
                 pageSize : 0;
         productResponse.setLastPageSize(lastPageSize);
+
+        // save to redis cache
+        redisProductService.saveAllProducts(
+                productResponse,
+                key,
+                cateNames,
+                sortCriteria,
+                pageNo,
+                pageSize
+        );
 
         return productResponse;
     }
@@ -345,20 +343,26 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse filterForUser(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) {
+    public ProductResponse filterForUser(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) throws JsonProcessingException {
         ProductResponse response = filter(
-                sell, searchTerm, cateNames, sortCriteria, pageNo, pageSize
+                sell,
+                searchTerm,
+                cateNames,
+                sortCriteria,
+                pageNo,
+                pageSize
         );
         if (username == null) {
             return response;
         }
         response.getContent().forEach((item) -> {
-                    boolean isLiked = followRepository.existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(item.getId(), username);
+                    boolean isLiked = followService.isFollowed(username, item.getId());
                     item.setLiked(isLiked);
                 }
         );
         return response;
     }
+
 
     @Transactional
     protected void saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {

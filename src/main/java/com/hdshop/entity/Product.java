@@ -32,8 +32,9 @@ public class Product extends BaseEntity {
 
     String slug;
 
+    BigDecimal originalPrice;
+    BigDecimal percentDiscount;
     BigDecimal price;
-
     BigDecimal promotionalPrice;
 
     Integer quantity;

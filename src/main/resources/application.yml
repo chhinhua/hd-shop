@@ -13,6 +13,10 @@ logging:
 spring:
     application:
         name: duck-shop
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 100MB
     jpa:
         hibernate:
             ddl-auto: update
@@ -23,7 +27,7 @@ spring:
                     time_zone: Asia/Ho_Chi_Minh
         show-sql: true
     profiles:
-        active: prod
+        active: dev
 
     http:
         encoding:
@@ -37,6 +41,13 @@ spring:
     web:
         locale: vi
         locale-resolver: fixed
+    data:
+        redis:
+            #spring.data.redis.use-redis-cache
+            use-redis-cache: true
+            host: ${REDIS_HOST:localhost} # Default to 'localhost' if not provided
+            #host: ${REDIS_HOST:ubuntu-server-01.local} # Default to 'localhost' if not provided
+            port: ${REDIS_PORT:6379}      # Default to 6379 if not provided
 
 app:
     jwt-secret: 38a0963a6364b09ad867aa9a66c6d009673c21e182015461da236ec361877f77
@@ -50,7 +61,7 @@ app:
 paging:
     default:
         page-number: 1
-        page-size: 24
+        page-size: 12
 
 vnpay:
     tmn-code: ZCZAPALE
