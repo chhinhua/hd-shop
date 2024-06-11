@@ -1,8 +1,16 @@
 server:
-  port: 8099
+    port: 5000
 
 spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/hd-shop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: 123hua@
+    datasource:
+        url:  ${MYSQL_URL:jdbc:mysql://localhost:4407/duck}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+        username: ${MYSQL_USERNAME:jinhua}
+        password: ${MYSQL_PASSWORD:Password@123}
+    data:
+        redis:
+            use-redis-cache: true
+            host: ${REDIS_HOSTNAME:localhost}
+            port: ${REDIS_PORT:6379}
+            password: ${REDIS_PASSWORD:Password@123}
+            #spring.data.redis.use-redis-cache
+            #host: ${REDIS_HOST:ubuntu-server-01.local} # Default to 'localhost' if not provided

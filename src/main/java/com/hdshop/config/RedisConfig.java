@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -31,11 +32,14 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}") // Read 'spring.data.redis.port' property from application.yml
     private int redisPort;
 
+    @Value("${spring.data.redis.password}") // Read 'spring.data.redis.port' property from application.yml
+    private String redisPassword;
+
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         logger.info(String.format("redisHost = %s, redisPort = %d", redisHost, redisPort));
-        RedisStandaloneConfiguration configuration =
-                new RedisStandaloneConfiguration(redisHost, redisPort);
+        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration(redisHost, redisPort);
+        configuration.setPassword(RedisPassword.of(redisPassword));
         return new LettuceConnectionFactory(configuration);
     }
     @Bean
@@ -71,6 +75,5 @@ public class RedisConfig {
 
         return RedisCacheManager.builder(connectionFactory) //
                 .cacheDefaults(config) //
-                .build();
-    }
+                .build();    }
 }

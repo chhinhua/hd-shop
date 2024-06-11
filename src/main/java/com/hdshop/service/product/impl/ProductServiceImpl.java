@@ -222,11 +222,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDTO toggleActive(Long productId) {
         Product existingProduct = findById(productId);
-
         existingProduct.setIsActive(!existingProduct.getIsActive());
-
         Product updateIsAcitve = productRepository.save(existingProduct);
-
         return mapToDTO(updateIsAcitve);
     }
 
@@ -241,11 +238,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDTO toggleSelling(Long productId) {
         Product existingProduct = findById(productId);
-
         existingProduct.setIsSelling(!existingProduct.getIsSelling());
-
         Product updateIsAcitve = productRepository.save(existingProduct);
-
         return mapToDTO(updateIsAcitve);
     }
 
@@ -270,8 +264,6 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponse filter(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) throws JsonProcessingException {
-        // follow Pageable instances
-        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
         // get all name of cate childs for this cate
         List<String> listCateNames = cateNames;
         if (cateNames != null && listCateNames.size() > 0) {
@@ -280,12 +272,13 @@ public class ProductServiceImpl implements ProductService {
         logger.info(String.format("keyword = %s, cate_names = %s, sort = %s, page_no = %d, page_size = %d",
                 key, cateNames, sortCriteria, pageNo, pageSize));
 
-        ProductResponse response = redisProductService.getAllProducts(key, cateNames, sortCriteria, pageNo, pageSize);
+        ProductResponse response = redisProductService.getAllProducts(key, listCateNames, sortCriteria, pageNo, pageSize);
         if (response != null && !response.getContent().isEmpty()) {
             return response;
         }
 
-        Page<Product> productPage = productRepository.searchSortAndFilterProducts(
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+        Page<Product> productPage = productRepository.filterProducts(
                 sell, key, listCateNames, sortCriteria, pageable
         );
         // get content for page object
@@ -369,7 +362,6 @@ public class ProductServiceImpl implements ProductService {
         List<Option> options = optionDTOList.stream()
                 .map(dto -> modelMapper.map(dto, Option.class))
                 .collect(Collectors.toList());
-
         optionService.saveOrUpdateOptions(existingProduct.getProductId(), options);
     }
 
@@ -378,7 +370,6 @@ public class ProductServiceImpl implements ProductService {
         List<ProductSku> skus = skuDTOList.stream()
                 .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
                 .collect(Collectors.toList());
-
         productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skus);
     }
 

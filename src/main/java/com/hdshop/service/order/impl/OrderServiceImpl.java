@@ -18,6 +18,7 @@ import com.hdshop.service.cart.CartItemService;
 import com.hdshop.service.cart.CartService;
 import com.hdshop.service.ghn.GhnService;
 import com.hdshop.service.order.OrderService;
+import com.hdshop.service.order.OrderTrackingService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
 import com.hdshop.service.product.impl.ProductServiceImpl;
@@ -74,6 +75,7 @@ public class OrderServiceImpl implements OrderService {
     ProductService productService;
     CartItemService cartItemService;
     RedisOrderService redisOrderService;
+    OrderTrackingService trackingService;
     RestTemplate restTemplate;
     static String VNPAY_SUBMIT_ORDER = "http://localhost:8080/api/v1/vnpay/submit-order-v2";
     static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
@@ -175,8 +177,8 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponse createOrder(OrderDTO orderDto, Principal principal) throws JsonProcessingException {
         OrderResponse response = createV2(orderDto, principal); // create order data to duckshop service
+        trackingService.create(response.getId()); // create order_tracking
         Order order = findById(response.getId());
-
         if (order.getPaymentType().equals(EnumPaymentType.COD)) {
             // build and create GHN order
             GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
@@ -184,16 +186,13 @@ public class OrderServiceImpl implements OrderService {
             order.setOrderCode(orderCode); // update order code
             orderRepository.save(order);
         }
-
         cleanUpCartItems(order);
-
         return mapEntityToResponse(order);
     }
 
     void cleanUpCartItems(Order order) {
         List<Long> cartItemIds = extractCartItemIds(order);
         cartItemService.deleteListItems(cartItemIds);
-
         // reupdate cart
         Cart cart = cartService.findByUsername(order.getUser().getUsername());
         cartService.updateCartTotals(cart);

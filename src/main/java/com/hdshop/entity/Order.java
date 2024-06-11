@@ -70,9 +70,8 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order")
     List<Review> reviews = new ArrayList<>();
 
-    @OneToMany(
-            mappedBy = "order",
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE, CascadeType.DETACH}
-    )
+    @OneToMany(mappedBy = "order", cascade = {
+            CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE, CascadeType.DETACH
+    })
     List<OrderItem> orderItems = new ArrayList<>();
 }

@@ -1,7 +1,6 @@
 package com.hdshop.repository;
 
 import com.hdshop.entity.Product;
-import com.hdshop.utils.EnumOrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -41,7 +40,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "CASE WHEN 'available:desc' IN :sortCriteria THEN p.quantityAvailable END DESC, " +
             "CASE WHEN 'rating:asc' IN :sortCriteria THEN p.rating END ASC, " +
             "CASE WHEN 'rating:desc' IN :sortCriteria THEN p.rating END DESC")
-    Page<Product> searchSortAndFilterProducts(
+    Page<Product> filterProducts(
             @Param("sell") Boolean sell,
             @Param("key") String key,
             @Param("cateNames") List<String> cateNames,

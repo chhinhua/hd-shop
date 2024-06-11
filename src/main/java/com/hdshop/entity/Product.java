@@ -18,7 +18,11 @@ import java.util.List;
 @Entity
 @DynamicUpdate
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "products")
+@Table(name = "products", indexes = {
+        @Index(name = "idx_product_name", columnList = "name"),
+        @Index(name = "idx_product_price", columnList = "price"),
+        @Index(name = "idx_product_number_of_ratings", columnList = "numberOfRatings")
+})
 public class Product extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -96,3 +100,4 @@ public class Product extends BaseEntity {
             cascade = {CascadeType.REMOVE})
     List<ProductSku> skus;
 }
+

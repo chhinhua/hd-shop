@@ -17,7 +17,7 @@ import java.util.List;
 @DynamicUpdate
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "categories")
+@Table(name = "categories",indexes = {@Index(name = "idx_cate_name", columnList = "name")})
 public class Category extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

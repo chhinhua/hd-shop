@@ -1,0 +1,48 @@
+version: '3.7'
+
+services:
+    mysql-datasource:
+        image: mysql:8
+        container_name: mysql-datasource
+        ports:
+            - "4407:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: Password@123
+            MYSQL_DATABASE: duck
+            MYSQL_USER: jinhua
+            MYSQL_PASSWORD: Password@123
+        networks:
+            - duck-network
+
+    redis-cache:
+        image: redis
+        container_name: redis-cache
+        ports:
+            - "6379:6379"
+        command: redis-server --requirepass "Password@123"
+        networks:
+            - duck-network
+
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: backend
+        ports:
+            - "5000:8080"
+        depends_on:
+            - mysql-datasource
+            - redis-cache
+        environment:
+            MYSQL_URL: jdbc:mysql://mysql-datasource:3306/duck
+            MYSQL_USERNAME: jinhua
+            MYSQL_PASSWORD: Password@123
+            REDIS_HOSTNAME: redis-cache
+            REDIS_PORT: 6379
+            REDIS_PASSWORD: Password@123
+        networks:
+            - duck-network
+        restart: on-failure:5
+
+networks:
+    duck-network:

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hdshop.dto.product.ProductResponse;
-import com.hdshop.service.product.impl.ProductServiceImpl;
 import com.hdshop.service.redis.RedisProductService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -26,7 +25,7 @@ public class RedisProductServiceImpl implements RedisProductService {
     private final ObjectMapper redisObjectMapper;
     @Value("${spring.data.redis.use-redis-cache}")
     private boolean useRedisCache;
-    private static Logger logger = LoggerFactory.getLogger(RedisProductServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(RedisProductServiceImpl.class);
 
     private String getKeyFrom(String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) {
         String key = String.format("all_products:%s:%s:%s:%d:%d", searchTerm, cateNames, sortCriteria, pageNo, pageSize);
@@ -35,15 +34,15 @@ public class RedisProductServiceImpl implements RedisProductService {
 
     @Override
     public void clear() {
-        Cursor<byte[]> cursor = redisTemplate
-                .getConnectionFactory()
+        Cursor<byte[]> cursor = Objects
+                .requireNonNull(redisTemplate.getConnectionFactory())
                 .getConnection()
                 .scan(ScanOptions.scanOptions().match("all_products*").build());
         while (cursor.hasNext()) {
             String key = Arrays.toString(cursor.next());
             if (key.startsWith("all_products")) {
                 redisTemplate.delete(key);
-                logger.info("deleted cache data for key: " + key);
+                logger.info("Deleted cache data with key = " + key);
             }
         }
         cursor.close(); // Close the cursor to release resources
@@ -56,10 +55,11 @@ public class RedisProductServiceImpl implements RedisProductService {
         }
         String key = this.getKeyFrom(searchTerm, cateNames, sortCriteria, pageNo, pageSize);
         String json = (String) redisTemplate.opsForValue().get(key);
-        ProductResponse response = json != null ?
-                redisObjectMapper.readValue(json, new TypeReference<>() {
-                })
-                : null;
+        ProductResponse response =
+                json != null ?
+                        redisObjectMapper.readValue(json, new TypeReference<>() {
+                        })
+                        : null;
         return response;
     }
 
