@@ -5,7 +5,6 @@ import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
-import com.hdshop.service.image.ImageService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -104,7 +103,7 @@ public class ProductController {
         if (principal != null) {
             username = principal.getName();
         }
-        ProductResponse searchResponse = productService.filterForUser(
+        ProductResponse searchResponse = productService.userFilter(
                 sell, key, cateNames, sortCriteria, pageNo, pageSize, username
         );
         return ResponseEntity.ok(searchResponse);

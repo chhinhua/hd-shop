@@ -6,7 +6,6 @@ import com.hdshop.config.DateTimeConfig;
 import com.hdshop.dto.address.AddressDTO;
 import com.hdshop.dto.ghn.GhnOrder;
 import com.hdshop.dto.order.*;
-import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.dto.vnpay.SubmitOrderRequest;
 import com.hdshop.entity.*;
 import com.hdshop.exception.APIException;
@@ -21,8 +20,7 @@ import com.hdshop.service.order.OrderService;
 import com.hdshop.service.order.OrderTrackingService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
-import com.hdshop.service.product.impl.ProductServiceImpl;
-import com.hdshop.service.redis.RedisOrderService;
+import com.hdshop.service.redis.RedisService;
 import com.hdshop.service.user.UserService;
 import com.hdshop.utils.AppUtils;
 import com.hdshop.utils.EnumOrderStatus;
@@ -49,7 +47,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -76,6 +73,7 @@ public class OrderServiceImpl implements OrderService {
     CartItemService cartItemService;
     RedisOrderService redisOrderService;
     OrderTrackingService trackingService;
+    RedisService<Order> redisService;
     RestTemplate restTemplate;
     static String VNPAY_SUBMIT_ORDER = "http://localhost:8080/api/v1/vnpay/submit-order-v2";
     static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
@@ -533,16 +531,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderPageResponse userFilter(String statusValue, String key, int pageNo, int pageSize, Principal principal) {
         try {
-            logger.info(String.format("user filter -> status = %s, key = %s, page_no = %d, page_size = %d", statusValue, key, pageNo, pageSize));
-            String username = principal.getName();
             // check and retrive data caching 👇
-            OrderPageResponse response = redisOrderService.getMyOrders(
-                    statusValue,
-                    key,
-                    pageNo,
-                    pageSize,
-                    username
-            );
+            logger.info(String.format("user filter: status=%s, key=%s, page_no=%d, page_size=%d", statusValue, key, pageNo, pageSize));
+            String username = principal.getName();
+            String keyPrefix = username != null ? (AppUtils.KEY_PREFIX_GET_ALL_ORDER + ":" + username) : (AppUtils.KEY_PREFIX_GET_MY_ORDER);
+            String redisKey = redisService.getKeyFrom(keyPrefix,statusValue, key, pageNo, pageSize);
+            OrderPageResponse response = redisService.getAll(redisKey, OrderPageResponse.class);
             if (response != null && !response.getContent().isEmpty()) {
                 return response;
             }
@@ -569,7 +563,7 @@ public class OrderServiceImpl implements OrderService {
             pageResponse.setTotalElements(orderPage.getTotalElements());
             pageResponse.setLast(orderPage.isLast());
 
-            redisOrderService.saveMyOrders(pageResponse, statusValue, key, pageNo, pageSize, username); //👈 save caching data
+            redisService.saveAll(redisKey, pageResponse); //👈 save caching data
             return pageResponse;
         } catch (Exception e) {
             throw new InvalidException(getMessage("list-order-is-empty"));

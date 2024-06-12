@@ -38,7 +38,7 @@ public interface ProductService {
             int pageSize
     ) throws JsonProcessingException;
 
-    ProductResponse filterForUser(
+    ProductResponse userFilter(
             Boolean sell,
             String searchTerm,
             List<String> cateNames,

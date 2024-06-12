@@ -16,7 +16,8 @@ import com.hdshop.service.follow.FollowService;
 import com.hdshop.service.product.OptionService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
-import com.hdshop.service.redis.RedisProductService;
+import com.hdshop.service.redis.RedisService;
+import com.hdshop.service.user.UserService;
 import com.hdshop.utils.AppUtils;
 import com.hdshop.validator.ProductValidator;
 import lombok.AccessLevel;
@@ -35,10 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,16 +45,17 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     ProductRepository productRepository;
     CategoryRepository categoryRepository;
-    RedisProductService redisProductService;
     ProductSkuService productSkuService;
     FollowService followService;
     CategoryService categoryService;
     OptionService optionService;
+    UserService userService;
     UniqueSlugGenerator slugGenerator;
     ProductValidator productValidator;
     MessageSource messageSource;
     ModelMapper modelMapper;
     Slugify slugify;
+    RedisService<Product> redisService;
     static Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     @Override
@@ -207,7 +206,6 @@ public class ProductServiceImpl implements ProductService {
         existingProduct = productRepository.save(normalizedProduct);    // Lưu sản phẩm đã cập nhật
         saveOrUpdateOptions(existingProduct, dto.getOptions()); // Lưu hoặc cập nhật Options và OptionValues
         saveOrUpdateSkus(existingProduct, dto.getSkus());  // Lưu hoặc cập nhật ProductSkus
-        redisProductService.clear(); // Xóa bộ nhớ đệm của Product
         return mapToDTO(findById(productId));
     }
 
@@ -272,7 +270,8 @@ public class ProductServiceImpl implements ProductService {
         logger.info(String.format("keyword = %s, cate_names = %s, sort = %s, page_no = %d, page_size = %d",
                 key, cateNames, sortCriteria, pageNo, pageSize));
 
-        ProductResponse response = redisProductService.getAllProducts(key, listCateNames, sortCriteria, pageNo, pageSize);
+        String redisKey = redisService.getKeyFrom(AppUtils.KEY_PREFIX_GET_ALL_PRODUCT, key, cateNames, sortCriteria, pageNo, pageSize);
+        ProductResponse response = redisService.getAll(redisKey, ProductResponse.class);
         if (response != null && !response.getContent().isEmpty()) {
             return response;
         }
@@ -301,14 +300,7 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setLastPageSize(lastPageSize);
 
         // save to redis cache
-        redisProductService.saveAllProducts(
-                productResponse,
-                key,
-                cateNames,
-                sortCriteria,
-                pageNo,
-                pageSize
-        );
+        redisService.saveAll(redisKey, productResponse);
 
         return productResponse;
     }
@@ -336,23 +328,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse filterForUser(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) throws JsonProcessingException {
-        ProductResponse response = filter(
-                sell,
-                searchTerm,
-                cateNames,
-                sortCriteria,
-                pageNo,
-                pageSize
-        );
-        if (username == null) {
-            return response;
+    public ProductResponse userFilter(Boolean sell, String searchTerm, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize, String username) throws JsonProcessingException {
+        ProductResponse response = filter(sell, searchTerm, cateNames, sortCriteria, pageNo, pageSize);
+        if (username != null) {
+            Set<Role> roles = userService.findByUsername(username).getRoles();
+            if (roles.stream().anyMatch(role -> role.getName().equals(AppUtils.ROLE_ADMIN_NAME))) {
+                return response; // Early return if admin
+            }
+            response.getContent().forEach(item -> item.setLiked(followService.isFollowed(username, item.getId())));
+            // set following product status for different users ☝
         }
-        response.getContent().forEach((item) -> {
-                    boolean isLiked = followService.isFollowed(username, item.getId());
-                    item.setLiked(isLiked);
-                }
-        );
         return response;
     }
 
