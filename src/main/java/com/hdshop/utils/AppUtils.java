@@ -14,12 +14,11 @@ import java.nio.charset.StandardCharsets;
 public class AppUtils {
     @Autowired
     private MessageSource messageSource;
-
-    @Value("${ghn.shop-id}")
-    public static String ghn_shop_id;
-
-    @Value("${ghn.token}")
-    public static String ghn_token;
+    public static final String KEY_PREFIX_GET_ALL_PRODUCT = "all_products";
+    public static final String KEY_PREFIX_GET_ALL_ORDER = "all_orders";
+    public static final String KEY_PREFIX_GET_MY_ORDER = "my_orders";
+    public static final String ROLE_ADMIN_NAME = "ROLE_ADMIN";
+    public static final String ROLE_CLIENT_NAME = "ROLE_USER";
 
     public EnumPaymentType getPaymentType(String input) {
         if ("VN_PAY".equals(input)) {

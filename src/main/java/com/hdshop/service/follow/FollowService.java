@@ -14,4 +14,6 @@ public interface FollowService {
     List<Long> findProductIdsFollowedByUser(Principal principal);
 
     Long countYourFollow(final Principal principal);
+
+    boolean isFollowed(final String username, final Long productId);
 }

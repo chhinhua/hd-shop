@@ -70,12 +70,9 @@ public class CategoryController {
             @RequestParam(value = "pageNo", required = false,
                     defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false,
-                    defaultValue = "${paging.default.page-size}") int pageSize
-
+                    defaultValue =  "${paging.default.page-size}") int pageSize
     ) {
-        CategoryResponse filterCategories = categoryService.filter(
-               key, sortCriteria, pageNo, pageSize
-        );
+        CategoryResponse filterCategories = categoryService.filter(key, sortCriteria, pageNo, pageSize);
         return ResponseEntity.ok(filterCategories);
     }
 
@@ -84,9 +81,7 @@ public class CategoryController {
             @RequestParam(value = "pageNo", required = false,
                     defaultValue = "${paging.default.page-number}") int pageNo,
             @RequestParam(value = "pageSize", required = false,
-                    defaultValue = "${paging.default.page-size}") int pageSize
-
-    ) {
+                    defaultValue = "30") int pageSize) {
         CategoryResponse filterCategories = categoryService.getAll(pageNo, pageSize);
         return ResponseEntity.ok(filterCategories);
     }

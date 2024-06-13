@@ -121,6 +121,14 @@ public class FollowServiceImpl implements FollowService {
         return followRepository.countYourFollow(username);
     }
 
+    @Override
+    public boolean isFollowed(String username, Long productId) {
+        return followRepository.existsByProduct_ProductIdAndUser_UsernameAndIsDeletedFalse(
+                productId,
+                username
+        );
+    }
+
     private FollowDTO mapEntityToDTO(Follow follow) {
         FollowDTO dto = modelMapper.map(follow, FollowDTO.class);
         dto.getProduct().setImageUrl(

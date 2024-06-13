@@ -1,5 +1,6 @@
 package com.hdshop.entity;
 
+import com.hdshop.listener.EntityListener;
 import com.hdshop.utils.EnumOrderStatus;
 import com.hdshop.utils.EnumPaymentType;
 import jakarta.persistence.*;
@@ -15,13 +16,14 @@ import java.util.List;
 
 @Getter
 @Setter
+@Builder
+@Entity
+@DynamicUpdate
 @NoArgsConstructor
 @AllArgsConstructor
-@DynamicUpdate
-@Entity
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@Builder
 @Table(name = "orders")
+@EntityListeners(EntityListener.class)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -70,9 +72,9 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order")
     List<Review> reviews = new ArrayList<>();
 
-    @OneToMany(
-            mappedBy = "order",
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE, CascadeType.DETACH}
-    )
+    @OneToMany(mappedBy = "order", cascade = {
+            CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE, CascadeType.DETACH
+    })
     List<OrderItem> orderItems = new ArrayList<>();
 }
+

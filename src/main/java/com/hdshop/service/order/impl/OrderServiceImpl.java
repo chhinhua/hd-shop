@@ -17,8 +17,10 @@ import com.hdshop.service.cart.CartItemService;
 import com.hdshop.service.cart.CartService;
 import com.hdshop.service.ghn.GhnService;
 import com.hdshop.service.order.OrderService;
+import com.hdshop.service.order.OrderTrackingService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
+import com.hdshop.service.redis.RedisService;
 import com.hdshop.service.user.UserService;
 import com.hdshop.utils.AppUtils;
 import com.hdshop.utils.EnumOrderStatus;
@@ -28,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -43,7 +47,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -68,8 +71,11 @@ public class OrderServiceImpl implements OrderService {
     AddressService addressService;
     ProductService productService;
     CartItemService cartItemService;
+    OrderTrackingService trackingService;
+    RedisService<Order> redisService;
     RestTemplate restTemplate;
     static String VNPAY_SUBMIT_ORDER = "http://localhost:8080/api/v1/vnpay/submit-order-v2";
+    static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     @Override
     public void callVNPaySubmitOrder(Long orderId, BigDecimal amount, Long addressId, String username, String note) throws JsonProcessingException {
@@ -168,8 +174,8 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponse createOrder(OrderDTO orderDto, Principal principal) throws JsonProcessingException {
         OrderResponse response = createV2(orderDto, principal); // create order data to duckshop service
+        trackingService.create(response.getId()); // create order_tracking
         Order order = findById(response.getId());
-
         if (order.getPaymentType().equals(EnumPaymentType.COD)) {
             // build and create GHN order
             GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
@@ -177,16 +183,13 @@ public class OrderServiceImpl implements OrderService {
             order.setOrderCode(orderCode); // update order code
             orderRepository.save(order);
         }
-
         cleanUpCartItems(order);
-
         return mapEntityToResponse(order);
     }
 
     void cleanUpCartItems(Order order) {
         List<Long> cartItemIds = extractCartItemIds(order);
         cartItemService.deleteListItems(cartItemIds);
-
         // reupdate cart
         Cart cart = cartService.findByUsername(order.getUser().getUsername());
         cartService.updateCartTotals(cart);
@@ -495,6 +498,14 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderPageResponse adminFilter(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize) {
         try {
+            // check and retrive data caching 👇
+            logger.info(String.format("user filter: status=%s, key=%s, sort=%s, page_no=%d, page_size=%d", statusValue, key, sortCriteria, pageNo, pageSize));
+            String redisKey = redisService.getKeyFrom(AppUtils.KEY_PREFIX_GET_ALL_ORDER, statusValue, key, sortCriteria, pageNo, pageSize);
+            OrderPageResponse response = redisService.getAll(redisKey, OrderPageResponse.class);
+            if (response != null && !response.getContent().isEmpty()) {
+                return response;
+            }
+
             // follow Pageable instances
             Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
             EnumOrderStatus status = null;
@@ -518,32 +529,40 @@ public class OrderServiceImpl implements OrderService {
             pageResponse.setTotalElements(orderPage.getTotalElements());
             pageResponse.setLast(orderPage.isLast());
 
+            redisService.saveAll(redisKey, pageResponse); //👈 save caching data
             return pageResponse;
         } catch (Exception e) {
             throw new InvalidException(getMessage("list-order-is-empty"));
         }
     }
-
+// TODO test clear cache when data changed
     @Override
     public OrderPageResponse userFilter(String statusValue, String key, int pageNo, int pageSize, Principal principal) {
         try {
-            // follow Pageable instances
-            Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+            // check and retrive data caching 👇
+            logger.info(String.format("user filter: status=%s, key=%s, page_no=%d, page_size=%d", statusValue, key, pageNo, pageSize));
+            String username = principal.getName();
+            String keyPrefix = username != null ? (AppUtils.KEY_PREFIX_GET_ALL_ORDER + ":" + username) : (AppUtils.KEY_PREFIX_GET_MY_ORDER);
+            String redisKey = redisService.getKeyFrom(keyPrefix,statusValue, key, pageNo, pageSize);
+            OrderPageResponse response = redisService.getAll(redisKey, OrderPageResponse.class);
+            if (response != null && !response.getContent().isEmpty()) {
+                return response;
+            }
 
+            // data caching not exists 👇
+            Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
             EnumOrderStatus status = null;
             if (statusValue != null) {
                 status = appUtils.getOrderStatus(statusValue);
             }
-
             Page<Order> orderPage = orderRepository.userFilter(status, key, principal.getName(), pageable);
-
             // get content for page object
             List<Order> orderList = orderPage.getContent();
             List<OrderResponse> content = orderList.stream()
                     .map(this::mapEntityToResponse)
                     .collect(Collectors.toList());
 
-            // set data to the product response
+            // set data to the product response 👇
             OrderPageResponse pageResponse = new OrderPageResponse();
             pageResponse.setContent(content);
             pageResponse.setPageNo(orderPage.getNumber() + 1);
@@ -552,11 +571,61 @@ public class OrderServiceImpl implements OrderService {
             pageResponse.setTotalElements(orderPage.getTotalElements());
             pageResponse.setLast(orderPage.isLast());
 
+            redisService.saveAll(redisKey, pageResponse); //👈 save caching data
             return pageResponse;
         } catch (Exception e) {
             throw new InvalidException(getMessage("list-order-is-empty"));
         }
     }
+
+
+    public OrderPageResponse filterOrders(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize, Principal principal) {
+        try {
+            // Determine key prefix based on principal
+            String keyPrefix = principal != null ? AppUtils.KEY_PREFIX_GET_ALL_ORDER + ":" + principal.getName() : AppUtils.KEY_PREFIX_GET_MY_ORDER;
+
+            // Check and retrieve data caching
+            String redisKey = redisService.getKeyFrom(keyPrefix, statusValue, key, sortCriteria, pageNo, pageSize);
+            OrderPageResponse response = redisService.getAll(redisKey, OrderPageResponse.class);
+            if (response != null && !response.getContent().isEmpty()) {
+                return response;
+            }
+
+            // Data caching not found, proceed with database query
+            Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+            EnumOrderStatus status = null;
+            if (statusValue != null) {
+                status = appUtils.getOrderStatus(statusValue);
+            }
+
+            Page<Order> orderPage;
+            if (principal != null) {
+                orderPage = orderRepository.userFilter(status, key, principal.getName(), pageable);
+            } else {
+                orderPage = orderRepository.filter(status, key, sortCriteria, pageable);
+            }
+
+            // Process retrieved data and set response properties
+            List<Order> orderList = orderPage.getContent();
+            List<OrderResponse> content = orderList.stream()
+                    .map(this::mapEntityToResponse)
+                    .collect(Collectors.toList());
+
+            OrderPageResponse pageResponse = new OrderPageResponse();
+            pageResponse.setContent(content);
+            pageResponse.setPageNo(orderPage.getNumber() + 1);
+            pageResponse.setPageSize(orderPage.getSize());
+            pageResponse.setTotalPages(orderPage.getTotalPages());
+            pageResponse.setTotalElements(orderPage.getTotalElements());
+            pageResponse.setLast(orderPage.isLast());
+
+            redisService.saveAll(redisKey, pageResponse);
+            return pageResponse;
+        } catch (Exception e) {
+            throw new InvalidException(getMessage("list-order-is-empty"));
+        }
+    }
+
 
     @Override
     public OrderResponse makePaymentForCOD(OrderDTO dto, Long orderId) throws JsonProcessingException {

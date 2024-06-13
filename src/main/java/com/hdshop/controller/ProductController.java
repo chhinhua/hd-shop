@@ -1,10 +1,10 @@
 package com.hdshop.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Product;
 import com.hdshop.entity.ProductSku;
-import com.hdshop.service.image.ImageService;
 import com.hdshop.service.product.ProductService;
 import com.hdshop.service.product.ProductSkuService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -98,12 +98,12 @@ public class ProductController {
             @RequestParam(value = "pageSize", required = false,
                     defaultValue = "${paging.default.page-size}") int pageSize,
             Principal principal
-    ) {
+    ) throws JsonProcessingException {
         String username = null;
         if (principal != null) {
             username = principal.getName();
         }
-        ProductResponse searchResponse = productService.filterForUser(
+        ProductResponse searchResponse = productService.userFilter(
                 sell, key, cateNames, sortCriteria, pageNo, pageSize, username
         );
         return ResponseEntity.ok(searchResponse);

@@ -13,6 +13,10 @@ logging:
 spring:
     application:
         name: duck-shop
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 100MB
     jpa:
         hibernate:
             ddl-auto: update
@@ -23,7 +27,7 @@ spring:
                     time_zone: Asia/Ho_Chi_Minh
         show-sql: true
     profiles:
-        active: prod
+        active: dev
 
     http:
         encoding:

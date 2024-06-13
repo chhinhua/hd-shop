@@ -68,16 +68,12 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     @Override
     public List<ProductSku> saveSkusFromProduct(Product product) {
         List<ProductSku> savedSkus = new ArrayList<>();
-
         for (ProductSku sku : product.getSkus()) {
             sku.setProduct(product);
-
             List<OptionValue> optionValues = getOptionValuesForSku(sku, product);
-
             sku.setOptionValues(optionValues);
             savedSkus.add(productSkuRepository.save(sku));
         }
-
         return savedSkus.stream().toList();
     }
 

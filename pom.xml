@@ -11,19 +11,35 @@
     <groupId>com</groupId>
     <artifactId>hdshop</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>hdshop</name>
-    <description>Project Spring Boot for Fashion Shop (TLCN - 2023-2024)</description>
+    <name>duck_shop</name>
+    <description>Project Spring Boot for Fashion Shop (TLCN_KLTN - 2023-2024)</description>
     <properties>
         <java.version>17</java.version>
         <jwt.version>0.11.5</jwt.version>
     </properties>
     <dependencies>
         <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+            <version>6.2.6.RELEASE</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
-
 
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>
@@ -31,7 +47,6 @@
             <artifactId>slf4j-api</artifactId>
             <version>2.1.0-alpha1</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.thymeleaf.extras</groupId>

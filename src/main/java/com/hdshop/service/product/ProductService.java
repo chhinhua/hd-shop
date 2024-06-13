@@ -1,5 +1,6 @@
 package com.hdshop.service.product;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hdshop.dto.product.ProductDTO;
 import com.hdshop.dto.product.ProductResponse;
 import com.hdshop.entity.Product;
@@ -35,14 +36,14 @@ public interface ProductService {
             List<String> sortCriteria,
             int pageNo,
             int pageSize
-    );
+    ) throws JsonProcessingException;
 
-    ProductResponse filterForUser(
+    ProductResponse userFilter(
             Boolean sell,
             String searchTerm,
             List<String> cateNames,
             List<String> sortCriteria,
             int pageNo,
             int pageSize,
-            String username);
+            String username) throws JsonProcessingException;
 }
