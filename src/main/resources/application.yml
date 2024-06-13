@@ -54,7 +54,7 @@ app:
 paging:
     default:
         page-number: 1
-        page-size: 12
+        page-size: 24
 
 vnpay:
     tmn-code: ZCZAPALE

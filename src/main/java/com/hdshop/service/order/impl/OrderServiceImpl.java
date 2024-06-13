@@ -71,7 +71,6 @@ public class OrderServiceImpl implements OrderService {
     AddressService addressService;
     ProductService productService;
     CartItemService cartItemService;
-    RedisOrderService redisOrderService;
     OrderTrackingService trackingService;
     RedisService<Order> redisService;
     RestTemplate restTemplate;
@@ -499,6 +498,14 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderPageResponse adminFilter(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize) {
         try {
+            // check and retrive data caching 👇
+            logger.info(String.format("user filter: status=%s, key=%s, sort=%s, page_no=%d, page_size=%d", statusValue, key, sortCriteria, pageNo, pageSize));
+            String redisKey = redisService.getKeyFrom(AppUtils.KEY_PREFIX_GET_ALL_ORDER, statusValue, key, sortCriteria, pageNo, pageSize);
+            OrderPageResponse response = redisService.getAll(redisKey, OrderPageResponse.class);
+            if (response != null && !response.getContent().isEmpty()) {
+                return response;
+            }
+
             // follow Pageable instances
             Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
             EnumOrderStatus status = null;
@@ -522,6 +529,7 @@ public class OrderServiceImpl implements OrderService {
             pageResponse.setTotalElements(orderPage.getTotalElements());
             pageResponse.setLast(orderPage.isLast());
 
+            redisService.saveAll(redisKey, pageResponse); //👈 save caching data
             return pageResponse;
         } catch (Exception e) {
             throw new InvalidException(getMessage("list-order-is-empty"));
@@ -569,6 +577,55 @@ public class OrderServiceImpl implements OrderService {
             throw new InvalidException(getMessage("list-order-is-empty"));
         }
     }
+
+
+    public OrderPageResponse filterOrders(String statusValue, String key, List<String> sortCriteria, int pageNo, int pageSize, Principal principal) {
+        try {
+            // Determine key prefix based on principal
+            String keyPrefix = principal != null ? AppUtils.KEY_PREFIX_GET_ALL_ORDER + ":" + principal.getName() : AppUtils.KEY_PREFIX_GET_MY_ORDER;
+
+            // Check and retrieve data caching
+            String redisKey = redisService.getKeyFrom(keyPrefix, statusValue, key, sortCriteria, pageNo, pageSize);
+            OrderPageResponse response = redisService.getAll(redisKey, OrderPageResponse.class);
+            if (response != null && !response.getContent().isEmpty()) {
+                return response;
+            }
+
+            // Data caching not found, proceed with database query
+            Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+            EnumOrderStatus status = null;
+            if (statusValue != null) {
+                status = appUtils.getOrderStatus(statusValue);
+            }
+
+            Page<Order> orderPage;
+            if (principal != null) {
+                orderPage = orderRepository.userFilter(status, key, principal.getName(), pageable);
+            } else {
+                orderPage = orderRepository.filter(status, key, sortCriteria, pageable);
+            }
+
+            // Process retrieved data and set response properties
+            List<Order> orderList = orderPage.getContent();
+            List<OrderResponse> content = orderList.stream()
+                    .map(this::mapEntityToResponse)
+                    .collect(Collectors.toList());
+
+            OrderPageResponse pageResponse = new OrderPageResponse();
+            pageResponse.setContent(content);
+            pageResponse.setPageNo(orderPage.getNumber() + 1);
+            pageResponse.setPageSize(orderPage.getSize());
+            pageResponse.setTotalPages(orderPage.getTotalPages());
+            pageResponse.setTotalElements(orderPage.getTotalElements());
+            pageResponse.setLast(orderPage.isLast());
+
+            redisService.saveAll(redisKey, pageResponse);
+            return pageResponse;
+        } catch (Exception e) {
+            throw new InvalidException(getMessage("list-order-is-empty"));
+        }
+    }
+
 
     @Override
     public OrderResponse makePaymentForCOD(OrderDTO dto, Long orderId) throws JsonProcessingException {

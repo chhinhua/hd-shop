@@ -1,5 +1,6 @@
 package com.hdshop.entity;
 
+import com.hdshop.annotation.CacheableEntity;
 import com.hdshop.listener.EntityListener;
 import jakarta.persistence.*;
 import lombok.*;

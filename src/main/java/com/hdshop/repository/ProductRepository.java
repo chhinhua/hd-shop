@@ -24,6 +24,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND (:sell IS NULL OR p.isSelling = :sell) " +
             "AND (:key IS NULL OR LOWER(p.name) LIKE %:key%) " +
             "AND (:cateNames IS NULL OR p.category.name IN :cateNames) " +
+            "AND (p.sold > 0 OR ( " +  // Check if sold is greater than 0 only when sorting by sold
+                " 'sold:desc' NOT IN :sortCriteria " +
+                "AND 'sold:asc' NOT IN :sortCriteria " +
+            "))" +
             "ORDER BY " +
             "CASE WHEN 'random' IN :sortCriteria THEN RAND() END, " +
             "CASE WHEN 'id:asc' IN :sortCriteria THEN p.productId END ASC, " +

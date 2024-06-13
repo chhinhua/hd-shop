@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -46,19 +47,15 @@ public class RedisServiceImpl<T> implements RedisService<T> {
 
     @Override
     public void clearCache(T entity) {
+        logger.info("run clear method");
         String keyPrefix = getKeyPrefixFromEntityClass(entity);
-        Cursor<byte[]> cursor = Objects
-                .requireNonNull(redisTemplate.getConnectionFactory())
-                .getConnection()
-                .scan(ScanOptions.scanOptions().match(keyPrefix).build()); // Find data have this keyPrefix
-        while (cursor.hasNext()) {
-            String key = Arrays.toString(cursor.next());
-            if (key.startsWith(keyPrefix)) {
-                redisTemplate.delete(key);
-                logger.info("Deleted cache data with key=" + key);
-            }
+        logger.info("keyPrefix: " + keyPrefix);
+        Set<String> keys = redisTemplate.keys(keyPrefix + "*");
+
+        if (keys != null && !keys.isEmpty()) {
+            logger.info("set keys" + keys);
+            logger.info(String.valueOf(redisTemplate.delete(keys)));
         }
-        cursor.close();
     }
 
     @Override
