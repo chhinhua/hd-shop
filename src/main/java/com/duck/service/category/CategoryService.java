@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface CategoryService {
     Category findByName(final String cateName);
+    Category findById(final Long id);
 
     CategoryDTO findByIdOrSlug(final String identifier);
 
@@ -18,7 +19,7 @@ public interface CategoryService {
 
     void delete(final Long id);
 
-    CategoryResponse getAll(int pageNo, int pageSize);
+    CategoryResponse getAll(int pageNo, int pageSize) throws JsonProcessingException;
 
     CategoryResponse filter(
             String searchTerm,

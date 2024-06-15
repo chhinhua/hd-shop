@@ -1,5 +1,6 @@
 package com.duck.entity;
 
+import com.duck.listener.EntityListener;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -16,8 +17,9 @@ import java.util.List;
 @AllArgsConstructor
 @DynamicUpdate
 @Entity
+@EntityListeners(EntityListener.class)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "categories",indexes = {@Index(name = "idx_cate_name", columnList = "name")})
+@Table(name = "categories", indexes = {@Index(name = "idx_cate_name", columnList = "name")})
 public class Category extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

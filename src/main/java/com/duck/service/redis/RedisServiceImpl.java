@@ -1,9 +1,12 @@
 package com.duck.service.redis;
 
+import com.duck.entity.Category;
+import com.duck.entity.Order;
+import com.duck.entity.Product;
+import com.duck.entity.ProductSku;
+import com.duck.utils.AppUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.duck.entity.Product;
-import com.duck.utils.AppUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +26,13 @@ public class RedisServiceImpl<T> implements RedisService<T> {
     private boolean useRedisCache;
 
     private <E> String getKeyPrefixFromEntityClass(E entity) {
-        if (entity instanceof Product) {
+        if (entity instanceof Category) {
+            return AppUtils.KEY_PREFIX_GET_ALL_CATEGORY;
+        } else if (entity instanceof Order) {
+            return AppUtils.KEY_PREFIX_GET_ALL_ORDER;
+        } else {
             return AppUtils.KEY_PREFIX_GET_ALL_PRODUCT;
         }
-        return AppUtils.KEY_PREFIX_GET_ALL_ORDER;
     }
 
     @SafeVarargs
@@ -62,7 +68,7 @@ public class RedisServiceImpl<T> implements RedisService<T> {
         String json = (String) redisTemplate.opsForValue().get(key);
         R response = json != null ? redisObjectMapper.readValue(json, responseType) : null;
         String haveData = json != null ? "true" : "false";
-        logger.info(String.format("Get cache vs key: %s, have data: %s", key, haveData));
+        logger.info(String.format("Get cache data of key: %s, have data: %s", key, haveData));
         return response;
     }
 

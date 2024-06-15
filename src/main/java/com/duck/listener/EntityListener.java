@@ -1,9 +1,6 @@
 package com.duck.listener;
 
-import com.duck.entity.BaseEntity;
-import com.duck.entity.Category;
-import com.duck.entity.Order;
-import com.duck.entity.Product;
+import com.duck.entity.*;
 import com.duck.service.redis.RedisService;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
@@ -12,14 +9,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-@SuppressWarnings("unchecked") // Suppress unchecked cast warning
-@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
+@SuppressWarnings("unchecked")
+@EntityListeners(AuditingEntityListener.class)
 public class EntityListener<T extends BaseEntity> {
-    private final Logger logger = LoggerFactory.getLogger(EntityListener.class);
     private RedisService<Product> redisProductService;
     private RedisService<Order> redisOrderService;
     private RedisService<Category> redisCateService;
+    private final Logger logger = LoggerFactory.getLogger(EntityListener.class);
 
     @Autowired
     public EntityListener(RedisService<Product> redisProductService, RedisService<Order> redisOrderService, RedisService<Category> redisCateService) {
@@ -62,7 +59,7 @@ public class EntityListener<T extends BaseEntity> {
     }
 
     private void clearCache(T entity) {
-        if (entity instanceof Product) {
+        if (entity instanceof Product || entity instanceof ProductSku) {
             redisProductService.clearCache((Product) entity);
         } else if (entity instanceof Order) {
             redisOrderService.clearCache((Order) entity);

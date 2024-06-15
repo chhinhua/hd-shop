@@ -68,10 +68,8 @@ public class CategoryController {
     public ResponseEntity<CategoryResponse> filter(
             @RequestParam(name = "key", required = false) String key,
             @RequestParam(name = "sort", required = false) List<String> sortCriteria,
-            @RequestParam(value = "pageNo", required = false,
-                    defaultValue = "${paging.default.page-number}") int pageNo,
-            @RequestParam(value = "pageSize", required = false,
-                    defaultValue =  "${paging.default.page-size}") int pageSize
+            @RequestParam(value = "pageNo", required = false, defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false, defaultValue =  "${paging.default.page-size}") int pageSize
     ) throws JsonProcessingException {
         CategoryResponse filterCategories = categoryService.filter(key, sortCriteria, pageNo, pageSize);
         return ResponseEntity.ok(filterCategories);
@@ -79,10 +77,9 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<CategoryResponse> getAll(
-            @RequestParam(value = "pageNo", required = false,
-                    defaultValue = "${paging.default.page-number}") int pageNo,
-            @RequestParam(value = "pageSize", required = false,
-                    defaultValue = "30") int pageSize) {
+            @RequestParam(value = "pageNo", required = false, defaultValue = "${paging.default.page-number}") int pageNo,
+            @RequestParam(value = "pageSize", required = false,defaultValue = "30") int pageSize
+    ) throws JsonProcessingException {
         CategoryResponse filterCategories = categoryService.getAll(pageNo, pageSize);
         return ResponseEntity.ok(filterCategories);
     }

@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,12 +70,12 @@ public class CategoryServiceImpl implements CategoryService {
      * @return categoryDTO instance
      */
     @Override
+    @Transactional
     public CategoryDTO create(CategoryDTO dto) {
         // check category name exists in database
         if (categoryRepository.existsCategoryByName(dto.getName())) {
             throw new APIException(HttpStatus.BAD_REQUEST, getMessage("category-name-already-exists"));
         }
-
         // retrieve parent category from parentName
         Category parentCategory = categoryRepository.findByName(dto.getParentName()).orElse(null);
 
@@ -88,7 +89,6 @@ public class CategoryServiceImpl implements CategoryService {
         category.setIsDeleted(false);
 
         Category newCategory = categoryRepository.save(category);
-
         return mapToDTO(newCategory);
     }
 
@@ -100,6 +100,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @return categoryDTO instance have been updated
      */
     @Override
+    @Transactional
     public CategoryDTO update(Long id, CategoryDTO dto) {
         // check existing category by id
         Category category = categoryRepository.findById(id)
@@ -132,10 +133,9 @@ public class CategoryServiceImpl implements CategoryService {
      * @param id
      */
     @Override
+    @Transactional
     public void delete(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("category-not-found")));
-
+        Category category = findById(id);
         // set null for child cates
         if (category.getChildren() != null) {
             category.getChildren().forEach((child) -> {
@@ -157,19 +157,22 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse getAll(int pageNo, int pageSize) {
+    public CategoryResponse getAll(int pageNo, int pageSize) throws JsonProcessingException {
+        logger.info(String.format("page_no=%d, page_size=%d", pageNo, pageSize));
+        String redisKey = redisService.getKeyFrom(AppUtils.KEY_PREFIX_GET_ALL_CATEGORY, pageNo, pageSize);
+        CategoryResponse response = redisService.getAll(redisKey, CategoryResponse.class);
+        if (response != null && !response.getContent().isEmpty()) {
+            return response;
+        }
+
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
-
         Page<Category> catePage = categoryRepository.findAll(pageable);
-
         // get content for page object
         List<Category> cateList = catePage.getContent();
-
         List<CategoryDTO> content = cateList.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
 
-        // set data to the product response
         CategoryResponse cateResponse = new CategoryResponse();
         cateResponse.setContent(content);
         cateResponse.setPageNo(catePage.getNumber() + 1);
@@ -178,6 +181,7 @@ public class CategoryServiceImpl implements CategoryService {
         cateResponse.setTotalElements(catePage.getTotalElements());
         cateResponse.setLast(catePage.isLast());
 
+        redisService.saveAll(redisKey, cateResponse); // save cache data
         return cateResponse;
     }
 
@@ -194,20 +198,17 @@ public class CategoryServiceImpl implements CategoryService {
         // retrieve data from database
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
         Page<Category> catePage = categoryRepository.filter(key, sortCriteria, pageable);
-        // get content for page object
-        List<Category> cateList = catePage.getContent();
-        List<CategoryDTO> content = cateList.stream()
+        List<CategoryDTO> content = catePage.getContent().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
-
-        // set data to the product response
-        CategoryResponse cateResponse = new CategoryResponse();
-        cateResponse.setContent(content);
-        cateResponse.setPageNo(catePage.getNumber() + 1);
-        cateResponse.setPageSize(catePage.getSize());
-        cateResponse.setTotalPages(catePage.getTotalPages());
-        cateResponse.setTotalElements(catePage.getTotalElements());
-        cateResponse.setLast(catePage.isLast());
+        CategoryResponse cateResponse = CategoryResponse.builder()
+                .content(content)
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages(catePage.getTotalPages())
+                .totalElements(catePage.getTotalElements())
+                .last(catePage.isLast())
+                .build();
 
         redisService.saveAll(key, cateResponse); // caching data if not saved yet
         return cateResponse;
@@ -216,6 +217,13 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Category findByName(String cateName) {
         return categoryRepository.findByName(cateName).orElseThrow(() ->
+                new ResourceNotFoundException(getMessage("category-not-found"))
+        );
+    }
+
+    @Override
+    public Category findById(Long id) {
+        return categoryRepository.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException(getMessage("category-not-found"))
         );
     }

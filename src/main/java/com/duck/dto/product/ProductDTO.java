@@ -19,58 +19,33 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProductDTO {
     Long id;
-
     String name;
-
     String description;
-
     BigDecimal price;
-
-    Integer quantity;
-
-    Integer productClicks;
-
-    Integer productViews;
-
-    Integer productCartAdds;
-
-    int quantityAvailable;
-
-    Long categoryId;
-
-    String categoryName;
-
-    String slug;
-
+    BigDecimal originalPrice;
+    BigDecimal percentDiscount;
     BigDecimal promotionalPrice;
-
-    int sold;
-
-    float rating;
-
-    int numberOfRatings;
-
-    int favoriteCount;
-
-    boolean liked;
-
+    Integer quantity;
+    Integer productClicks;
+    Integer productViews;
+    Integer productCartAdds;
+    Integer quantityAvailable;
+    Integer sold;
+    Integer numberOfRatings;
+    Integer favoriteCount;
+    Float rating;
+    Boolean liked;
     Boolean isActive;
-
     Boolean isSelling;
-
+    Long categoryId;
+    String slug;
+    String categoryName;
     String createdDate;
-
     String lastModifiedDate;
-
-    CategoryDTO category;
-
     String createdBy;
-
     String lastModifiedBy;
-
+    CategoryDTO category;
     List<String> listImages = new ArrayList<>();
-
     List<OptionDTO> options = new ArrayList<>();
-
     List<ProductSkuDTO> skus = new ArrayList<>();
 }

@@ -3,6 +3,7 @@ package com.duck.dto.category;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Hidden
+@Builder
 @Schema(description = "Category Response Information")
 public class CategoryResponse {
     @Schema(description = "Category Content")

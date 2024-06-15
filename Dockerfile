@@ -6,9 +6,9 @@ RUN mvn clean package -DskipTests
 
 FROM openjdk:17.0.1-jdk-slim
 
-COPY --from=build /target/hdshop-0.0.1-SNAPSHOT.jar duck.jar
+COPY --from=build /target/duck-shop-0.0.1-SNAPSHOT.jar duck.jar
 
-EXPOSE 8080
+EXPOSE 5000
 
 ENTRYPOINT ["java", "-jar", "/duck.jar"]
 
