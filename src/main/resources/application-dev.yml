@@ -1,3 +1,5 @@
+
+
 server:
     port: 5000
 
@@ -8,9 +10,7 @@ spring:
         password: ${MYSQL_PASSWORD:Password@123}
     data:
         redis:
-            use-redis-cache: true
             host: ${REDIS_HOSTNAME:localhost}
             port: ${REDIS_PORT:6379}
             password: ${REDIS_PASSWORD:Password@123}
-            #spring.data.redis.use-redis-cache
-            #host: ${REDIS_HOST:ubuntu-server-01.local} # Default to 'localhost' if not provided
+            use-redis-cache: true
