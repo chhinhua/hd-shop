@@ -35,6 +35,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
             "CASE WHEN 'id:asc' IN :sortCriteria THEN c.id END ASC, " +
             "CASE WHEN 'id:desc' IN :sortCriteria THEN c.id END DESC, " +
             "CASE WHEN 'name:asc' IN :sortCriteria THEN c.name END ASC, " +
+            "CASE WHEN 'name:desc' IN :sortCriteria THEN c.name END DESC, " +
             "CASE WHEN 'prod_count:asc' IN :sortCriteria THEN COUNT(p) END ASC, " +
             "CASE WHEN 'prod_count:desc' IN :sortCriteria THEN COUNT(p) END DESC "
     )

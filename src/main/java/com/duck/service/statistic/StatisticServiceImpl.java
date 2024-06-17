@@ -9,7 +9,7 @@ import com.duck.repository.ProductRepository;
 import com.duck.repository.UserRepository;
 import com.duck.service.follow.FollowService;
 import com.duck.service.user.UserService;
-import com.duck.utils.EnumOrderStatus;
+import com.duck.utils.EOrderStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -43,11 +43,11 @@ public class StatisticServiceImpl implements StatisticService {
         countStatistic.setOrderedCount(orderedCount);
 
         // Đếm số lượng đơn hàng đã được giao hàng
-        Long shippingCount = orderRepository.countByStatus(EnumOrderStatus.SHIPPING);
+        Long shippingCount = orderRepository.countByStatus(EOrderStatus.SHIPPING);
         countStatistic.setShippingCount(shippingCount);
 
         // Đếm số lượng đơn hàng đã hoàn thành
-        Long deliveredCount = orderRepository.countByStatus(EnumOrderStatus.DELIVERED);
+        Long deliveredCount = orderRepository.countByStatus(EOrderStatus.DELIVERED);
         countStatistic.setDeliveredCount(deliveredCount);
 
         return countStatistic;
@@ -65,12 +65,12 @@ public class StatisticServiceImpl implements StatisticService {
         ZonedDateTime zonedDateTime = DateTimeConfig.parseDateTime(dateValue);
         LocalDate localDate = zonedDateTime.toLocalDate();
 
-        long wait_for_pay = orderRepository.countByDate(localDate, EnumOrderStatus.WAIT_FOR_PAY);
-        long ordered = orderRepository.countByDate(localDate, EnumOrderStatus.ORDERED);
-        long processing = orderRepository.countByDate(localDate, EnumOrderStatus.PROCESSING);
-        long shipping = orderRepository.countByDate(localDate, EnumOrderStatus.SHIPPING);
-        long delivered = orderRepository.countByDate(localDate, EnumOrderStatus.DELIVERED);
-        long cancaled = orderRepository.countByDate(localDate, EnumOrderStatus.CANCELED);
+        long wait_for_pay = orderRepository.countByDate(localDate, EOrderStatus.WAIT_FOR_PAY);
+        long ordered = orderRepository.countByDate(localDate, EOrderStatus.ORDERED);
+        long processing = orderRepository.countByDate(localDate, EOrderStatus.PROCESSING);
+        long shipping = orderRepository.countByDate(localDate, EOrderStatus.SHIPPING);
+        long delivered = orderRepository.countByDate(localDate, EOrderStatus.DELIVERED);
+        long cancaled = orderRepository.countByDate(localDate, EOrderStatus.CANCELED);
 
         OrderStatistic dailyStatistic = new OrderStatistic(
                 wait_for_pay,
@@ -86,12 +86,12 @@ public class StatisticServiceImpl implements StatisticService {
 
     @Override
     public OrderStatistic getMonthlyOrder(int month, int year) {
-        long wait_for_pay = orderRepository.countByMonthAndYear(month, year, EnumOrderStatus.WAIT_FOR_PAY);
-        long ordered = orderRepository.countByMonthAndYear(month, year, EnumOrderStatus.ORDERED);
-        long processing = orderRepository.countByMonthAndYear(month, year, EnumOrderStatus.PROCESSING);
-        long shipping = orderRepository.countByMonthAndYear(month, year, EnumOrderStatus.SHIPPING);
-        long delivered = orderRepository.countByMonthAndYear(month, year, EnumOrderStatus.DELIVERED);
-        long cancaled = orderRepository.countByMonthAndYear(month, year, EnumOrderStatus.CANCELED);
+        long wait_for_pay = orderRepository.countByMonthAndYear(month, year, EOrderStatus.WAIT_FOR_PAY);
+        long ordered = orderRepository.countByMonthAndYear(month, year, EOrderStatus.ORDERED);
+        long processing = orderRepository.countByMonthAndYear(month, year, EOrderStatus.PROCESSING);
+        long shipping = orderRepository.countByMonthAndYear(month, year, EOrderStatus.SHIPPING);
+        long delivered = orderRepository.countByMonthAndYear(month, year, EOrderStatus.DELIVERED);
+        long cancaled = orderRepository.countByMonthAndYear(month, year, EOrderStatus.CANCELED);
 
         OrderStatistic monthlyStatistic = new OrderStatistic(
                 wait_for_pay,
@@ -107,12 +107,12 @@ public class StatisticServiceImpl implements StatisticService {
 
     @Override
     public OrderStatistic getYearlyOrder(int year) {
-        long wait_for_pay = orderRepository.countByYear(year, EnumOrderStatus.WAIT_FOR_PAY);
-        long ordered = orderRepository.countByYear(year, EnumOrderStatus.ORDERED);
-        long processing = orderRepository.countByYear(year, EnumOrderStatus.PROCESSING);
-        long shipping = orderRepository.countByYear(year, EnumOrderStatus.SHIPPING);
-        long delivered = orderRepository.countByYear(year, EnumOrderStatus.DELIVERED);
-        long cancaled = orderRepository.countByYear(year, EnumOrderStatus.CANCELED);
+        long wait_for_pay = orderRepository.countByYear(year, EOrderStatus.WAIT_FOR_PAY);
+        long ordered = orderRepository.countByYear(year, EOrderStatus.ORDERED);
+        long processing = orderRepository.countByYear(year, EOrderStatus.PROCESSING);
+        long shipping = orderRepository.countByYear(year, EOrderStatus.SHIPPING);
+        long delivered = orderRepository.countByYear(year, EOrderStatus.DELIVERED);
+        long cancaled = orderRepository.countByYear(year, EOrderStatus.CANCELED);
 
         OrderStatistic yearlyStatistic = new OrderStatistic(
                 wait_for_pay,
@@ -174,9 +174,9 @@ public class StatisticServiceImpl implements StatisticService {
     public UserProfileStatistic getUserProfileStatistic(Principal principal) {
         String useranme = principal.getName();
         int favoriteCount = Math.toIntExact(followService.countYourFollow(principal));
-        int ordered = Math.toIntExact(orderRepository.countByStatusAndUser_Username(EnumOrderStatus.ORDERED, useranme));
-        int shipping = Math.toIntExact(orderRepository.countByStatusAndUser_Username(EnumOrderStatus.SHIPPING, useranme));
-        int delivered = Math.toIntExact(orderRepository.countByStatusAndUser_Username(EnumOrderStatus.DELIVERED, useranme));
+        int ordered = Math.toIntExact(orderRepository.countByStatusAndUser_Username(EOrderStatus.ORDERED, useranme));
+        int shipping = Math.toIntExact(orderRepository.countByStatusAndUser_Username(EOrderStatus.SHIPPING, useranme));
+        int delivered = Math.toIntExact(orderRepository.countByStatusAndUser_Username(EOrderStatus.DELIVERED, useranme));
 
         UserProfileStatistic statistic = new UserProfileStatistic(
                 favoriteCount, ordered, shipping, delivered

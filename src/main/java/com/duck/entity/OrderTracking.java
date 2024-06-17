@@ -22,8 +22,7 @@ public class OrderTracking {
 
     @Temporal(TemporalType.TIMESTAMP)
     private ZonedDateTime time;
-
-    private String content;
+    private String status;
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)

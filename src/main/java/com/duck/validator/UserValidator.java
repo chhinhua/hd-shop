@@ -24,7 +24,6 @@ public class UserValidator {
         String username = registerDTO.getUsername();
         String email = registerDTO.getEmail();
         String password = registerDTO.getPassword();
-
         // check invalid
         if (!isValidUsername(username)) {
             throw new InvalidException(getMessage("invalid-username"));
@@ -36,15 +35,12 @@ public class UserValidator {
             throw new InvalidException((getMessage("password-length") + " " +
                     String.format(getMessage("cannot-be-less-than-n-characters"), "8")));
         }
-
         // check existing registration
         if (userRepository.existsUserByUsername(username)) {
             throw new APIException(HttpStatus.BAD_REQUEST, getMessage("username-already-exists"));
         }
         if (userRepository.existsUserByEmail(email)) {
             throw new APIException(HttpStatus.BAD_REQUEST, getMessage("email-already-used"));
-
-
         }
     }
 
@@ -52,7 +48,6 @@ public class UserValidator {
         String username = profile.getUsername();
         String email = profile.getEmail();
         String phoneNumber = profile.getPhoneNumber();
-
         // check invalid
         if (!isValidUsername(username)) {
             throw new InvalidException(getMessage("invalid-username"));
@@ -63,7 +58,6 @@ public class UserValidator {
         if (!isValidPhoneNumber(phoneNumber)) {
             throw new InvalidException(getMessage("invalid-phone-number"));
         }
-
         // check existing
         if (userRepository.existsUserByUsername(username) && !username.equals(user.getUsername())) {
             throw new InvalidException(getMessage("username-already-exists"));

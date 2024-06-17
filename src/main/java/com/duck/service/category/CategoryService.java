@@ -22,7 +22,7 @@ public interface CategoryService {
     CategoryResponse getAll(int pageNo, int pageSize) throws JsonProcessingException;
 
     CategoryResponse filter(
-            String searchTerm,
+            String key,
             List<String> sortCriteria,
             int pageNo,
             int pageSize

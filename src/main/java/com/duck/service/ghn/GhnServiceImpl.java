@@ -9,8 +9,8 @@ import com.duck.dto.ghn.GhnOrder;
 import com.duck.entity.Address;
 import com.duck.entity.Order;
 import com.duck.exception.APIException;
-import com.duck.utils.EnumOrderStatus;
-import com.duck.utils.EnumPaymentType;
+import com.duck.utils.EOrderStatus;
+import com.duck.utils.EPaymentType;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -94,9 +94,9 @@ public class GhnServiceImpl implements GhnService {
 
         String content = items.stream().map(GhnItem::getName).collect(Collectors.joining("; "));
         String recipientAddress = address.getOrderDetails() + ", " + address.getWard() + ", " + address.getDistrict() + ", " + address.getProvince();
-        Long cashOnDeliveryAmount = order.getPaymentType().equals(EnumPaymentType.COD) ? order.getSubTotal().longValue() : 0L;
+        Long cashOnDeliveryAmount = order.getPaymentType().equals(EPaymentType.COD) ? order.getSubTotal().longValue() : 0L;
         Long codeFailedAmount = (long) (order.getSubTotal().longValue() < 200000 ? 20000 : 30000);
-        int paymentTypeId = order.getPaymentType().equals(EnumPaymentType.COD) ? 2 : 1; // 1. người bán trả phí ship - 2. người mua trả
+        int paymentTypeId = order.getPaymentType().equals(EPaymentType.COD) ? 2 : 1; // 1. người bán trả phí ship - 2. người mua trả
         Long height = calculateHeight(items.size());
 
         return GhnOrder.builder()
@@ -158,37 +158,6 @@ public class GhnServiceImpl implements GhnService {
     @Override
     public BigDecimal calculateFee(Address address) {
         return null;
-    }
-
-    @Override
-    public EnumOrderStatus getEnumStatus(String ghnOrderStatus) {
-        switch (ghnOrderStatus) {
-            case "ready_to_pick" -> {
-                return EnumOrderStatus.ORDERED; // đã đặt/mới tạo đơn
-            }
-            case "picking", "money_collect_picking", "picked", "storing", "sorting", "transporting" -> {
-                return EnumOrderStatus.PROCESSING; // đang xử lý
-            }
-            case "delivering", "money_collect_delivering" -> {
-                return EnumOrderStatus.SHIPPING; // đang giao
-            }
-            case "delivered" -> {
-                return EnumOrderStatus.DELIVERED; // đã giao/hoàn thành
-            }
-            case "waiting_to_return", "return", "return_transporting", "return_sorting", "returning", "return_fail", "returned" -> {
-                return EnumOrderStatus.RETURN_REFUND; // trả hàng/hoàn tiền
-            }
-            case "cancel" -> {
-                return EnumOrderStatus.CANCELED; // hủy
-            }
-            case "exception", "damage", "lost" -> {
-                return null;
-            }
-            default -> {
-                log.error("Unexpected value: " + ghnOrderStatus);
-                return null;
-            }
-        }
     }
 
     @Override

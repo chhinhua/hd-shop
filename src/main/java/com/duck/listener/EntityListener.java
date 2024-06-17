@@ -1,6 +1,10 @@
 package com.duck.listener;
 
-import com.duck.entity.*;
+import com.duck.entity.BaseEntity;
+import com.duck.entity.Category;
+import com.duck.entity.Order;
+import com.duck.entity.Product;
+import com.duck.service.order.OrderTrackingService;
 import com.duck.service.redis.RedisService;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
@@ -59,7 +63,7 @@ public class EntityListener<T extends BaseEntity> {
     }
 
     private void clearCache(T entity) {
-        if (entity instanceof Product || entity instanceof ProductSku) {
+        if (entity instanceof Product) {
             redisProductService.clearCache((Product) entity);
         } else if (entity instanceof Order) {
             redisOrderService.clearCache((Order) entity);

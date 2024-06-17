@@ -1,11 +1,10 @@
 package com.duck.service.ghn;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.gson.JsonObject;
 import com.duck.dto.ghn.GhnOrder;
 import com.duck.entity.Address;
 import com.duck.entity.Order;
-import com.duck.utils.EnumOrderStatus;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.JsonObject;
 
 import java.math.BigDecimal;
 
@@ -19,8 +18,6 @@ public interface GhnService {
     JsonObject getOrderDetail(final String orderCode) throws JsonProcessingException;
 
     void cancelGhnOrder(final String orderCode) throws JsonProcessingException;
-
-    EnumOrderStatus getEnumStatus(final String ghnOrderStatus);
 
     BigDecimal calculateFee(final Address address);
 

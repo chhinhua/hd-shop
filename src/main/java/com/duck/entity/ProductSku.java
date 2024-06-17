@@ -1,7 +1,6 @@
 package com.duck.entity;
 
 import com.duck.component.SkuGenerator;
-import com.duck.listener.EntityListener;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -15,10 +14,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@EntityListeners(EntityListener.class)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "product_skus")
-public class ProductSku extends BaseEntity{
+public class ProductSku {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sku_id")

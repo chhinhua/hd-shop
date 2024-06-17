@@ -1,6 +1,7 @@
 package com.duck.utils;
 
 public class EmailUtils {
+
     /**
      * Validates the email address
      * @param email

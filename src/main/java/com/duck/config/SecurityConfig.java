@@ -41,9 +41,9 @@ public class SecurityConfig {
             "/api/v1/image/**",
             "/api/v1/products/analyze/**",
             "/api/v1/vnpay/**",
-            "/vnpay-payment",
             "/api/v1/auth/**",
             "/api/v1/users/password/forgot",
+            "/vnpay-payment",
             "/swagger-ui/**",
             "/v2/api-docs",
             "/v3/api-docs",
@@ -83,6 +83,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers(WHITE_LIST_URL).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/order/tracking").permitAll()
                         .anyRequest()
                         .authenticated()
                 )

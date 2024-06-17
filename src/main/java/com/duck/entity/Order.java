@@ -1,8 +1,8 @@
 package com.duck.entity;
 
 import com.duck.listener.EntityListener;
-import com.duck.utils.EnumOrderStatus;
-import com.duck.utils.EnumPaymentType;
+import com.duck.utils.EOrderStatus;
+import com.duck.utils.EPaymentType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -35,11 +35,11 @@ public class Order extends BaseEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    EnumOrderStatus status;
+    EOrderStatus status;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    EnumPaymentType paymentType;
+    EPaymentType paymentType;
 
     Integer totalItems;
 

@@ -1,12 +1,11 @@
 package com.duck.service.order.impl;
 
+import com.duck.utils.EOrderTrackingStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.duck.config.DateTimeConfig;
 import com.duck.dto.address.AddressDTO;
 import com.duck.dto.ghn.GhnOrder;
 import com.duck.dto.order.*;
-import com.duck.dto.vnpay.SubmitOrderRequest;
 import com.duck.entity.*;
 import com.duck.exception.APIException;
 import com.duck.exception.InvalidException;
@@ -23,8 +22,8 @@ import com.duck.service.product.ProductSkuService;
 import com.duck.service.redis.RedisService;
 import com.duck.service.user.UserService;
 import com.duck.utils.AppUtils;
-import com.duck.utils.EnumOrderStatus;
-import com.duck.utils.EnumPaymentType;
+import com.duck.utils.EOrderStatus;
+import com.duck.utils.EPaymentType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,9 +36,6 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -77,20 +73,31 @@ public class OrderServiceImpl implements OrderService {
     static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     @Override
-    public void callVNPaySubmitOrder(Long orderId, BigDecimal amount, Long addressId, String username, String note) throws JsonProcessingException {
-        // Tạo request body JSON
-        SubmitOrderRequest orderRequest = new SubmitOrderRequest(
-                orderId, amount, addressId, username, note
-        );
-        // Tạo request headers
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ObjectMapper mapper = new ObjectMapper();
-        String requestJson = mapper.writeValueAsString(orderRequest);
-        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+    @Transactional
+    public void trackingOrder(OrderStatusPayload payload) {
+        EOrderTrackingStatus trackingStatus = EOrderTrackingStatus.fromStatus(payload.getStatus());
+        Order order = findByOrderCode(payload.getOrderCode());
+        // create tracking entity
+        OrderTrackingDTO trackingDTO = new OrderTrackingDTO();
+        trackingDTO.setTime(payload.getTime());
+        trackingDTO.setOrderId(order.getId());
+        trackingDTO.setStatus(payload.getStatus());
+        trackingDTO.setDescription(trackingStatus.getDescription());
+        trackingService.create(trackingDTO);
 
-        // Capture the response entity
-        restTemplate.postForEntity(VNPAY_SUBMIT_ORDER, entity, String.class);
+        // update order status
+        EOrderStatus orderStatus = EOrderStatus.fromOrderTrackingStatus(payload.getStatus());
+        if (orderStatus != null) {
+            order.setStatus(orderStatus);
+            orderRepository.save(order);
+        }
+    }
+
+    @Override
+    public Order findByOrderCode(String orderCode) {
+        return orderRepository.findByOrderCode(orderCode).orElseThrow(() ->
+                new ResourceNotFoundException("%s=%s".formatted(getMessage("order-not-found-with-code"), orderCode))
+        );
     }
 
     @Override
@@ -107,8 +114,8 @@ public class OrderServiceImpl implements OrderService {
         User user = getUser(principal.getName());
         Address address = getAddress(orderDTO.getAddressId());
         List<OrderItem> orderItems = getOrderItems(orderDTO.getOrderItems());
-        EnumPaymentType paymentType = appUtils.getPaymentType(orderDTO.getPaymentType());
-        EnumOrderStatus status = paymentType.equals(EnumPaymentType.COD) ? EnumOrderStatus.ORDERED : EnumOrderStatus.WAIT_FOR_PAY;
+        EPaymentType paymentType = appUtils.getPaymentType(orderDTO.getPaymentType());
+        EOrderStatus status = paymentType.equals(EPaymentType.COD) ? EOrderStatus.ORDERED : EOrderStatus.WAIT_FOR_PAY;
 
         // build order
         Order order = Order.builder()
@@ -170,9 +177,9 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponse createOrder(OrderDTO orderDto, Principal principal) throws JsonProcessingException {
         OrderResponse response = createV2(orderDto, principal); // create order data to duckshop service
-        trackingService.create(response.getId()); // create order_tracking
+        trackingService.afterCreatedOrder(response.getId()); // create tracking order data
         Order order = findById(response.getId());
-        if (order.getPaymentType().equals(EnumPaymentType.COD)) {
+        if (order.getPaymentType().equals(EPaymentType.COD)) {
             // build and create GHN order
             GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
             String orderCode = ghnService.createGhnOrder(shippingOrder);
@@ -365,10 +372,10 @@ public class OrderServiceImpl implements OrderService {
             return mapEntityToResponse(order); // No change in status, return existing order
         }
 
-        EnumOrderStatus newStatus = appUtils.getOrderStatus(statusValue);
+        EOrderStatus newStatus = appUtils.getOrderStatus(statusValue);
 
         // Handle cancel `GHN` order specifically
-        if (newStatus.equals(EnumOrderStatus.CANCELED)) {
+        if (newStatus.equals(EOrderStatus.CANCELED)) {
             handleCancelOrder(order);
         }
 
@@ -382,9 +389,9 @@ public class OrderServiceImpl implements OrderService {
         if (order.getOrderCode() != null) {
             String ghnOrderStatus = ghnService.getOrderStatus(order.getOrderCode());
             if (ghnOrderStatus != null) {
-                EnumOrderStatus status = ghnService.getEnumStatus(ghnOrderStatus);
+                EOrderStatus status = EOrderStatus.fromOrderTrackingStatus(ghnOrderStatus);
                 if (status != null) {
-                    if (status.equals(EnumOrderStatus.ORDERED)) {
+                    if (status.equals(EOrderStatus.ORDERED)) {
                         ghnService.cancelGhnOrder(order.getOrderCode());
                     }
                 }
@@ -484,7 +491,7 @@ public class OrderServiceImpl implements OrderService {
         GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
         String orderCode = ghnService.createGhnOrder(shippingOrder);
 
-        order.setStatus(EnumOrderStatus.ORDERED);
+        order.setStatus(EOrderStatus.ORDERED);
         order.setIsPaidBefore(true);
         order.setOrderCode(orderCode); // update order code
         order.setCreatedDate(DateTimeConfig.getCurrentDateTimeInTimeZone());
@@ -504,7 +511,7 @@ public class OrderServiceImpl implements OrderService {
 
             // follow Pageable instances
             Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
-            EnumOrderStatus status = null;
+            EOrderStatus status = null;
             if (statusValue != null) {
                 status = appUtils.getOrderStatus(statusValue);
             }
@@ -547,7 +554,7 @@ public class OrderServiceImpl implements OrderService {
 
             // data caching not exists 👇
             Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
-            EnumOrderStatus status = null;
+            EOrderStatus status = null;
             if (statusValue != null) {
                 status = appUtils.getOrderStatus(statusValue);
             }
@@ -587,8 +594,8 @@ public class OrderServiceImpl implements OrderService {
         order.setTotal(dto.getTotal());
         order.setNote(dto.getNote());
         order.setAddress(address);
-        order.setStatus(EnumOrderStatus.ORDERED);
-        order.setPaymentType(EnumPaymentType.COD);
+        order.setStatus(EOrderStatus.ORDERED);
+        order.setPaymentType(EPaymentType.COD);
 
         // build and create GHN order
         GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
@@ -622,7 +629,7 @@ public class OrderServiceImpl implements OrderService {
             orderList = orderRepository
                     .getOrdersByUser_UsernameOrderByCreatedDateDesc(username);
         } else {
-            EnumOrderStatus status = appUtils.getOrderStatus(value);
+            EOrderStatus status = appUtils.getOrderStatus(value);
             orderList = orderRepository
                     .findAllByStatusAndUser_UsernameAndIsDeletedIsFalseOrderByCreatedDateDesc(status, username);
         }
@@ -664,7 +671,7 @@ public class OrderServiceImpl implements OrderService {
 
     public Order buildOrder(OrderDTO orderDTO, User user, Address address) {
         Order order = new Order();
-        order.setStatus(EnumOrderStatus.ORDERED);
+        order.setStatus(EOrderStatus.ORDERED);
         order.setIsDeleted(false);
         order.setIsPaidBefore(false);
         order.setNote(orderDTO.getNote());
@@ -673,7 +680,7 @@ public class OrderServiceImpl implements OrderService {
         order.setAddress(address);
 
         // retrieve enum payment type from input
-        EnumPaymentType paymentType = appUtils.getPaymentType(orderDTO.getPaymentType());
+        EPaymentType paymentType = appUtils.getPaymentType(orderDTO.getPaymentType());
         order.setPaymentType(paymentType);
 
         return order;
@@ -681,14 +688,14 @@ public class OrderServiceImpl implements OrderService {
 
     public Order buildOrderForVNPayPayment(OrderDTO orderDTO, User user, Address address) {
         Order order = new Order();
-        order.setStatus(EnumOrderStatus.WAIT_FOR_PAY);
+        order.setStatus(EOrderStatus.WAIT_FOR_PAY);
         order.setIsDeleted(false);
         order.setIsPaidBefore(false);
         order.setNote(orderDTO.getNote());
         order.setTotal(orderDTO.getTotal());
         order.setUser(user);
         order.setAddress(address);
-        order.setPaymentType(EnumPaymentType.VN_PAY);
+        order.setPaymentType(EPaymentType.VN_PAY);
 
         return order;
     }

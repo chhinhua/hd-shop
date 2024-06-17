@@ -210,7 +210,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .last(catePage.isLast())
                 .build();
 
-        redisService.saveAll(key, cateResponse); // caching data if not saved yet
+        redisService.saveAll(redisKey, cateResponse); // caching data if not saved yet
         return cateResponse;
     }
 

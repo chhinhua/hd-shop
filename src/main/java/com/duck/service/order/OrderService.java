@@ -1,10 +1,7 @@
 package com.duck.service.order;
 
+import com.duck.dto.order.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.duck.dto.order.CheckOutDTO;
-import com.duck.dto.order.OrderDTO;
-import com.duck.dto.order.OrderPageResponse;
-import com.duck.dto.order.OrderResponse;
 import com.duck.entity.Order;
 
 import java.math.BigDecimal;
@@ -12,7 +9,9 @@ import java.security.Principal;
 import java.util.List;
 
 public interface OrderService {
-    void callVNPaySubmitOrder(final Long orderId, final BigDecimal amount, final Long addressId, final String username, final String note) throws JsonProcessingException;
+    void trackingOrder(final OrderStatusPayload payload);
+
+    Order findByOrderCode(final String orderCode);
 
     Order findByVnpTxnRef(final String vnp_TxnRef);
 

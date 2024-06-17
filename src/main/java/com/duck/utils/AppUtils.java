@@ -20,29 +20,29 @@ public class AppUtils {
     public static final String ROLE_ADMIN_NAME = "ROLE_ADMIN";
     public static final String ROLE_CLIENT_NAME = "ROLE_USER";
 
-    public EnumPaymentType getPaymentType(String input) {
+    public EPaymentType getPaymentType(String input) {
         if ("VN_PAY".equals(input)) {
-            return EnumPaymentType.VN_PAY;
+            return EPaymentType.VN_PAY;
         } else if ("COD".equals(input)) {
-            return EnumPaymentType.COD;
+            return EPaymentType.COD;
         } else {
             throw new InvalidException(getMessage("payment-type-not-supported"));
         }
     }
 
-    public EnumOrderStatus getOrderStatus(String value) {
+    public EOrderStatus getOrderStatus(String value) {
         if ("Chờ thanh toán".equals(value)) {
-            return EnumOrderStatus.WAIT_FOR_PAY;
+            return EOrderStatus.WAIT_FOR_PAY;
         } else if ("Đã đặt hàng".equals(value)) {
-            return EnumOrderStatus.ORDERED;
+            return EOrderStatus.ORDERED;
         } else if ("Đang xử lý".equals(value)) {
-            return EnumOrderStatus.PROCESSING;
+            return EOrderStatus.PROCESSING;
         } else if ("Đang giao".equals(value)) {
-            return EnumOrderStatus.SHIPPING;
+            return EOrderStatus.SHIPPING;
         } else if ("Đã giao".equals(value)) {
-            return EnumOrderStatus.DELIVERED;
+            return EOrderStatus.DELIVERED;
         }else if ("Đã hủy".equals(value)) {
-            return EnumOrderStatus.CANCELED;
+            return EOrderStatus.CANCELED;
         } else {
             throw new InvalidException(getMessage("error-fetching-order-status-information"));
         }
