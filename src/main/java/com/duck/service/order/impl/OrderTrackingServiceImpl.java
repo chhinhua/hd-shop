@@ -11,11 +11,15 @@ import com.duck.repository.OrderTrackingRepository;
 import com.duck.service.order.OrderTrackingService;
 import com.duck.utils.EOrderTrackingStatus;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +27,7 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
     private final OrderTrackingRepository trackingRepository;
     private final OrderRepository orderRepository;
     private final MessageSource messageSource;
+    private final ModelMapper modelMapper;
     private static final Logger logger = LoggerFactory.getLogger(OrderTrackingServiceImpl.class);
 
     @Override
@@ -60,6 +65,12 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
         }
     }
 
+    @Override
+    public List<OrderTrackingDTO> getAll(Long orderId) {
+        List<OrderTracking> orderTrackings = trackingRepository.findAllByOrderId(orderId);
+        return orderTrackings.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
     private Order getOrder(Long orderId) {
         return orderRepository.findById(orderId).orElseThrow(
                 () -> new ResourceNotFoundException(getMessage("order-not-found"))
@@ -68,5 +79,9 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
 
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+    }
+
+    private OrderTrackingDTO mapToDTO(OrderTracking entity) {
+        return modelMapper.map(entity, OrderTrackingDTO.class);
     }
 }

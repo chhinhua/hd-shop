@@ -68,8 +68,6 @@ public class OrderServiceImpl implements OrderService {
     CartItemService cartItemService;
     OrderTrackingService trackingService;
     RedisService<Order> redisService;
-    RestTemplate restTemplate;
-    static String VNPAY_SUBMIT_ORDER = "http://localhost:8080/api/v1/vnpay/submit-order-v2";
     static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     @Override
@@ -333,14 +331,11 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
-    public OrderResponse getById(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
-
-        OrderDTO orderDTO = mapEntityToDTO(order);
-        orderDTO.setStatus(order.getStatus().getValue());
-
-        return mapEntityToResponse(order);
+    public OrderDetailResponse getById(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() ->
+                new ResourceNotFoundException("Order", "id", orderId)
+        );
+        return mapEntityToDetailResponse(order);
     }
 
     @Override
@@ -761,6 +756,18 @@ public class OrderServiceImpl implements OrderService {
         response.getOrderItems().forEach(item -> item.setHasReview(
                 reviewRepository.checkHasReview(item.getId()))
         );
+        return response;
+    }
+
+    private OrderDetailResponse mapEntityToDetailResponse(Order order) {
+        OrderDetailResponse response = modelMapper.map(order, OrderDetailResponse.class);
+        response.setStatus(order.getStatus().getValue());
+        response.setPaymentType(order.getPaymentType().getValue());
+        response.getOrderItems().forEach(item -> item.setHasReview(
+                reviewRepository.checkHasReview(item.getId()))
+        );
+        List<OrderTrackingDTO> trackingDTOS = trackingService.getAll(order.getId());
+        response.setTrackingDTOs(trackingDTOS);
         return response;
     }
 

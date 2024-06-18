@@ -1,5 +1,6 @@
 package com.duck.dto.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -21,6 +22,7 @@ public class UserDTO {
     private String username;
 
     @NotBlank(message = "{password-must-not-be-empty}")
+    @JsonIgnore
     private String password;
 
     @NotBlank(message = "{email-must-not-be-empty}")

@@ -32,9 +32,7 @@ public class CartController {
     @PostMapping
     public ResponseEntity<CartItemResponse> addToCart(@Valid @RequestBody CartItemDTO cartItemDTO, Principal principal) {
         String username = principal.getName();
-
         CartItemResponse addedItem = cartService.addToCart(username, cartItemDTO);
-
         return new ResponseEntity<>(addedItem, HttpStatus.CREATED);
     }
 

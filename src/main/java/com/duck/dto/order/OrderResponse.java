@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,9 +15,12 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 public class OrderResponse {
     private Long id;
     private String status;
+    private String orderCode;
+    private String vnpTxnRef;
     private String paymentType;
     private Integer totalItems;
     private BigDecimal subTotal;

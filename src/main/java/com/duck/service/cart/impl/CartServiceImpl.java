@@ -79,11 +79,8 @@ public class CartServiceImpl implements CartService {
     public CartItemResponse addToCart(String username, CartItemDTO itemDTO) {
         // TODO Handle vấn đề số lượng sản phẩm tồn tại trước khi thêm vào giỏ (quantityAvailable)
         Cart cart = getCartByUsernameOrElseCreateNew(username);
-
         Product product = getExistingProductById(itemDTO.getProductId());
-
         boolean hasSku = itemDTO.getValueNames() != null;
-
         if (hasSku) {
             return processCartItemWithSku(cart, product, itemDTO);
         } else {
@@ -94,17 +91,10 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public CartResponse clearItems(String username) {
-        Cart cart = getExistingCartByUsername(username);
-
-        // delete all items for of this cart
-        cartItemRepository.deleteAll(cart.getCartItems());
-
-        // clear items
-        cart.getCartItems().clear();
-
-        // save change
+        Cart cart = getExistingCartByUsername(username);    // delete all items for of this cart
+        cartItemRepository.deleteAll(cart.getCartItems());  // clear items
+        cart.getCartItems().clear();    // save change
         Cart cartWithClearedItems = updateCartTotals(cart);
-
         return mapToResponse(cartWithClearedItems);
     }
 
@@ -112,29 +102,18 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartResponse removeListItems(String username, List<Long> itemIds) {
         Cart cart = getExistingCartByUsername(username);
-
         List<CartItem> items = cartItemRepository.findByIdIn(itemIds);
-
-        // delete items
-        cartItemRepository.deleteAll(items);
-
-        // clear items
-        cart.getCartItems().removeAll(items);
-
-        // save change
-        Cart cartWithRemovedItems = updateCartTotals(cart);
-
+        cartItemRepository.deleteAll(items);     // delete items
+        cart.getCartItems().removeAll(items);       // clear items
+        Cart cartWithRemovedItems = updateCartTotals(cart);     //save change
         return mapToResponse(cartWithRemovedItems);
     }
 
     @Override
     public Integer getTotalItems(Principal principal) {
         String username = principal.getName();
-
         Cart userCart = getExistingCartByUsername(username);
-
         int totalItems = userCart.getCartItems().size();
-
         return totalItems;
     }
 
@@ -170,23 +149,18 @@ public class CartServiceImpl implements CartService {
      */
     private CartItemResponse processCartItemWithSku(Cart cart, Product product, CartItemDTO itemDTO) {
         ProductSku sku = skuService.findByProductIdAndValueNames(product.getProductId(), itemDTO.getValueNames());
-
         Optional<CartItem> existingItem = getCartItemByCartProductAndSku(cart, product, sku);
 
         if (existingItem.isPresent()) {
             CartItem existingCartItem = existingItem.get();
             updateExistingCartItem(existingCartItem, sku, itemDTO.getQuantity());
-
             // update cart totals
             updateCartTotals(cart);
-
             return mapToItemResponse(cartItemRepository.save(existingCartItem));
         } else {
             CartItem newCartItem = createNewCartItemWithSku(cart, product, sku, itemDTO);
-
             // update cart totals
             updateCartTotals(cart);
-
             return mapToItemResponse(cartItemRepository.save(newCartItem));
         }
     }
@@ -205,17 +179,13 @@ public class CartServiceImpl implements CartService {
         if (existingItem.isPresent()) {
             CartItem existingCartItem = existingItem.get();
             updateExistingCartItem(existingCartItem, product, itemDTO.getQuantity());
-
             // update cart totals
             updateCartTotals(cart);
-
             return mapToItemResponse(cartItemRepository.save(existingCartItem));
         } else {
             CartItem newCartItem = createNewCartItemWithoutSku(cart, product, itemDTO);
-
             // update cart totals
             updateCartTotals(cart);
-
             return mapToItemResponse(cartItemRepository.save(newCartItem));
         }
     }
@@ -243,7 +213,6 @@ public class CartServiceImpl implements CartService {
 
     private CartItem createNewCartItemWithSku(Cart cart, Product product, ProductSku sku, CartItemDTO itemDTO) {
         CartItem newCartItem = new CartItem();
-
         newCartItem.setPrice(sku.getPrice());
         newCartItem.setQuantity(itemDTO.getQuantity());
         newCartItem.setSubTotal(sku.getPrice().multiply(BigDecimal.valueOf(itemDTO.getQuantity())));
@@ -251,9 +220,7 @@ public class CartServiceImpl implements CartService {
         newCartItem.setCart(cart);
         newCartItem.setProduct(product);
         newCartItem.setSku(sku);
-
         cart.getCartItems().add(newCartItem);
-
         return newCartItem;
     }
 
@@ -266,9 +233,7 @@ public class CartServiceImpl implements CartService {
         newCartItem.setImageUrl(product.getListImages().get(0));
         newCartItem.setCart(cart);
         newCartItem.setProduct(product);
-
         cart.getCartItems().add(newCartItem);
-
         return newCartItem;
     }
 

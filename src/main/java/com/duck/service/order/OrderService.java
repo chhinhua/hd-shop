@@ -29,7 +29,7 @@ public interface OrderService {
 
     OrderResponse createWithVNPayV2(final Long orderId, final String vnp_TxnRef);
 
-    OrderResponse getById(final Long orderId);
+    OrderDetailResponse getById(final Long orderId);
 
     Order findById(final Long orderId);
 
