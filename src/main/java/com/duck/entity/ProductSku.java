@@ -23,8 +23,12 @@ public class ProductSku {
     Long skuId;
 
     String sku;
-
+    BigDecimal originalPrice;
     BigDecimal price;
+    Integer percentDiscount;
+    Integer quantity;
+    Integer quantityAvailable;
+    Integer sold;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")

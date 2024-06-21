@@ -39,9 +39,9 @@ public class Product extends BaseEntity {
 
     String slug;
     BigDecimal originalPrice;
-    BigDecimal percentDiscount;
     BigDecimal price;
     BigDecimal promotionalPrice;
+    Integer percentDiscount;
     Integer quantity;
     Integer quantityAvailable;
     Integer sold;
@@ -54,7 +54,7 @@ public class Product extends BaseEntity {
     Float rating;
     Boolean isActive;
     Boolean isSelling;
-
+    String status;
     @CreatedBy
     String createdBy;
 

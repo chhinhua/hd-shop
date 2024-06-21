@@ -1,7 +1,5 @@
 package com.duck.service.product.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.slugify.Slugify;
 import com.duck.component.UniqueSlugGenerator;
 import com.duck.dto.product.OptionDTO;
 import com.duck.dto.product.ProductDTO;
@@ -10,7 +8,7 @@ import com.duck.dto.product.ProductSkuDTO;
 import com.duck.entity.*;
 import com.duck.exception.InvalidException;
 import com.duck.exception.ResourceNotFoundException;
-import com.duck.repository.*;
+import com.duck.repository.ProductRepository;
 import com.duck.service.category.CategoryService;
 import com.duck.service.follow.FollowService;
 import com.duck.service.product.OptionService;
@@ -20,6 +18,8 @@ import com.duck.service.redis.RedisService;
 import com.duck.service.user.UserService;
 import com.duck.utils.AppUtils;
 import com.duck.validator.ProductValidator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.slugify.Slugify;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProductServiceImpl implements ProductService {
     ProductRepository productRepository;
-    CategoryRepository categoryRepository;
     ProductSkuService productSkuService;
     FollowService followService;
     CategoryService categoryService;
@@ -73,7 +72,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * Create a new product.
+     * 🎯Create a new product.
      *
      * @param product The product object to follow.
      * @return ProductDTO representing the created product.
@@ -107,7 +106,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * Get a single product.
+     * 🎯Get a single product.
      *
      * @param productId Product ID.
      * @return Product DTO object.
@@ -148,7 +147,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * Update a product.
+     * 🎯Update a product.
      *
      * @param dto       Updated product information.
      * @param productId Product ID to update.
@@ -158,9 +157,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDTO update(ProductDTO dto, Long productId) {
-        productValidator.validateUpdate(dto);  // validate product update data
-        Product existingProduct = findById(productId);  // Kiểm tra nếu sản phẩm đã tồn tại
-        Category category = categoryService.findByName(dto.getCategory().getName()); // Kiểm tra nếu danh mục đã tồn tại
+        productValidator.validateUpdate(dto);  // xác thực đầu vào
+        Product existingProduct = findById(productId);  // Kiểm tra sản phẩm đã tồn tại
+        Category category = categoryService.findByName(dto.getCategory().getName()); // Kiểm tra danh mục đã tồn tại
         setProductFields(dto, existingProduct, category);    // Cập nhật các trường thay đổi
         Product normalizedProduct = normalizeProduct(existingProduct);  // Chuẩn hóa dữ liệu sản phẩm đầu vào
         existingProduct = productRepository.save(normalizedProduct);    // Lưu sản phẩm đã cập nhật
@@ -170,7 +169,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * Deactivate or activate a product based on its ID.
+     * 🎯Deactivate or activate a product based on its ID.
      *
      * @param productId ID of the product to deactivate or activate.
      * @return A ProductDTO representing the updated state of the product.
@@ -186,7 +185,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * Deactivate or activate the selling status of a product based on its ID.
+     * 🎯Deactivate or activate the selling status of a product based on its ID.
      *
      * @param productId ID of the product to deactivate or activate selling.
      * @return A ProductDTO representing the updated status of the product.
@@ -259,7 +258,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * Tính kích thước của trang cuối cùng dựa trên tổng số phần tử và kích thước trang.
+     * 🎯Tính kích thước của trang cuối cùng dựa trên tổng số phần tử và kích thước trang.
      *
      * <p>Nếu tổng số phần tử không chia hết cho kích thước trang,
      * trang cuối cùng sẽ chứa phần dư. Nếu không có phần tử nào,
@@ -312,6 +311,7 @@ public class ProductServiceImpl implements ProductService {
             if (roles.stream().anyMatch(role -> role.getName().equals(AppUtils.ROLE_ADMIN_NAME))) {
                 return response; // Early return if admin
             }
+            logger.info("filer product role user");
             retrieveUserFollowProduct(username, response.getContent());
         }
         return response;
@@ -338,7 +338,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * Build product object
+     * 🎯Build product object
      *
      * @param dto
      * @param existingProduct

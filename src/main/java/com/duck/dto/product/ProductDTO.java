@@ -23,7 +23,7 @@ public class ProductDTO {
     String description;
     BigDecimal price;
     BigDecimal originalPrice;
-    BigDecimal percentDiscount;
+    Integer percentDiscount;
     BigDecimal promotionalPrice;
     Integer quantity;
     Integer productClicks;
@@ -37,6 +37,7 @@ public class ProductDTO {
     Boolean liked;
     Boolean isActive;
     Boolean isSelling;
+    String status;
     Long categoryId;
     String slug;
     String categoryName;
