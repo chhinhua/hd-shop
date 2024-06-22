@@ -45,16 +45,16 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     ProductRepository productRepository;
     ProductSkuService productSkuService;
-    FollowService followService;
-    CategoryService categoryService;
-    OptionService optionService;
     UserService userService;
+    FollowService followService;
+    OptionService optionService;
+    CategoryService categoryService;
     UniqueSlugGenerator slugGenerator;
     ProductValidator productValidator;
+    RedisService<Product> redisService;
     MessageSource messageSource;
     ModelMapper modelMapper;
     Slugify slugify;
-    RedisService<Product> redisService;
     static Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     @Override
@@ -321,16 +321,14 @@ public class ProductServiceImpl implements ProductService {
         products.forEach(item -> item.setLiked(followService.isFollowed(username, item.getId())));
     }
 
-    @Transactional
-    protected void saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
+    private void saveOrUpdateOptions(Product existingProduct, List<OptionDTO> optionDTOList) {
         List<Option> options = optionDTOList.stream()
                 .map(dto -> modelMapper.map(dto, Option.class))
                 .collect(Collectors.toList());
         optionService.saveOrUpdateOptions(existingProduct.getProductId(), options);
     }
 
-    @Transactional
-    protected void saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
+    private void saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
         List<ProductSku> skus = skuDTOList.stream()
                 .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
                 .collect(Collectors.toList());
@@ -352,6 +350,8 @@ public class ProductServiceImpl implements ProductService {
         // set fields
         existingProduct.setQuantity(dto.getQuantity());
         existingProduct.setPrice(dto.getPrice());
+        existingProduct.setOriginalPrice(dto.getOriginalPrice());
+        existingProduct.setPercentDiscount(dto.getPercentDiscount());
         existingProduct.setPromotionalPrice(dto.getPromotionalPrice());
         existingProduct.setDescription(dto.getDescription());
 
