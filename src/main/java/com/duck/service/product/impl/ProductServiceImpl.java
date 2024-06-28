@@ -17,6 +17,7 @@ import com.duck.service.product.ProductSkuService;
 import com.duck.service.redis.RedisService;
 import com.duck.service.user.UserService;
 import com.duck.utils.AppUtils;
+import com.duck.utils.EProductStatus;
 import com.duck.validator.ProductValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.slugify.Slugify;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -81,26 +83,35 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDTO create(Product product) {
-        productValidator.validate(product);  // validate input product
-        Category category = categoryService.findByName(product.getCategory().getName());    // find the product category based on its ID
+        productValidator.validateCreate(product);
+        Category category = findCateByName(product.getCategory().getName());
 
         // build product
+        int quantity = calculateProductQuantityCount(mapToDTO(product));
+        BigDecimal price = calculateDiscountedPrice(product.getOriginalPrice(), product.getPercentDiscount());
+
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
         product.setSlug(uniqueSlug);
-        product.setCategory(category);
-        product.setIsSelling(false);
-        product.setIsActive(true);
+        product.setPrice(price);
+        product.setQuantity(quantity);
+        product.setQuantityAvailable(quantity);
         product.setSold(0);
         product.setRating(0f);
         product.setFavoriteCount(0);
+        product.setProductCartAdds(0);
+        product.setProductClicks(0);
+        product.setProductViews(0);
         product.setNumberOfRatings(0);
         product.setPromotionalPrice(BigDecimal.ZERO);
-        product.setQuantityAvailable(product.getQuantity());
+        product.setStatus(EProductStatus.UNSELLING.getValue());
+        product.setCategory(category);
+        product.setIsSelling(false);
+        product.setIsActive(true);
         setProductForChildEntity(product);
 
         Product normalizedProduct = normalizeProduct(product);  // normalize product information
         Product newProduct = productRepository.save(normalizedProduct); // save the product to the database
-        productSkuService.saveSkusFromProduct(newProduct);  // save information about product variants (productSkus)
+        productSkuService.saveSkusProductCreation(newProduct);  // save information about product variants (productSkus)
 
         return mapToDTO(findById(newProduct.getProductId()));   // convert the product to a ProductDTO object and return it
     }
@@ -147,25 +158,47 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * 🎯Update a product.
+     * Updates an existing {@link Product} with new information.
      *
-     * @param dto       Updated product information.
-     * @param productId Product ID to update.
-     * @return Updated product DTO object.
-     * @date 25-10-2023
+     * <ul>
+     *      <li>1. Validates the input data</li>
+     *      <li>2. Retrieves the existing {@link Product}</li>
+     *      <li>3. Retrieves the existing {@link Category}</li>
+     *      <li>4. Updates product fields</li>
+     *      <li>5. Normalizes product data</li>
+     *      <li>6. Saves the updated product</li>
+     *      <li>7. Updates or creates {@link Option} and list {@link ProductSku}</li>
+     * </ul>
+     *
+     * @param dto       The {@link ProductDTO} containing updated information
+     * @param productId The ID of the product to update
+     * @return A {@link ProductDTO} representing the updated product
+     * @throws ResourceNotFoundException if the product or category is not found
+     * @throws InvalidException          if the input data is invalid
      */
     @Override
     @Transactional
     public ProductDTO update(ProductDTO dto, Long productId) {
-        productValidator.validateUpdate(dto);  // xác thực đầu vào
-        Product existingProduct = findById(productId);  // Kiểm tra sản phẩm đã tồn tại
-        Category category = categoryService.findByName(dto.getCategory().getName()); // Kiểm tra danh mục đã tồn tại
-        setProductFields(dto, existingProduct, category);    // Cập nhật các trường thay đổi
-        Product normalizedProduct = normalizeProduct(existingProduct);  // Chuẩn hóa dữ liệu sản phẩm đầu vào
-        existingProduct = productRepository.save(normalizedProduct);    // Lưu sản phẩm đã cập nhật
-        saveOrUpdateOptions(existingProduct, dto.getOptions()); // Lưu hoặc cập nhật Options và OptionValues
-        saveOrUpdateSkus(existingProduct, dto.getSkus());  // Lưu hoặc cập nhật ProductSkus
+        productValidator.validateUpdate(dto);
+        Product existingProduct = findById(productId);
+        Category category = findCateByName(dto.getCategory().getName());
+        setProductFields(dto, existingProduct, category);
+        Product normalizedProduct = normalizeProduct(existingProduct);
+        existingProduct = productRepository.save(normalizedProduct);
+        saveOrUpdateOptions(existingProduct, dto.getOptions());
+        saveOrUpdateSkus(existingProduct, dto.getSkus());
         return mapToDTO(findById(productId));
+    }
+
+    private Category findCateByName(String cateName) {
+       return categoryService.findByName(cateName);
+    }
+
+    private void saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
+        List<ProductSku> skus = skuDTOList.stream()
+                .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
+                .collect(Collectors.toList());
+        productSkuService.saveOrUpdateListSkus(existingProduct.getProductId(), skus);
     }
 
     /**
@@ -180,12 +213,14 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO toggleActive(Long productId) {
         Product existingProduct = findById(productId);
         existingProduct.setIsActive(!existingProduct.getIsActive());
+        existingProduct.setStatus(EProductStatus.getProductStatusValue(existingProduct));
         Product updateIsAcitve = productRepository.save(existingProduct);
         return mapToDTO(updateIsAcitve);
     }
 
     /**
-     * 🎯Deactivate or activate the selling status of a product based on its ID.
+     * 🎯
+     * Deactivate or activate the selling status of a product based on its ID.
      *
      * @param productId ID of the product to deactivate or activate selling.
      * @return A ProductDTO representing the updated status of the product.
@@ -196,15 +231,15 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO toggleSelling(Long productId) {
         Product existingProduct = findById(productId);
         existingProduct.setIsSelling(!existingProduct.getIsSelling());
+        existingProduct.setStatus(EProductStatus.getProductStatusValue(existingProduct));
         Product updateIsAcitve = productRepository.save(existingProduct);
         return mapToDTO(updateIsAcitve);
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
-        productRepository.findById(id).orElseThrow(() ->
-                new ResourceNotFoundException(getMessage("product-not-found"))
-        );
+        productRepository.deleteById(id);
     }
 
     @Override
@@ -328,13 +363,6 @@ public class ProductServiceImpl implements ProductService {
         optionService.saveOrUpdateOptions(existingProduct.getProductId(), options);
     }
 
-    private void saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
-        List<ProductSku> skus = skuDTOList.stream()
-                .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
-                .collect(Collectors.toList());
-        productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skus);
-    }
-
     /**
      * 🎯Build product object
      *
@@ -347,11 +375,14 @@ public class ProductServiceImpl implements ProductService {
             existingProduct.setCategory(category);
         }
 
+        int quantity = calculateProductQuantityCount(dto);
+        BigDecimal price = calculateDiscountedPrice(dto.getOriginalPrice(), dto.getPercentDiscount());
+
         // set fields
-        existingProduct.setQuantity(dto.getQuantity());
-        existingProduct.setPrice(dto.getPrice());
         existingProduct.setOriginalPrice(dto.getOriginalPrice());
         existingProduct.setPercentDiscount(dto.getPercentDiscount());
+        existingProduct.setQuantity(quantity);
+        existingProduct.setPrice(price);
         existingProduct.setPromotionalPrice(dto.getPromotionalPrice());
         existingProduct.setDescription(dto.getDescription());
 
@@ -361,6 +392,19 @@ public class ProductServiceImpl implements ProductService {
             String uniqueSlug = slugGenerator.generateUniqueSlug(existingProduct, dto.getName());
             existingProduct.setSlug(uniqueSlug);
         }
+    }
+
+    private static int calculateProductQuantityCount(ProductDTO dto) {
+        return dto.getSkus().stream().mapToInt(item -> item.getQuantity()).sum();
+    }
+
+    public static BigDecimal calculateDiscountedPrice(BigDecimal originalPrice, double percentDiscount) {
+        BigDecimal discountRate = BigDecimal.valueOf(percentDiscount);
+        BigDecimal hundred = new BigDecimal("100");
+        BigDecimal discountAmount = originalPrice.multiply(discountRate)
+                .divide(hundred, 2, RoundingMode.HALF_UP);
+        BigDecimal discountedPrice = originalPrice.subtract(discountAmount);
+        return discountedPrice.setScale(0, RoundingMode.DOWN);
     }
 
     public void setProductForChildEntity(Product product) {

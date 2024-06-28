@@ -25,8 +25,8 @@ public class ProductSku {
     String sku;
     BigDecimal originalPrice;
     BigDecimal price;
-    Integer percentDiscount;
     Integer quantity;
+    Integer percentDiscount;
     Integer quantityAvailable;
     Integer sold;
 

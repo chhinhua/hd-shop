@@ -21,7 +21,12 @@ public interface ProductService {
 
     ProductDTO getOne(final Long productId, final Principal principal);
 
+    // TODO update this implementation method
     ProductDTO addQuantity(final Long product_id, final Integer quantity);
+
+    void delete(final Long id);
+
+    void productAnalysis(final Long productId, final String analysisType);
 
     ProductResponse filter(
             Boolean sell,
@@ -32,6 +37,18 @@ public interface ProductService {
             int pageSize
     ) throws JsonProcessingException;
 
+    /**
+     * Filter product for client has logedin account
+     * @param sell
+     * @param searchTerm
+     * @param cateNames
+     * @param sortCriteria
+     * @param pageNo
+     * @param pageSize
+     * @param username
+     * @return
+     * @throws JsonProcessingException
+     */
     ProductResponse filterProducts(
             Boolean sell,
             String searchTerm,
@@ -41,8 +58,4 @@ public interface ProductService {
             int pageSize,
             String username
     ) throws JsonProcessingException;
-
-    void delete(final Long id);
-
-    void productAnalysis(final Long productId, final String analysisType);
 }

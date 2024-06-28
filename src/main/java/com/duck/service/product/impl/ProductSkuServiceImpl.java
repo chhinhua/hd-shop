@@ -15,10 +15,12 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -31,69 +33,117 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     ProductRepository productRepository;
     MessageSource messageSource;
 
-    /**
-     * 🎯Lưu hoặc cập nhật danh sách các phiên bản {@link ProductSku} liên quan đến một sản phẩm cụ thể.
-     * <p>
-     * Phương thức này lấy thông tin của {@link Product} dựa trên ID của nó, duyệt qua danh sách
-     * các phiên bản {@link ProductSku} được cung cấp và xác định xem mỗi phiên bản có nên được cập nhật
-     * hay tạo mới dựa trên sự tồn tại của phiên bản có các giá trị tùy chọn tương tự. Nếu có phiên bản
-     * tương tự đã tồn tại, nó sẽ cập nhật thông tin của phiên bản đó. Nếu không tìm thấy phiên bản tương
-     * tự, nó sẽ tạo mới một phiên bản {@link ProductSku} cho sản phẩm. Các phiên bản được cập nhật hoặc
-     * tạo mới sẽ được lưu và trả về trong danh sách kết quả. ✅
-     *
-     * @param productId ID của {@link Product} mà các phiên bản {@link ProductSku} liên quan đến.
-     * @param skus Danh sách các phiên bản {@link ProductSku} cần lưu hoặc cập nhật.
-     * @return Danh sách các phiên bản {@link ProductSku} đã được lưu hoặc cập nhật.
-     * @date: 27-10-2023 🗓
-     * @author <a href="https://github.com/chhinhua">Chhin Hua</a> 👨‍💻
-     */
     @Override
-    public List<ProductSku> saveOrUpdateSkus(Long productId, List<ProductSku> skus) {
-        // Retrieve entity
-        Product product = getProductById(productId);
-        List<ProductSku> saveProductSkus = new ArrayList<>();
-
-        // Iterate through each sku in the provided list
-        for (ProductSku productSku : skus) {
-            List<String> valueNames = getValueNames(productSku.getOptionValues());
-            Optional<ProductSku> existingSku = productSkuRepository.findByProductIdAndValueNames(
-                    productId, valueNames, valueNames.size()
-            );
-
-            // If an existing sku is found, update it; otherwise, create a new sku
-            if (existingSku.isPresent()) {
-                updateExistingSku(existingSku.get(), productSku);
-                productSkuRepository.flush();
-                saveProductSkus.add(existingSku.get());
-            } else {
-                ProductSku newProductSku = createNewProductSku(productSku, product);
-                saveProductSkus.add(newProductSku);
-            }
-        }
-        return saveProductSkus;
-    }
-
-    /**
-     * Saves the list of {@link ProductSku} instances associated with a {@link Product}.
-     * <p>
-     * This method iterates through the skus of the provided {@link Product}, assigns
-     * the product reference, retrieves option values, sets percent discount if available,
-     * and saves each SKU to the repository. The saved list of skus is returned.
-     *
-     * @param product The {@link Product} containing the skus to be saved.
-     * @return A list of {@link ProductSku} instances that have been saved.
-     */
-    @Override
-    public List<ProductSku> saveSkusFromProduct(Product product) {
+    @Transactional
+    public void saveSkusProductCreation(Product product) {
         List<ProductSku> savedSkus = new ArrayList<>();
         for (ProductSku sku : product.getSkus()) {
             List<OptionValue> optionValues = getOptionValuesForSku(sku, product);
             sku.setProduct(product);
             sku.setOptionValues(optionValues);
+            sku.setSold(0);
+            sku.setQuantityAvailable(sku.getQuantity());
             sku.setPercentDiscount(product.getPercentDiscount() == null ? 0 : product.getPercentDiscount());
             savedSkus.add(productSkuRepository.save(sku));
         }
-        return savedSkus.stream().toList();
+        savedSkus.stream().toList();
+    }
+
+    /**
+     * Retrieves or creates OptionValue instances for a given ProductSku and Product.
+     *
+     * @param sku The ProductSku containing the option values to process
+     * @param product The Product associated with the SKU
+     * @return A list of OptionValue instances, either existing or newly created
+     */
+    private List<OptionValue> getOptionValuesForSku(ProductSku sku, Product product) {
+        List<OptionValue> optionValues = new ArrayList<>();
+        for (OptionValue value : sku.getOptionValues()) {
+            OptionValue newOptionValue = getOrCreateOptionValue(value, product);
+            optionValues.add(newOptionValue);
+        }
+        return optionValues;
+    }
+
+    @Override
+    @Transactional
+    public void saveOrUpdateListSkus(Long productId, List<ProductSku> skus) {
+        Product product = findProductById(productId);
+        skus.stream()
+                .map(sku -> saveOrUpdateSku(product, sku))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Saves a new {@link ProductSku} or updates an existing one based on product and option values.
+     *
+     * @param product The associated {@link Product}
+     * @param sku The {@link ProductSku} to save or update
+     * @return The saved or updated {@link ProductSku}
+     */
+    private ProductSku saveOrUpdateSku(Product product, ProductSku sku) {
+        List<String> valueNames = getValueNames(sku.getOptionValues());
+        return productSkuRepository.findByProductIdAndValueNames(product.getProductId(), valueNames, valueNames.size())
+                .map(existingSku -> updateExistingSku(existingSku, sku))
+                .orElseGet(() -> createNewSku(sku, product));
+    }
+
+    /**
+     * Updates an existing {@link ProductSku} with new values if they differ.
+     *
+     * @param existingSku The existing {@link ProductSku} to update
+     * @param newSku The new {@link ProductSku} containing updated values
+     * @return The updated {@link ProductSku}
+     */
+    private ProductSku updateExistingSku(ProductSku existingSku, ProductSku newSku) {
+        Integer oldPercentDiscountVal = existingSku.getPercentDiscount();
+        Integer newPercentDiscountVal = newSku.getProduct().getPercentDiscount();
+
+        if (!Objects.equals(oldPercentDiscountVal, newPercentDiscountVal)) {
+            existingSku.setPercentDiscount(newPercentDiscountVal);
+        }
+        if (newSku.getOriginalPrice() != existingSku.getOriginalPrice()) {
+            existingSku.setOriginalPrice(newSku.getOriginalPrice());
+        }
+        if (newSku.getPrice() != existingSku.getPrice()) {
+            existingSku.setPrice(newSku.getPrice());
+        }
+
+        return productSkuRepository.save(existingSku);
+    }
+
+    /**
+     * Creates and saves a new {@link ProductSku} with updated details.
+     *
+     * This method:
+     * - Sets the sold quantity to 0
+     * - Sets the available quantity to the initial quantity
+     * - Updates the percent discount from the product
+     * - Associates the SKU with the given product
+     * - Updates option values based on existing product option values
+     *
+     * @param productSku The {@link ProductSku} to be created and updated
+     * @param product The associated {@link Product}
+     * @return The newly created and saved {@link ProductSku}
+     */
+    private ProductSku createNewSku(ProductSku productSku, Product product) {
+        List<OptionValue> valueList = getExistingOptionValues(
+                productSku.getOptionValues(),
+                product.getProductId()
+        );
+        productSku.setSold(0);
+        productSku.setQuantityAvailable(productSku.getQuantity());
+        productSku.setPercentDiscount(product.getPercentDiscount());
+        productSku.setProduct(product);
+        productSku.setOptionValues(valueList);
+
+        return productSkuRepository.save(productSku);
+    }
+
+    private List<String> getValueNames(List<OptionValue> values) {
+        return values.stream()
+                .map(OptionValue::getValueName)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -118,21 +168,13 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         );
     }
 
-    private List<String> getValueNames(List<OptionValue> values) {
-        return values.stream()
-                .map(OptionValue::getValueName)
-                .collect(Collectors.toList());
-    }
-
-    private List<OptionValue> getOptionValuesForSku(ProductSku sku, Product product) {
-        List<OptionValue> optionValues = new ArrayList<>();
-        for (OptionValue value : sku.getOptionValues()) {
-            OptionValue newOptionValue = getOrCreateOptionValue(value, product);
-            optionValues.add(newOptionValue);
-        }
-        return optionValues;
-    }
-
+    /**
+     * Retrieves an existing OptionValue or returns the provided one if not found.
+     *
+     * @param value The OptionValue to search for or potentially create
+     * @param product The Product associated with the OptionValue
+     * @return An existing OptionValue if found, otherwise the provided value
+     */
     private OptionValue getOrCreateOptionValue(OptionValue value, Product product) {
         Optional<OptionValue> newOptionValue = optionValueService
                 .findByValueNameAndProductId(
@@ -142,50 +184,13 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         return newOptionValue.orElse(value); // Return existing or follow new
     }
 
-    private Product getProductById(Long productId) {
-        return productRepository.findById(productId).orElseThrow(() ->
-                new ResourceNotFoundException("Product", "id", productId)
-        );
-    }
-
-    private void updateExistingSku(ProductSku existingSku, ProductSku newSku) {
-        if (newSku.getOriginalPrice() != null && newSku.getOriginalPrice().compareTo(BigDecimal.ZERO) > 0) {
-            existingSku.setOriginalPrice(newSku.getOriginalPrice());
-        }
-        if (newSku.getPrice() != null && newSku.getPrice().compareTo(BigDecimal.ZERO) > 0) {
-            existingSku.setPrice(newSku.getPrice());
-        }
-    }
-
     /**
-     * Creates and saves a new {@link ProductSku} with updated product details.
-     * <p>
-     * This method updates the {@link ProductSku} with the following details:
-     * <ul>
-     *   <li>Resets the sold quantity to 0.</li>
-     *   <li>Retains the current percent discount.</li>
-     *   <li>Associates the {@link ProductSku} with the given {@link Product}.</li>
-     *   <li>Updates the option values based on the existing option values of the product SKU and the product ID.</li>
-     * </ul>
+     * Retrieves existing OptionValue instances for a list of OptionValues and a product ID.
      *
-     * @param productSku The original {@link ProductSku} to update.
-     * @param product    The {@link Product} containing new product details.
-     * @return The updated and saved {@link ProductSku}.
+     * @param optionValues The list of OptionValues to find existing instances for
+     * @param productId The ID of the product associated with the OptionValues
+     * @return A list of existing OptionValue instances
      */
-    private ProductSku createNewProductSku(ProductSku productSku, Product product) {
-        List<OptionValue> valueList = getExistingOptionValues(
-                productSku.getOptionValues(),
-                product.getProductId()
-        );
-
-        productSku.setSold(0);
-        productSku.setPercentDiscount(productSku.getPercentDiscount());
-        productSku.setProduct(product);
-        productSku.setOptionValues(valueList);
-
-        return productSkuRepository.save(productSku);
-    }
-
     private List<OptionValue> getExistingOptionValues(List<OptionValue> optionValues, Long productId) {
         List<OptionValue> valueList = new ArrayList<>();
         for (OptionValue value : optionValues) {
@@ -197,6 +202,12 @@ public class ProductSkuServiceImpl implements ProductSkuService {
             valueList.add(existingOptionValue);
         }
         return valueList;
+    }
+
+    private Product findProductById(Long productId) {
+        return productRepository.findById(productId).orElseThrow(() ->
+                new ResourceNotFoundException("Product", "id", productId)
+        );
     }
 
     private String getMessage(String code) {
