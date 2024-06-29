@@ -17,7 +17,8 @@ import com.duck.service.product.ProductSkuService;
 import com.duck.service.redis.RedisService;
 import com.duck.service.user.UserService;
 import com.duck.utils.AppUtils;
-import com.duck.utils.EProductStatus;
+import com.duck.utils.enums.EProductAnalysisType;
+import com.duck.utils.enums.EProductStatus;
 import com.duck.validator.ProductValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.slugify.Slugify;
@@ -40,6 +41,7 @@ import java.math.RoundingMode;
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -65,10 +67,12 @@ public class ProductServiceImpl implements ProductService {
         Integer clicks = product.getProductClicks();
         Integer views = product.getProductViews();
         Integer cart_adds = product.getProductCartAdds();
-        switch (analysisType.trim()) {
-            case "click" -> product.setProductClicks(clicks != null ? clicks + 1 : 1);
-            case "view" -> product.setProductViews(views != null ? views + 1 : 1);
-            case "add_cart" -> product.setProductCartAdds(cart_adds != null ? cart_adds + 1 : 1);
+
+        EProductAnalysisType type = EProductAnalysisType.fromKey(analysisType);
+        switch (type) {
+            case CLICK -> product.setProductClicks(clicks != null ? clicks + 1 : 1);
+            case VIEW -> product.setProductViews(views != null ? views + 1 : 1);
+            case ADD_CART -> product.setProductCartAdds(cart_adds != null ? cart_adds + 1 : 1);
         }
         productRepository.save(product);
     }
@@ -89,8 +93,8 @@ public class ProductServiceImpl implements ProductService {
         // build product
         int quantity = calculateProductQuantityCount(mapToDTO(product));
         BigDecimal price = calculateDiscountedPrice(product.getOriginalPrice(), product.getPercentDiscount());
-
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
+
         product.setSlug(uniqueSlug);
         product.setPrice(price);
         product.setQuantity(quantity);
@@ -110,10 +114,10 @@ public class ProductServiceImpl implements ProductService {
         setProductForChildEntity(product);
 
         Product normalizedProduct = normalizeProduct(product);  // normalize product information
-        Product newProduct = productRepository.save(normalizedProduct); // save the product to the database
+        Product newProduct = productRepository.save(normalizedProduct);
         productSkuService.saveSkusProductCreation(newProduct);  // save information about product variants (productSkus)
 
-        return mapToDTO(findById(newProduct.getProductId()));   // convert the product to a ProductDTO object and return it
+        return mapToDTO(findById(newProduct.getProductId()));
     }
 
     /**
@@ -254,6 +258,20 @@ public class ProductServiceImpl implements ProductService {
         return mapToDTO(addQuantity);
     }
 
+    /**
+     * Filters {@link Product} based on the provided criteria, retrieves them from a Redis cache if available, or
+     * fetches from the database otherwise, and returns the results as a paginated response.
+     *
+     * @param sell         Boolean flag indicating whether to filter by sell status.
+     * @param key          Keyword to filter the products.
+     * @param cateNames    List of category names to filter the products.
+     * @param sortCriteria List of sorting criteria to order the products.
+     * @param pageNo       The page number to retrieve.
+     * @param pageSize     The number of products per page.
+     * @return ProductResponse A paginated response containing the filtered products.
+     * @throws JsonProcessingException If there is an error processing JSON data.
+     * @see  <a href="https://redis.io/">More about Redis</a>
+     */
     @Override
     public ProductResponse filter(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) throws JsonProcessingException {
         // get all name of cate childs for this cate
@@ -395,7 +413,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private static int calculateProductQuantityCount(ProductDTO dto) {
-        return dto.getSkus().stream().mapToInt(item -> item.getQuantity()).sum();
+        return dto.getSkus().stream().mapToInt(ProductSkuDTO::getQuantity).sum();
     }
 
     public static BigDecimal calculateDiscountedPrice(BigDecimal originalPrice, double percentDiscount) {

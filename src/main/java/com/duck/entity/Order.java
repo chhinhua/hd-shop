@@ -1,8 +1,8 @@
 package com.duck.entity;
 
 import com.duck.listener.EntityListener;
-import com.duck.utils.EOrderStatus;
-import com.duck.utils.EPaymentType;
+import com.duck.utils.enums.EOrderStatus;
+import com.duck.utils.enums.EPaymentType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

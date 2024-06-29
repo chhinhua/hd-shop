@@ -1,4 +1,4 @@
-package com.duck.utils;
+package com.duck.utils.enums;
 
 import com.duck.entity.Product;
 import lombok.Getter;

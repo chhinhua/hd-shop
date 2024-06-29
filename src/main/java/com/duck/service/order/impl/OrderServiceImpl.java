@@ -1,6 +1,6 @@
 package com.duck.service.order.impl;
 
-import com.duck.utils.EOrderTrackingStatus;
+import com.duck.utils.enums.EOrderTrackingStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.duck.config.DateTimeConfig;
 import com.duck.dto.address.AddressDTO;
@@ -22,8 +22,8 @@ import com.duck.service.product.ProductSkuService;
 import com.duck.service.redis.RedisService;
 import com.duck.service.user.UserService;
 import com.duck.utils.AppUtils;
-import com.duck.utils.EOrderStatus;
-import com.duck.utils.EPaymentType;
+import com.duck.utils.enums.EOrderStatus;
+import com.duck.utils.enums.EPaymentType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,7 +38,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.security.Principal;

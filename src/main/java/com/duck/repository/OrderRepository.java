@@ -1,7 +1,7 @@
 package com.duck.repository;
 
 import com.duck.entity.Order;
-import com.duck.utils.EOrderStatus;
+import com.duck.utils.enums.EOrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

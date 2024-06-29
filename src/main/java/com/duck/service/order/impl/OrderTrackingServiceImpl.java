@@ -9,7 +9,7 @@ import com.duck.exception.ResourceNotFoundException;
 import com.duck.repository.OrderRepository;
 import com.duck.repository.OrderTrackingRepository;
 import com.duck.service.order.OrderTrackingService;
-import com.duck.utils.EOrderTrackingStatus;
+import com.duck.utils.enums.EOrderTrackingStatus;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;

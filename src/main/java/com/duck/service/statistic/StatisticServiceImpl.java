@@ -9,7 +9,7 @@ import com.duck.repository.ProductRepository;
 import com.duck.repository.UserRepository;
 import com.duck.service.follow.FollowService;
 import com.duck.service.user.UserService;
-import com.duck.utils.EOrderStatus;
+import com.duck.utils.enums.EOrderStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
