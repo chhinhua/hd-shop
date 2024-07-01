@@ -56,6 +56,13 @@ public class AppUtils {
         return input;
     }
 
+    public static String replaceVietnameseCharacters(String input) {
+        String replacedString = input
+                .replaceAll("đ", "d")
+                .replaceAll("Đ", "D");
+        return replacedString;
+    }
+
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }

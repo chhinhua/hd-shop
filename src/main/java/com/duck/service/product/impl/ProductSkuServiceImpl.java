@@ -1,5 +1,6 @@
 package com.duck.service.product.impl;
 
+import com.duck.dto.product.ProductSkuDTO;
 import com.duck.entity.OptionValue;
 import com.duck.entity.Product;
 import com.duck.entity.ProductSku;
@@ -9,29 +10,29 @@ import com.duck.repository.ProductRepository;
 import com.duck.repository.ProductSkuRepository;
 import com.duck.service.product.OptionValueService;
 import com.duck.service.product.ProductSkuService;
+import com.duck.utils.AppUtils;
+import com.github.slugify.Slugify;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProductSkuServiceImpl implements ProductSkuService {
-    ProductSkuRepository productSkuRepository;
+    ProductSkuRepository skuRepository;
     OptionValueService optionValueService;
     ProductRepository productRepository;
     MessageSource messageSource;
+    ModelMapper modelMapper;
 
     @Override
     @Transactional
@@ -44,7 +45,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
             sku.setSold(0);
             sku.setQuantityAvailable(sku.getQuantity());
             sku.setPercentDiscount(product.getPercentDiscount() == null ? 0 : product.getPercentDiscount());
-            savedSkus.add(productSkuRepository.save(sku));
+            savedSkus.add(skuRepository.save(sku));
         }
         savedSkus.stream().toList();
     }
@@ -52,7 +53,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     /**
      * Retrieves or creates OptionValue instances for a given ProductSku and Product.
      *
-     * @param sku The ProductSku containing the option values to process
+     * @param sku     The ProductSku containing the option values to process
      * @param product The Product associated with the SKU
      * @return A list of OptionValue instances, either existing or newly created
      */
@@ -78,12 +79,12 @@ public class ProductSkuServiceImpl implements ProductSkuService {
      * Saves a new {@link ProductSku} or updates an existing one based on product and option values.
      *
      * @param product The associated {@link Product}
-     * @param sku The {@link ProductSku} to save or update
+     * @param sku     The {@link ProductSku} to save or update
      * @return The saved or updated {@link ProductSku}
      */
     private ProductSku saveOrUpdateSku(Product product, ProductSku sku) {
         List<String> valueNames = getValueNames(sku.getOptionValues());
-        return productSkuRepository.findByProductIdAndValueNames(product.getProductId(), valueNames, valueNames.size())
+        return skuRepository.findByProductIdAndValueNames(product.getProductId(), valueNames, valueNames.size())
                 .map(existingSku -> updateExistingSku(existingSku, sku))
                 .orElseGet(() -> createNewSku(sku, product));
     }
@@ -92,29 +93,33 @@ public class ProductSkuServiceImpl implements ProductSkuService {
      * Updates an existing {@link ProductSku} with new values if they differ.
      *
      * @param existingSku The existing {@link ProductSku} to update
-     * @param newSku The new {@link ProductSku} containing updated values
+     * @param skuUpdate   The new {@link ProductSku} containing updated values
      * @return The updated {@link ProductSku}
      */
-    private ProductSku updateExistingSku(ProductSku existingSku, ProductSku newSku) {
+    private ProductSku updateExistingSku(ProductSku existingSku, ProductSku skuUpdate) {
         Integer oldPercentDiscountVal = existingSku.getPercentDiscount();
-        Integer newPercentDiscountVal = newSku.getProduct().getPercentDiscount();
+        Integer newPercentDiscountVal = skuUpdate.getProduct().getPercentDiscount();
 
         if (!Objects.equals(oldPercentDiscountVal, newPercentDiscountVal)) {
             existingSku.setPercentDiscount(newPercentDiscountVal);
         }
-        if (newSku.getOriginalPrice() != existingSku.getOriginalPrice()) {
-            existingSku.setOriginalPrice(newSku.getOriginalPrice());
+        if (!Objects.equals(skuUpdate.getOriginalPrice(), existingSku.getOriginalPrice())) {
+            existingSku.setOriginalPrice(skuUpdate.getOriginalPrice());
         }
-        if (newSku.getPrice() != existingSku.getPrice()) {
-            existingSku.setPrice(newSku.getPrice());
+        if (!Objects.equals(skuUpdate.getPrice(), existingSku.getPrice())) {
+            existingSku.setPrice(skuUpdate.getPrice());
+        }
+        if (!Objects.equals(skuUpdate.getQuantity(), existingSku.getQuantity())) {
+            existingSku.setQuantity(skuUpdate.getQuantity());
+            existingSku.setQuantityAvailable(skuUpdate.getQuantity());
         }
 
-        return productSkuRepository.save(existingSku);
+        return skuRepository.save(existingSku);
     }
 
     /**
      * Creates and saves a new {@link ProductSku} with updated details.
-     *
+     * <p>
      * This method:
      * - Sets the sold quantity to 0
      * - Sets the available quantity to the initial quantity
@@ -123,7 +128,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
      * - Updates option values based on existing product option values
      *
      * @param productSku The {@link ProductSku} to be created and updated
-     * @param product The associated {@link Product}
+     * @param product    The associated {@link Product}
      * @return The newly created and saved {@link ProductSku}
      */
     private ProductSku createNewSku(ProductSku productSku, Product product) {
@@ -137,7 +142,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         productSku.setProduct(product);
         productSku.setOptionValues(valueList);
 
-        return productSkuRepository.save(productSku);
+        return skuRepository.save(productSku);
     }
 
     private List<String> getValueNames(List<OptionValue> values) {
@@ -155,7 +160,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
             throw new InvalidException("value-names-must-not-be-empty");
         }
         try {
-            return productSkuRepository.findByProductIdAndValueNames(productId, valueNames,valueNames.size()).get();
+            return skuRepository.findByProductIdAndValueNames(productId, valueNames, valueNames.size()).get();
         } catch (Exception e) {
             throw new ResourceNotFoundException(getMessage("sku-not-found-please-choose-anorther-style"));
         }
@@ -163,15 +168,60 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     @Override
     public ProductSku findById(Long skuId) {
-        return productSkuRepository.findById(skuId).orElseThrow(
+        return skuRepository.findById(skuId).orElseThrow(
                 () -> new ResourceNotFoundException(getMessage("sku-not-found"))
         );
     }
 
     /**
+     * Finds a {@link ProductSkuDTO} by generating an SKU based on the provided productId and valueNames.
+     * If the SKU is not found using the original valueNames order, the method attempts to find it
+     * using the reversed valueNames order.
+     *
+     * @param productId the ID of the product
+     * @param valueNames the list of values used to generate the SKU
+     * @return the found ProductSkuDTO
+     * @throws ResourceNotFoundException if the ProductSku is not found
+     */
+    @Override
+    public ProductSkuDTO findBySku(Long productId, List<String> valueNames) {
+        String sku = generateSku(productId, valueNames);
+
+        Optional<ProductSku> productSku = skuRepository.findBySku(sku);
+
+        // If the product SKU is not found, try using the reversed valueNames order
+        if (productSku.isEmpty()) {
+            Collections.reverse(valueNames);
+            sku = generateSku(productId, valueNames);
+            productSku = skuRepository.findBySku(sku);
+        }
+
+        return productSku.map(this::mapToDTO).orElseThrow(() -> new ResourceNotFoundException(
+                getMessage("sku-not-found-please-choose-another-style")
+        ));
+    }
+
+    @Override
+    public String generateSku(Long productId, List<String> valueNames) {
+        StringBuilder skuBuilder = new StringBuilder();
+        skuBuilder.append("SKU-");
+        skuBuilder.append(productId);
+
+        for (String value : valueNames) {
+            String name = AppUtils.replaceVietnameseCharacters(value);
+            skuBuilder.append("-");
+            skuBuilder.append(name);
+        }
+
+        Slugify slugify = new Slugify();
+        return slugify.slugify(skuBuilder.toString());
+
+    }
+
+    /**
      * Retrieves an existing OptionValue or returns the provided one if not found.
      *
-     * @param value The OptionValue to search for or potentially create
+     * @param value   The OptionValue to search for or potentially create
      * @param product The Product associated with the OptionValue
      * @return An existing OptionValue if found, otherwise the provided value
      */
@@ -188,7 +238,7 @@ public class ProductSkuServiceImpl implements ProductSkuService {
      * Retrieves existing OptionValue instances for a list of OptionValues and a product ID.
      *
      * @param optionValues The list of OptionValues to find existing instances for
-     * @param productId The ID of the product associated with the OptionValues
+     * @param productId    The ID of the product associated with the OptionValues
      * @return A list of existing OptionValue instances
      */
     private List<OptionValue> getExistingOptionValues(List<OptionValue> optionValues, Long productId) {
@@ -212,5 +262,9 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+    }
+
+    private ProductSkuDTO mapToDTO(ProductSku sku){
+        return modelMapper.map(sku, ProductSkuDTO.class);
     }
 }

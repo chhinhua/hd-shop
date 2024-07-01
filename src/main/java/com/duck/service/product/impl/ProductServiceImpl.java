@@ -195,7 +195,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Category findCateByName(String cateName) {
-       return categoryService.findByName(cateName);
+        return categoryService.findByName(cateName);
     }
 
     private void saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
@@ -270,7 +270,7 @@ public class ProductServiceImpl implements ProductService {
      * @param pageSize     The number of products per page.
      * @return ProductResponse A paginated response containing the filtered products.
      * @throws JsonProcessingException If there is an error processing JSON data.
-     * @see  <a href="https://redis.io/">More about Redis</a>
+     * @see <a href="https://redis.io/">More about Redis</a>
      */
     @Override
     public ProductResponse filter(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) throws JsonProcessingException {

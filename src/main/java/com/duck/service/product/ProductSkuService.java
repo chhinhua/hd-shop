@@ -1,5 +1,6 @@
 package com.duck.service.product;
 
+import com.duck.dto.product.ProductSkuDTO;
 import com.duck.entity.Product;
 import com.duck.entity.ProductSku;
 import com.duck.exception.InvalidException;
@@ -45,4 +46,26 @@ public interface ProductSkuService {
     ProductSku findByProductIdAndValueNames(final Long productId, final List<String> valueNames);
 
     ProductSku findById(final Long skuId);
+
+    /**
+     * Finds a {@link ProductSkuDTO} by generating an SKU based on the provided productId and valueNames.
+     * If the SKU is not found using the original valueNames order, the method attempts to find it
+     * using the reversed valueNames order.
+     *
+     * @param productId the ID of the product
+     * @param valueNames the list of values used to generate the SKU
+     * @return the found ProductSkuDTO
+     * @throws ResourceNotFoundException if the ProductSku is not found
+     */
+    ProductSkuDTO findBySku(final Long productId, final List<String> valueNames);
+
+    /**
+     * Generates an SKU based on the provided productId and valueNames.
+     * The SKU generation logic is defined within this method.
+     *
+     * @param productId the ID of the product
+     * @param valueNames the list of values used to generate the SKU
+     * @return the generated SKU as a String
+     */
+    String generateSku(final Long productId, final List<String> valueNames);
 }

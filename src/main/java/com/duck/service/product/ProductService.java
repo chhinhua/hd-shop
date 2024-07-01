@@ -8,6 +8,10 @@ import com.duck.entity.Product;
 import java.security.Principal;
 import java.util.List;
 
+/**
+ * @author Chhin Hua
+ * @date 7/10/2023
+ */
 public interface ProductService {
 
     /**
@@ -64,7 +68,7 @@ public interface ProductService {
     /**
      * Adds a specified quantity to a product.
      *
-     * @param productId The ID of the product to which the quantity is to be added.
+     * @param product_id The ID of the product to which the quantity is to be added.
      * @param quantity  The quantity to be added.
      * @return The updated product data transfer object.
      */

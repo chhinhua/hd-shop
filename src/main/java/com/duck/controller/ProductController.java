@@ -1,12 +1,11 @@
 package com.duck.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.duck.dto.product.ProductDTO;
 import com.duck.dto.product.ProductResponse;
 import com.duck.entity.Product;
-import com.duck.entity.ProductSku;
 import com.duck.service.product.ProductService;
 import com.duck.service.product.ProductSkuService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +29,7 @@ public class ProductController {
 
     @PostMapping("/analyze")
     public ResponseEntity<?> productAnalysis(@RequestParam(value = "product_id") Long productId,
-                                @RequestParam(value = "type") String type) {
+                                             @RequestParam(value = "type") String type) {
         productService.productAnalysis(productId, type);
         return ResponseEntity.ok("Successfully");
     }
@@ -99,18 +98,21 @@ public class ProductController {
     }
 
     @GetMapping("/sku")
-    public ResponseEntity<?> getSkuPrice(@RequestParam(value = "product_id") Long product_id,
-                                         @RequestParam(value = "value_names") List<String> value_names) {
-        ProductSku sku = skuService.findByProductIdAndValueNames(product_id, value_names);
-        return ResponseEntity.ok(sku.getPrice());
+    public ResponseEntity<?> getSku(
+            @RequestParam(value = "product_id") Long product_id,
+            @RequestParam(value = "value_names") List<String> value_names
+    ) {
+        return ResponseEntity.ok(skuService.findBySku(product_id, value_names));
     }
 
     @SecurityRequirement(name = "Bear Authentication")
     @Operation(summary = "Add product quantity")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/add-quantity")
-    public ResponseEntity<ProductDTO> addQuantity(@RequestParam(value = "productId") Long product_id,
-                                                  @RequestParam(value = "quantity") Integer quantity) {
+    public ResponseEntity<ProductDTO> addQuantity(
+            @RequestParam(value = "productId") Long product_id,
+            @RequestParam(value = "quantity") Integer quantity
+    ) {
         return ResponseEntity.ok(productService.addQuantity(product_id, quantity));
     }
 }
