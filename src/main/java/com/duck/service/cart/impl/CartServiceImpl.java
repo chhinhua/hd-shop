@@ -4,6 +4,7 @@ import com.duck.dto.cart.CartItemDTO;
 import com.duck.dto.cart.CartItemResponse;
 import com.duck.dto.cart.CartResponse;
 import com.duck.entity.*;
+import com.duck.exception.BadCredentialsException;
 import com.duck.exception.ResourceNotFoundException;
 import com.duck.repository.CartItemRepository;
 import com.duck.repository.CartRepository;
@@ -77,7 +78,6 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     public CartItemResponse addToCart(String username, CartItemDTO itemDTO) {
-        // TODO Handle vấn đề số lượng sản phẩm tồn tại trước khi thêm vào giỏ (quantityAvailable)
         Cart cart = getCartByUsernameOrElseCreateNew(username);
         Product product = getExistingProductById(itemDTO.getProductId());
         boolean hasSku = itemDTO.getValueNames() != null;
@@ -142,13 +142,23 @@ public class CartServiceImpl implements CartService {
     /**
      * Processes a cart item with SKU information.
      *
-     * @param cart    The cart to process the item for.
-     * @param product The product associated with the item.
-     * @param itemDTO The DTO containing the item information.
+     * @param cart    The {@link Cart} to process the item for.
+     * @param product The {@link Product} associated with the item.
+     * @param itemDTO The {@link CartItemDTO} containing the item information.
      * @return The updated CartItemDTO.
+     * @throws BadCredentialsException
      */
     private CartItemResponse processCartItemWithSku(Cart cart, Product product, CartItemDTO itemDTO) {
         ProductSku sku = skuService.findByProductIdAndValueNames(product.getProductId(), itemDTO.getValueNames());
+        if (sku.getQuantityAvailable() < itemDTO.getQuantity()) {
+            // TODO tạo thông báo lấy thêm hàng
+            throw new BadCredentialsException("%s %d %s".formatted(
+                    getMessage("out-of-stock,-you-can-only-add-up-to"),
+                    sku.getQuantityAvailable(),
+                    getMessage("products-to-your-cart"))
+            );
+        }
+
         Optional<CartItem> existingItem = getCartItemByCartProductAndSku(cart, product, sku);
 
         if (existingItem.isPresent()) {
@@ -168,9 +178,9 @@ public class CartServiceImpl implements CartService {
     /**
      * Processes a cart item without SKU information.
      *
-     * @param cart    The cart to process the item for.
-     * @param product The product associated with the item.
-     * @param itemDTO The DTO containing the item information.
+     * @param cart    The {@link Cart} to process the item for.
+     * @param product The {@link Product} associated with the item.
+     * @param itemDTO The {@link CartItemDTO} containing the item information.
      * @return The updated CartItemDTO.
      */
     private CartItemResponse processCartItemWithoutSku(Cart cart, Product product, CartItemDTO itemDTO) {

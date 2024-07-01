@@ -52,7 +52,7 @@ public interface ProductSkuService {
      * If the SKU is not found using the original valueNames order, the method attempts to find it
      * using the reversed valueNames order.
      *
-     * @param productId the ID of the product
+     * @param productId the ID of the {@link Product}
      * @param valueNames the list of values used to generate the SKU
      * @return the found ProductSkuDTO
      * @throws ResourceNotFoundException if the ProductSku is not found
@@ -63,7 +63,7 @@ public interface ProductSkuService {
      * Generates an SKU based on the provided productId and valueNames.
      * The SKU generation logic is defined within this method.
      *
-     * @param productId the ID of the product
+     * @param productId the ID of the {@link Product}
      * @param valueNames the list of values used to generate the SKU
      * @return the generated SKU as a String
      */
