@@ -27,11 +27,19 @@ public class ProductController {
     private final ProductService productService;
     private final ProductSkuService skuService;
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/make-discount")
+    public ResponseEntity<?> makeDiscount(@RequestParam(value = "product_id") Long product_id,
+                                          @RequestParam(value = "percent_discount") int percent_discount) {
+        productService.makeDiscount(product_id, percent_discount);
+        return ResponseEntity.ok("Make discount successfully");
+    }
+
     @PostMapping("/analyze")
     public ResponseEntity<?> productAnalysis(@RequestParam(value = "product_id") Long productId,
                                              @RequestParam(value = "type") String type) {
         productService.productAnalysis(productId, type);
-        return ResponseEntity.ok("Successfully");
+        return ResponseEntity.ok("Analysis successfully");
     }
 
     @Operation(summary = "Create Product")

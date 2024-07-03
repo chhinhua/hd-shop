@@ -15,6 +15,15 @@ import java.util.List;
 public interface ProductService {
 
     /**
+     * Applies a discount to a product and its associated SKUs based on the given discount percentage.
+     *
+     * @param productId       the ID of the product to which the discount will be applied
+     * @param percentDiscount the percentage discount to be applied to the product's price
+     * @throw {@link com.duck.exception.BadCredentialsException} if the percentDiscount is negative or greater than 100
+     */
+    void makeDiscount(final long productId, final int percentDiscount);
+
+    /**
      * Finds a product by its ID.
      *
      * @param productId The ID of the product to find.

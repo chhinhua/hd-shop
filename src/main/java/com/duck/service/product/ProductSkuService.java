@@ -68,4 +68,6 @@ public interface ProductSkuService {
      * @return the generated SKU as a String
      */
     String generateSku(final Long productId, final List<String> valueNames);
+
+    void save(final ProductSku sku);
 }

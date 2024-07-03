@@ -4,11 +4,12 @@ import com.duck.dto.order.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.duck.entity.Order;
 
-import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
 
 public interface OrderService {
+    void saveChangedSkusQuantity(final Order order);
+
     void trackingOrder(final OrderStatusPayload payload);
 
     Order findByOrderCode(final String orderCode);

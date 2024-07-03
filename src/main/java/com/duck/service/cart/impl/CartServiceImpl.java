@@ -55,7 +55,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public Cart findByUsername(String username) {
         return cartRepository.findByUser_Username(username).orElseThrow(
-                () -> new ResourceNotFoundException(getMessage("cart-not-found"))
+                () -> new ResourceNotFoundException(message("cart-not-found"))
         );
     }
 
@@ -63,7 +63,7 @@ public class CartServiceImpl implements CartService {
     public CartResponse getCartById(Long cartId) {
         Cart cart = cartRepository
                 .findById(cartId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(message("cart-not-found")));
 
         return mapToResponse(cart);
     }
@@ -119,7 +119,7 @@ public class CartServiceImpl implements CartService {
 
     private Cart getExistingCartByUsername(String username) {
         return cartRepository.findByUser_Username(username)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(message("cart-not-found")));
     }
 
     private Cart getCartByUsernameOrElseCreateNew(String username) {
@@ -127,7 +127,7 @@ public class CartServiceImpl implements CartService {
                 .orElseGet(() -> {
                     User user = userRepository
                             .findByUsernameOrEmail(username, username)
-                            .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
+                            .orElseThrow(() -> new ResourceNotFoundException(message("user-not-found")));
 
                     Cart newCart = new Cart();
                     newCart.setTotalPrice(BigDecimal.valueOf(0));
@@ -152,10 +152,11 @@ public class CartServiceImpl implements CartService {
         ProductSku sku = skuService.findByProductIdAndValueNames(product.getProductId(), itemDTO.getValueNames());
         if (sku.getQuantityAvailable() < itemDTO.getQuantity()) {
             // TODO tạo thông báo lấy thêm hàng
-            throw new BadCredentialsException("%s %d %s".formatted(
-                    getMessage("out-of-stock,-you-can-only-add-up-to"),
+            throw new BadCredentialsException("%s, %s %d %s".formatted(
+                    message("out-of-stock"),
+                    message("you-can-only-add-up-to"),
                     sku.getQuantityAvailable(),
-                    getMessage("products-to-your-cart"))
+                    message("products-to-your-cart"))
             );
         }
 
@@ -282,10 +283,10 @@ public class CartServiceImpl implements CartService {
 
     private Product getExistingProductById(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("product-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(message("product-not-found")));
     }
 
-    private String getMessage(String code) {
+    private String message(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 

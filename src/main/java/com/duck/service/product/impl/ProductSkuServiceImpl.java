@@ -218,6 +218,11 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     }
 
+    @Override
+    public void save(ProductSku sku) {
+        skuRepository.save(sku);
+    }
+
     /**
      * Retrieves an existing OptionValue or returns the provided one if not found.
      *

@@ -6,6 +6,7 @@ import com.duck.dto.product.ProductDTO;
 import com.duck.dto.product.ProductResponse;
 import com.duck.dto.product.ProductSkuDTO;
 import com.duck.entity.*;
+import com.duck.exception.BadCredentialsException;
 import com.duck.exception.InvalidException;
 import com.duck.exception.ResourceNotFoundException;
 import com.duck.repository.ProductRepository;
@@ -138,6 +139,26 @@ public class ProductServiceImpl implements ProductService {
         dto.setLiked(isLiked);
         return dto;
     }
+
+    @Override
+    @Transactional
+    public void makeDiscount(long productId, int percentDiscount) {
+        if (percentDiscount < 0 || percentDiscount > 100) {
+            throw new BadCredentialsException(getMessage("discount_percentage-must-have-a-value-between-0-and-100"));
+        }
+
+        Product product = findById(productId);
+        product.setPercentDiscount(percentDiscount);
+        product.setPrice(calculateDiscountedPrice(product.getOriginalPrice(), percentDiscount));
+        productRepository.save(product);
+
+        product.getSkus().stream().forEach(sku -> {
+            sku.setPercentDiscount(percentDiscount);
+            sku.setPrice(calculateDiscountedPrice(sku.getOriginalPrice(), percentDiscount));
+            productSkuService.save(sku);
+        });
+    }
+
 
     @Override
     public Product findById(Long productId) {
