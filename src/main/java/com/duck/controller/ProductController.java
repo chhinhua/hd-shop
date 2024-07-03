@@ -1,5 +1,6 @@
 package com.duck.controller;
 
+import com.duck.dto.product.AddInventoryRequest;
 import com.duck.dto.product.ProductDTO;
 import com.duck.dto.product.ProductResponse;
 import com.duck.entity.Product;
@@ -26,6 +27,12 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
     private final ProductSkuService skuService;
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/add-inventory")
+    public ResponseEntity<?> addInventory(@RequestBody AddInventoryRequest request) {
+        return ResponseEntity.ok(productService.addInventory(request));
+    }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/make-discount")

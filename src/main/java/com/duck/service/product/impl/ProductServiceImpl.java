@@ -1,10 +1,7 @@
 package com.duck.service.product.impl;
 
 import com.duck.component.UniqueSlugGenerator;
-import com.duck.dto.product.OptionDTO;
-import com.duck.dto.product.ProductDTO;
-import com.duck.dto.product.ProductResponse;
-import com.duck.dto.product.ProductSkuDTO;
+import com.duck.dto.product.*;
 import com.duck.entity.*;
 import com.duck.exception.BadCredentialsException;
 import com.duck.exception.InvalidException;
@@ -142,6 +139,29 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    public ProductDTO addInventory(AddInventoryRequest request) {
+        request.getSkus().stream().forEach(item -> {
+            if (item.getAddNumber() < 0 || item.getAddNumber() > 10000) {
+                throw new BadCredentialsException(getMessage("additional-quantity-must-be-from-1-to-10000"));
+            }
+            ProductSku sku = productSkuService.findById(item.getSkuId());
+            sku.setQuantity(sku.getQuantity() + item.getAddNumber());
+            sku.setQuantityAvailable(sku.getQuantityAvailable() + item.getAddNumber());
+            productSkuService.save(sku);
+        });
+
+        int increaseProductQuantity = request.getSkus().stream()
+                .mapToInt(AddInventoryRequest.SkuRequest::getAddNumber)
+                .sum();
+        Product product = findById(request.getProductId());
+        product.setQuantity(product.getQuantity() + increaseProductQuantity);
+        product.setQuantityAvailable(product.getQuantityAvailable() + increaseProductQuantity);
+
+        return mapToDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
     public void makeDiscount(long productId, int percentDiscount) {
         if (percentDiscount < 0 || percentDiscount > 100) {
             throw new BadCredentialsException(getMessage("discount_percentage-must-have-a-value-between-0-and-100"));
@@ -158,7 +178,6 @@ public class ProductServiceImpl implements ProductService {
             productSkuService.save(sku);
         });
     }
-
 
     @Override
     public Product findById(Long productId) {
@@ -436,6 +455,7 @@ public class ProductServiceImpl implements ProductService {
     private static int calculateProductQuantityCount(ProductDTO dto) {
         return dto.getSkus().stream().mapToInt(ProductSkuDTO::getQuantity).sum();
     }
+
 
     public static BigDecimal calculateDiscountedPrice(BigDecimal originalPrice, double percentDiscount) {
         BigDecimal discountRate = BigDecimal.valueOf(percentDiscount);

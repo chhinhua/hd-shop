@@ -1,5 +1,7 @@
 package com.duck.service.product;
 
+import com.duck.dto.product.AddInventoryRequest;
+import com.duck.dto.product.ProductSkuDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.duck.dto.product.ProductDTO;
 import com.duck.dto.product.ProductResponse;
@@ -15,11 +17,20 @@ import java.util.List;
 public interface ProductService {
 
     /**
+     * Adds inventory based on the provided request.
+     *
+     * @param request the {@link AddInventoryRequest} containing the product ID and SKUs with their respective quantities to add
+     * @return a {@link ProductDTO} representing the updated product
+     * @throws com.duck.exception.BadCredentialsException if any {@link com.duck.entity.ProductSku} or {@link Product} is not found, or if any quantity is negative
+     */
+    ProductDTO addInventory(final AddInventoryRequest request);
+
+    /**
      * Applies a discount to a product and its associated SKUs based on the given discount percentage.
      *
      * @param productId       the ID of the product to which the discount will be applied
      * @param percentDiscount the percentage discount to be applied to the product's price
-     * @throw {@link com.duck.exception.BadCredentialsException} if the percentDiscount is negative or greater than 100
+     * @throws com.duck.exception.BadCredentialsException if the percentDiscount is negative or greater than 100
      */
     void makeDiscount(final long productId, final int percentDiscount);
 
