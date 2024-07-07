@@ -20,5 +20,5 @@ SET percent_discount = (
 )
 WHERE percent_discount IS NULL;
 
--- set sku percent_discount
+--
 

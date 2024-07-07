@@ -102,12 +102,12 @@ public class ProductController {
                     defaultValue = "${paging.default.page-size}") int pageSize,
             Principal principal
     ) throws JsonProcessingException {
-        String username = null;
-        if (principal != null) {
-            username = principal.getName();
-        }
-        ProductResponse searchResponse = productService.filterProducts(
-                sell, key, cateNames, sortCriteria, pageNo, pageSize, username
+//        String username = null;
+//        if (principal != null) {
+//            username = principal.getName();
+//        }
+        ProductResponse searchResponse = productService.filter(
+                sell, key, cateNames, sortCriteria, pageNo, pageSize
         );
         return ResponseEntity.ok(searchResponse);
     }

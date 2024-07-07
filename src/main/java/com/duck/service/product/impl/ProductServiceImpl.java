@@ -60,26 +60,22 @@ public class ProductServiceImpl implements ProductService {
     static Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     @Override
+    @Transactional
     public void productAnalysis(Long productId, String analysisType) {
-        Product product = findById(productId);
-        Integer clicks = product.getProductClicks();
-        Integer views = product.getProductViews();
-        Integer cart_adds = product.getProductCartAdds();
-
         EProductAnalysisType type = EProductAnalysisType.fromKey(analysisType);
-        switch (type) {
-            case CLICK -> product.setProductClicks(clicks != null ? clicks + 1 : 1);
-            case VIEW -> product.setProductViews(views != null ? views + 1 : 1);
-            case ADD_CART -> product.setProductCartAdds(cart_adds != null ? cart_adds + 1 : 1);
-        }
-        productRepository.save(product);
+        String fieldName = switch (type) {
+            case CLICK -> "product_clicks";
+            case VIEW -> "product_views";
+            case ADD_CART -> "product_cart_adds";
+        };
+        productRepository.incrementField(productId, fieldName);
     }
 
     /**
      * 🎯Create a new product.
      *
-     * @param product The product object to follow.
-     * @return ProductDTO representing the created product.
+     * @param product The {@link Product} object to follow.
+     * @return {@link ProductDTO} representing the created product.
      * @throws ResourceNotFoundException if the corresponding category is not found.
      */
     @Override
@@ -121,8 +117,8 @@ public class ProductServiceImpl implements ProductService {
     /**
      * 🎯Get a single product.
      *
-     * @param productId Product ID.
-     * @return Product DTO object.
+     * @param productId {@link Product} ID.
+     * @return {@link ProductDTO} object.
      * @throws ResourceNotFoundException if the product is not found.
      */
     @Override
@@ -140,7 +136,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDTO addInventory(AddInventoryRequest request) {
-        request.getSkus().stream().forEach(item -> {
+        request.getSkus().forEach(item -> {
             if (item.getAddNumber() < 0 || item.getAddNumber() > 10000) {
                 throw new BadCredentialsException(getMessage("additional-quantity-must-be-from-1-to-10000"));
             }
@@ -172,7 +168,7 @@ public class ProductServiceImpl implements ProductService {
         product.setPrice(calculateDiscountedPrice(product.getOriginalPrice(), percentDiscount));
         productRepository.save(product);
 
-        product.getSkus().stream().forEach(sku -> {
+        product.getSkus().forEach(sku -> {
             sku.setPercentDiscount(percentDiscount);
             sku.setPrice(calculateDiscountedPrice(sku.getOriginalPrice(), percentDiscount));
             productSkuService.save(sku);
@@ -248,8 +244,8 @@ public class ProductServiceImpl implements ProductService {
     /**
      * 🎯Deactivate or activate a product based on its ID.
      *
-     * @param productId ID of the product to deactivate or activate.
-     * @return A ProductDTO representing the updated state of the product.
+     * @param productId ID of the {@link Product} to deactivate or activate.
+     * @return A {@link ProductDTO} representing the updated state of the product.
      * @throws ResourceNotFoundException if the product is not found.
      * @date 01-11-2023
      */
@@ -266,8 +262,8 @@ public class ProductServiceImpl implements ProductService {
      * 🎯
      * Deactivate or activate the selling status of a product based on its ID.
      *
-     * @param productId ID of the product to deactivate or activate selling.
-     * @return A ProductDTO representing the updated status of the product.
+     * @param productId ID of the {@link Product} to deactivate or activate selling.
+     * @return A {@link ProductDTO} representing the updated status of the product.
      * @throws ResourceNotFoundException if the product is not found.
      * @date 01-11-2023
      */
@@ -308,7 +304,7 @@ public class ProductServiceImpl implements ProductService {
      * @param sortCriteria List of sorting criteria to order the products.
      * @param pageNo       The page number to retrieve.
      * @param pageSize     The number of products per page.
-     * @return ProductResponse A paginated response containing the filtered products.
+     * @return {@link ProductResponse} A paginated response containing the filtered products.
      * @throws JsonProcessingException If there is an error processing JSON data.
      * @see <a href="https://redis.io/">More about Redis</a>
      */
@@ -372,8 +368,16 @@ public class ProductServiceImpl implements ProductService {
         return totalElements % pageSize != 0 ? totalElements % pageSize : totalElements != 0 ? pageSize : 0;
     }
 
+    /**
+     * Retrieves a list of category names, including the names of all child categories for each provided {@link Category} name.
+     * <p>
+     * This method trims whitespace from the input category names, removes duplicates, and processes each category name
+     * to find its child categories. The names of child categories are then added to the result set.
+     *
+     * @param cateNames a list of category names to process
+     * @return a list of unique category names, including child category names, with any encoded names decoded
+     */
     private List<String> getOnlyCateChild(List<String> cateNames) {
-        // Sử dụng Set để tránh các mục trùng lặp
         Set<String> allCateNames = cateNames.stream()
                 .map(String::trim)
                 .collect(Collectors.toSet());
@@ -422,11 +426,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * 🎯Build product object
+     * 🎯Build {@link Product} object
      *
-     * @param dto
-     * @param existingProduct
-     * @param category
+     * @param dto is {@link ProductDTO}
+     * @param existingProduct is {@link Product}
+     * @param category is {@link Category}
      */
     private void setProductFields(ProductDTO dto, Product existingProduct, Category category) {
         if (!Objects.equals(existingProduct.getCategory().getId(), category.getId())) {
