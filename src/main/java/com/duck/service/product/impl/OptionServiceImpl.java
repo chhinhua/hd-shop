@@ -15,15 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OptionServiceImpl implements OptionService {
     OptionRepository optionRepository;
-    OptionValueService valueService;
     OptionValueRepository valueRepository;
+    OptionValueService valueService;
 
     /**
      * Lưu danh sách option ứng vs product vào database
@@ -32,6 +31,7 @@ public class OptionServiceImpl implements OptionService {
      * @return option list
      */
     @Override
+    @Transactional
     public List<Option> saveOrUpdateOptions(Long productId, List<Option> options) {
         List<Option> savedOptions = new ArrayList<>();
         for (Option option : options) {
@@ -57,9 +57,7 @@ public class OptionServiceImpl implements OptionService {
                 }
 
                 Option updateOption = optionRepository.saveAndFlush(existingOption.get());
-
                 deleteUnusedValues(updateOption, option.getValues());
-
                 savedOptions.add(updateOption);
             }
         }
@@ -67,14 +65,12 @@ public class OptionServiceImpl implements OptionService {
         return savedOptions.stream().toList();
     }
 
-    @Transactional
-    protected void deleteUnusedValues(Option existingOption, List<OptionValue> newOptionValues) {
+    private void deleteUnusedValues(Option existingOption, List<OptionValue> newOptionValues) {
         List<OptionValue> existingOptionValues = existingOption.getValues();
 
         // Xác định các OptionValues không còn được sử dụng
         List<OptionValue> optionValuesToDelete = existingOptionValues.stream()
-                .filter(optionValue -> !valueNameExists(optionValue, newOptionValues))
-                .collect(Collectors.toList());
+                .filter(optionValue -> !valueNameExists(optionValue, newOptionValues)).toList();
 
         // Xóa các OptionValues không còn được sử dụng khỏi cơ sở dữ liệu
         for (OptionValue optionValue : optionValuesToDelete) {

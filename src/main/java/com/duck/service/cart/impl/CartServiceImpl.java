@@ -4,6 +4,7 @@ import com.duck.dto.cart.CartItemDTO;
 import com.duck.dto.cart.CartItemResponse;
 import com.duck.dto.cart.CartResponse;
 import com.duck.entity.*;
+import com.duck.exception.BadCredentialsException;
 import com.duck.exception.ResourceNotFoundException;
 import com.duck.repository.CartItemRepository;
 import com.duck.repository.CartRepository;
@@ -54,7 +55,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public Cart findByUsername(String username) {
         return cartRepository.findByUser_Username(username).orElseThrow(
-                () -> new ResourceNotFoundException(getMessage("cart-not-found"))
+                () -> new ResourceNotFoundException(message("cart-not-found"))
         );
     }
 
@@ -62,7 +63,7 @@ public class CartServiceImpl implements CartService {
     public CartResponse getCartById(Long cartId) {
         Cart cart = cartRepository
                 .findById(cartId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(message("cart-not-found")));
 
         return mapToResponse(cart);
     }
@@ -77,7 +78,6 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     public CartItemResponse addToCart(String username, CartItemDTO itemDTO) {
-        // TODO Handle vấn đề số lượng sản phẩm tồn tại trước khi thêm vào giỏ (quantityAvailable)
         Cart cart = getCartByUsernameOrElseCreateNew(username);
         Product product = getExistingProductById(itemDTO.getProductId());
         boolean hasSku = itemDTO.getValueNames() != null;
@@ -119,7 +119,7 @@ public class CartServiceImpl implements CartService {
 
     private Cart getExistingCartByUsername(String username) {
         return cartRepository.findByUser_Username(username)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("cart-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(message("cart-not-found")));
     }
 
     private Cart getCartByUsernameOrElseCreateNew(String username) {
@@ -127,7 +127,7 @@ public class CartServiceImpl implements CartService {
                 .orElseGet(() -> {
                     User user = userRepository
                             .findByUsernameOrEmail(username, username)
-                            .orElseThrow(() -> new ResourceNotFoundException(getMessage("user-not-found")));
+                            .orElseThrow(() -> new ResourceNotFoundException(message("user-not-found")));
 
                     Cart newCart = new Cart();
                     newCart.setTotalPrice(BigDecimal.valueOf(0));
@@ -142,13 +142,24 @@ public class CartServiceImpl implements CartService {
     /**
      * Processes a cart item with SKU information.
      *
-     * @param cart    The cart to process the item for.
-     * @param product The product associated with the item.
-     * @param itemDTO The DTO containing the item information.
+     * @param cart    The {@link Cart} to process the item for.
+     * @param product The {@link Product} associated with the item.
+     * @param itemDTO The {@link CartItemDTO} containing the item information.
      * @return The updated CartItemDTO.
+     * @throws BadCredentialsException
      */
     private CartItemResponse processCartItemWithSku(Cart cart, Product product, CartItemDTO itemDTO) {
         ProductSku sku = skuService.findByProductIdAndValueNames(product.getProductId(), itemDTO.getValueNames());
+        if (sku.getQuantityAvailable() < itemDTO.getQuantity()) {
+            // TODO tạo thông báo lấy thêm hàng
+            throw new BadCredentialsException("%s, %s %d %s".formatted(
+                    message("out-of-stock"),
+                    message("you-can-only-add-up-to"),
+                    sku.getQuantityAvailable(),
+                    message("products-to-your-cart"))
+            );
+        }
+
         Optional<CartItem> existingItem = getCartItemByCartProductAndSku(cart, product, sku);
 
         if (existingItem.isPresent()) {
@@ -168,9 +179,9 @@ public class CartServiceImpl implements CartService {
     /**
      * Processes a cart item without SKU information.
      *
-     * @param cart    The cart to process the item for.
-     * @param product The product associated with the item.
-     * @param itemDTO The DTO containing the item information.
+     * @param cart    The {@link Cart} to process the item for.
+     * @param product The {@link Product} associated with the item.
+     * @param itemDTO The {@link CartItemDTO} containing the item information.
      * @return The updated CartItemDTO.
      */
     private CartItemResponse processCartItemWithoutSku(Cart cart, Product product, CartItemDTO itemDTO) {
@@ -272,10 +283,10 @@ public class CartServiceImpl implements CartService {
 
     private Product getExistingProductById(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("product-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(message("product-not-found")));
     }
 
-    private String getMessage(String code) {
+    private String message(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 

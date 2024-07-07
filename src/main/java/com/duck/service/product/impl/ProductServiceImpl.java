@@ -1,11 +1,9 @@
 package com.duck.service.product.impl;
 
 import com.duck.component.UniqueSlugGenerator;
-import com.duck.dto.product.OptionDTO;
-import com.duck.dto.product.ProductDTO;
-import com.duck.dto.product.ProductResponse;
-import com.duck.dto.product.ProductSkuDTO;
+import com.duck.dto.product.*;
 import com.duck.entity.*;
+import com.duck.exception.BadCredentialsException;
 import com.duck.exception.InvalidException;
 import com.duck.exception.ResourceNotFoundException;
 import com.duck.repository.ProductRepository;
@@ -17,6 +15,8 @@ import com.duck.service.product.ProductSkuService;
 import com.duck.service.redis.RedisService;
 import com.duck.service.user.UserService;
 import com.duck.utils.AppUtils;
+import com.duck.utils.enums.EProductAnalysisType;
+import com.duck.utils.enums.EProductStatus;
 import com.duck.validator.ProductValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.slugify.Slugify;
@@ -35,9 +35,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -58,58 +60,65 @@ public class ProductServiceImpl implements ProductService {
     static Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     @Override
+    @Transactional
     public void productAnalysis(Long productId, String analysisType) {
-        Product product = findById(productId);
-        Integer clicks = product.getProductClicks();
-        Integer views = product.getProductViews();
-        Integer cart_adds = product.getProductCartAdds();
-        switch (analysisType.trim()) {
-            case "click" -> product.setProductClicks(clicks != null ? clicks + 1 : 1);
-            case "view" -> product.setProductViews(views != null ? views + 1 : 1);
-            case "add_cart" -> product.setProductCartAdds(cart_adds != null ? cart_adds + 1 : 1);
-        }
-        productRepository.save(product);
+        EProductAnalysisType type = EProductAnalysisType.fromKey(analysisType);
+        String fieldName = switch (type) {
+            case CLICK -> "product_clicks";
+            case VIEW -> "product_views";
+            case ADD_CART -> "product_cart_adds";
+        };
+        productRepository.incrementField(productId, fieldName);
     }
 
     /**
      * 🎯Create a new product.
      *
-     * @param product The product object to follow.
-     * @return ProductDTO representing the created product.
+     * @param product The {@link Product} object to follow.
+     * @return {@link ProductDTO} representing the created product.
      * @throws ResourceNotFoundException if the corresponding category is not found.
      */
     @Override
     @Transactional
     public ProductDTO create(Product product) {
-        productValidator.validate(product);  // validate input product
-        Category category = categoryService.findByName(product.getCategory().getName());    // find the product category based on its ID
+        productValidator.validateCreate(product);
+        Category category = findCateByName(product.getCategory().getName());
 
         // build product
+        int quantity = calculateProductQuantityCount(mapToDTO(product));
+        BigDecimal price = calculateDiscountedPrice(product.getOriginalPrice(), product.getPercentDiscount());
         String uniqueSlug = slugGenerator.generateUniqueProductSlug(slugify.slugify(product.getName()));
+
         product.setSlug(uniqueSlug);
-        product.setCategory(category);
-        product.setIsSelling(false);
-        product.setIsActive(true);
+        product.setPrice(price);
+        product.setQuantity(quantity);
+        product.setQuantityAvailable(quantity);
         product.setSold(0);
         product.setRating(0f);
         product.setFavoriteCount(0);
+        product.setProductCartAdds(0);
+        product.setProductClicks(0);
+        product.setProductViews(0);
         product.setNumberOfRatings(0);
         product.setPromotionalPrice(BigDecimal.ZERO);
-        product.setQuantityAvailable(product.getQuantity());
+        product.setStatus(EProductStatus.UNSELLING.getValue());
+        product.setCategory(category);
+        product.setIsSelling(false);
+        product.setIsActive(true);
         setProductForChildEntity(product);
 
         Product normalizedProduct = normalizeProduct(product);  // normalize product information
-        Product newProduct = productRepository.save(normalizedProduct); // save the product to the database
-        productSkuService.saveSkusFromProduct(newProduct);  // save information about product variants (productSkus)
+        Product newProduct = productRepository.save(normalizedProduct);
+        productSkuService.saveSkusProductCreation(newProduct);  // save information about product variants (productSkus)
 
-        return mapToDTO(findById(newProduct.getProductId()));   // convert the product to a ProductDTO object and return it
+        return mapToDTO(findById(newProduct.getProductId()));
     }
 
     /**
      * 🎯Get a single product.
      *
-     * @param productId Product ID.
-     * @return Product DTO object.
+     * @param productId {@link Product} ID.
+     * @return {@link ProductDTO} object.
      * @throws ResourceNotFoundException if the product is not found.
      */
     @Override
@@ -122,6 +131,48 @@ public class ProductServiceImpl implements ProductService {
         boolean isLiked = followService.isFollowed(principal.getName(), dto.getId());
         dto.setLiked(isLiked);
         return dto;
+    }
+
+    @Override
+    @Transactional
+    public ProductDTO addInventory(AddInventoryRequest request) {
+        request.getSkus().forEach(item -> {
+            if (item.getAddNumber() < 0 || item.getAddNumber() > 10000) {
+                throw new BadCredentialsException(getMessage("additional-quantity-must-be-from-1-to-10000"));
+            }
+            ProductSku sku = productSkuService.findById(item.getSkuId());
+            sku.setQuantity(sku.getQuantity() + item.getAddNumber());
+            sku.setQuantityAvailable(sku.getQuantityAvailable() + item.getAddNumber());
+            productSkuService.save(sku);
+        });
+
+        int increaseProductQuantity = request.getSkus().stream()
+                .mapToInt(AddInventoryRequest.SkuRequest::getAddNumber)
+                .sum();
+        Product product = findById(request.getProductId());
+        product.setQuantity(product.getQuantity() + increaseProductQuantity);
+        product.setQuantityAvailable(product.getQuantityAvailable() + increaseProductQuantity);
+
+        return mapToDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
+    public void makeDiscount(long productId, int percentDiscount) {
+        if (percentDiscount < 0 || percentDiscount > 100) {
+            throw new BadCredentialsException(getMessage("discount_percentage-must-have-a-value-between-0-and-100"));
+        }
+
+        Product product = findById(productId);
+        product.setPercentDiscount(percentDiscount);
+        product.setPrice(calculateDiscountedPrice(product.getOriginalPrice(), percentDiscount));
+        productRepository.save(product);
+
+        product.getSkus().forEach(sku -> {
+            sku.setPercentDiscount(percentDiscount);
+            sku.setPrice(calculateDiscountedPrice(sku.getOriginalPrice(), percentDiscount));
+            productSkuService.save(sku);
+        });
     }
 
     @Override
@@ -147,32 +198,54 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * 🎯Update a product.
+     * Updates an existing {@link Product} with new information.
      *
-     * @param dto       Updated product information.
-     * @param productId Product ID to update.
-     * @return Updated product DTO object.
-     * @date 25-10-2023
+     * <ul>
+     *      <li>1. Validates the input data</li>
+     *      <li>2. Retrieves the existing {@link Product}</li>
+     *      <li>3. Retrieves the existing {@link Category}</li>
+     *      <li>4. Updates product fields</li>
+     *      <li>5. Normalizes product data</li>
+     *      <li>6. Saves the updated product</li>
+     *      <li>7. Updates or creates {@link Option} and list {@link ProductSku}</li>
+     * </ul>
+     *
+     * @param dto       The {@link ProductDTO} containing updated information
+     * @param productId The ID of the product to update
+     * @return A {@link ProductDTO} representing the updated product
+     * @throws ResourceNotFoundException if the product or category is not found
+     * @throws InvalidException          if the input data is invalid
      */
     @Override
     @Transactional
     public ProductDTO update(ProductDTO dto, Long productId) {
-        productValidator.validateUpdate(dto);  // xác thực đầu vào
-        Product existingProduct = findById(productId);  // Kiểm tra sản phẩm đã tồn tại
-        Category category = categoryService.findByName(dto.getCategory().getName()); // Kiểm tra danh mục đã tồn tại
-        setProductFields(dto, existingProduct, category);    // Cập nhật các trường thay đổi
-        Product normalizedProduct = normalizeProduct(existingProduct);  // Chuẩn hóa dữ liệu sản phẩm đầu vào
-        existingProduct = productRepository.save(normalizedProduct);    // Lưu sản phẩm đã cập nhật
-        saveOrUpdateOptions(existingProduct, dto.getOptions()); // Lưu hoặc cập nhật Options và OptionValues
-        saveOrUpdateSkus(existingProduct, dto.getSkus());  // Lưu hoặc cập nhật ProductSkus
+        productValidator.validateUpdate(dto);
+        Product existingProduct = findById(productId);
+        Category category = findCateByName(dto.getCategory().getName());
+        setProductFields(dto, existingProduct, category);
+        Product normalizedProduct = normalizeProduct(existingProduct);
+        existingProduct = productRepository.save(normalizedProduct);
+        saveOrUpdateOptions(existingProduct, dto.getOptions());
+        saveOrUpdateSkus(existingProduct, dto.getSkus());
         return mapToDTO(findById(productId));
+    }
+
+    private Category findCateByName(String cateName) {
+        return categoryService.findByName(cateName);
+    }
+
+    private void saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
+        List<ProductSku> skus = skuDTOList.stream()
+                .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
+                .collect(Collectors.toList());
+        productSkuService.saveOrUpdateListSkus(existingProduct.getProductId(), skus);
     }
 
     /**
      * 🎯Deactivate or activate a product based on its ID.
      *
-     * @param productId ID of the product to deactivate or activate.
-     * @return A ProductDTO representing the updated state of the product.
+     * @param productId ID of the {@link Product} to deactivate or activate.
+     * @return A {@link ProductDTO} representing the updated state of the product.
      * @throws ResourceNotFoundException if the product is not found.
      * @date 01-11-2023
      */
@@ -180,15 +253,17 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO toggleActive(Long productId) {
         Product existingProduct = findById(productId);
         existingProduct.setIsActive(!existingProduct.getIsActive());
+        existingProduct.setStatus(EProductStatus.getProductStatusValue(existingProduct));
         Product updateIsAcitve = productRepository.save(existingProduct);
         return mapToDTO(updateIsAcitve);
     }
 
     /**
-     * 🎯Deactivate or activate the selling status of a product based on its ID.
+     * 🎯
+     * Deactivate or activate the selling status of a product based on its ID.
      *
-     * @param productId ID of the product to deactivate or activate selling.
-     * @return A ProductDTO representing the updated status of the product.
+     * @param productId ID of the {@link Product} to deactivate or activate selling.
+     * @return A {@link ProductDTO} representing the updated status of the product.
      * @throws ResourceNotFoundException if the product is not found.
      * @date 01-11-2023
      */
@@ -196,15 +271,15 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO toggleSelling(Long productId) {
         Product existingProduct = findById(productId);
         existingProduct.setIsSelling(!existingProduct.getIsSelling());
+        existingProduct.setStatus(EProductStatus.getProductStatusValue(existingProduct));
         Product updateIsAcitve = productRepository.save(existingProduct);
         return mapToDTO(updateIsAcitve);
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
-        productRepository.findById(id).orElseThrow(() ->
-                new ResourceNotFoundException(getMessage("product-not-found"))
-        );
+        productRepository.deleteById(id);
     }
 
     @Override
@@ -219,6 +294,20 @@ public class ProductServiceImpl implements ProductService {
         return mapToDTO(addQuantity);
     }
 
+    /**
+     * Filters {@link Product} based on the provided criteria, retrieves them from a Redis cache if available, or
+     * fetches from the database otherwise, and returns the results as a paginated response.
+     *
+     * @param sell         Boolean flag indicating whether to filter by sell status.
+     * @param key          Keyword to filter the products.
+     * @param cateNames    List of category names to filter the products.
+     * @param sortCriteria List of sorting criteria to order the products.
+     * @param pageNo       The page number to retrieve.
+     * @param pageSize     The number of products per page.
+     * @return {@link ProductResponse} A paginated response containing the filtered products.
+     * @throws JsonProcessingException If there is an error processing JSON data.
+     * @see <a href="https://redis.io/">More about Redis</a>
+     */
     @Override
     public ProductResponse filter(Boolean sell, String key, List<String> cateNames, List<String> sortCriteria, int pageNo, int pageSize) throws JsonProcessingException {
         // get all name of cate childs for this cate
@@ -279,8 +368,16 @@ public class ProductServiceImpl implements ProductService {
         return totalElements % pageSize != 0 ? totalElements % pageSize : totalElements != 0 ? pageSize : 0;
     }
 
+    /**
+     * Retrieves a list of category names, including the names of all child categories for each provided {@link Category} name.
+     * <p>
+     * This method trims whitespace from the input category names, removes duplicates, and processes each category name
+     * to find its child categories. The names of child categories are then added to the result set.
+     *
+     * @param cateNames a list of category names to process
+     * @return a list of unique category names, including child category names, with any encoded names decoded
+     */
     private List<String> getOnlyCateChild(List<String> cateNames) {
-        // Sử dụng Set để tránh các mục trùng lặp
         Set<String> allCateNames = cateNames.stream()
                 .map(String::trim)
                 .collect(Collectors.toSet());
@@ -328,30 +425,26 @@ public class ProductServiceImpl implements ProductService {
         optionService.saveOrUpdateOptions(existingProduct.getProductId(), options);
     }
 
-    private void saveOrUpdateSkus(Product existingProduct, List<ProductSkuDTO> skuDTOList) {
-        List<ProductSku> skus = skuDTOList.stream()
-                .map(skuDTO -> modelMapper.map(skuDTO, ProductSku.class))
-                .collect(Collectors.toList());
-        productSkuService.saveOrUpdateSkus(existingProduct.getProductId(), skus);
-    }
-
     /**
-     * 🎯Build product object
+     * 🎯Build {@link Product} object
      *
-     * @param dto
-     * @param existingProduct
-     * @param category
+     * @param dto is {@link ProductDTO}
+     * @param existingProduct is {@link Product}
+     * @param category is {@link Category}
      */
     private void setProductFields(ProductDTO dto, Product existingProduct, Category category) {
         if (!Objects.equals(existingProduct.getCategory().getId(), category.getId())) {
             existingProduct.setCategory(category);
         }
 
+        int quantity = calculateProductQuantityCount(dto);
+        BigDecimal price = calculateDiscountedPrice(dto.getOriginalPrice(), dto.getPercentDiscount());
+
         // set fields
-        existingProduct.setQuantity(dto.getQuantity());
-        existingProduct.setPrice(dto.getPrice());
         existingProduct.setOriginalPrice(dto.getOriginalPrice());
         existingProduct.setPercentDiscount(dto.getPercentDiscount());
+        existingProduct.setQuantity(quantity);
+        existingProduct.setPrice(price);
         existingProduct.setPromotionalPrice(dto.getPromotionalPrice());
         existingProduct.setDescription(dto.getDescription());
 
@@ -361,6 +454,20 @@ public class ProductServiceImpl implements ProductService {
             String uniqueSlug = slugGenerator.generateUniqueSlug(existingProduct, dto.getName());
             existingProduct.setSlug(uniqueSlug);
         }
+    }
+
+    private static int calculateProductQuantityCount(ProductDTO dto) {
+        return dto.getSkus().stream().mapToInt(ProductSkuDTO::getQuantity).sum();
+    }
+
+
+    public static BigDecimal calculateDiscountedPrice(BigDecimal originalPrice, double percentDiscount) {
+        BigDecimal discountRate = BigDecimal.valueOf(percentDiscount);
+        BigDecimal hundred = new BigDecimal("100");
+        BigDecimal discountAmount = originalPrice.multiply(discountRate)
+                .divide(hundred, 2, RoundingMode.HALF_UP);
+        BigDecimal discountedPrice = originalPrice.subtract(discountAmount);
+        return discountedPrice.setScale(0, RoundingMode.DOWN);
     }
 
     public void setProductForChildEntity(Product product) {

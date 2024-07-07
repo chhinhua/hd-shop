@@ -17,9 +17,12 @@ public class ModelMapperConfig {
     }
 
     private AbstractConverter<ZonedDateTime, String> dateToStringConverter() {
-        return new AbstractConverter<ZonedDateTime, String>() {
+        return new AbstractConverter<>() {
             @Override
             protected String convert(ZonedDateTime source) {
+                if (source == null) {
+                    return null;
+                }
                 return DateTimeConfig.formatDateTime(source);
             }
         };

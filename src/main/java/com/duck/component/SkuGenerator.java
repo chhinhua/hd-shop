@@ -1,5 +1,6 @@
 package com.duck.component;
 
+import com.duck.utils.AppUtils;
 import com.github.slugify.Slugify;
 import com.duck.entity.OptionValue;
 
@@ -20,7 +21,7 @@ public class SkuGenerator {
 
         for (OptionValue value : optionValues) {
             if (value.getValueName() != null) {
-                String skuValue = replaceVietnameseCharacters(value.getValueName());
+                String skuValue = AppUtils.replaceVietnameseCharacters(value.getValueName());
                 skuBuilder.append("-");
                 skuBuilder.append(skuValue);
             }
@@ -28,13 +29,5 @@ public class SkuGenerator {
 
         Slugify slugify = new Slugify();
         return slugify.slugify(skuBuilder.toString());
-    }
-
-    private static String replaceVietnameseCharacters(String input) {
-        String replacedString = input
-                .replaceAll("đ", "d")
-                .replaceAll("Đ", "D");
-
-        return replacedString;
     }
 }

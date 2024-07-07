@@ -1,7 +1,5 @@
 package com.duck.service.order.impl;
 
-import com.duck.utils.EOrderTrackingStatus;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.duck.config.DateTimeConfig;
 import com.duck.dto.address.AddressDTO;
 import com.duck.dto.ghn.GhnOrder;
@@ -22,8 +20,11 @@ import com.duck.service.product.ProductSkuService;
 import com.duck.service.redis.RedisService;
 import com.duck.service.user.UserService;
 import com.duck.utils.AppUtils;
-import com.duck.utils.EOrderStatus;
-import com.duck.utils.EPaymentType;
+import com.duck.utils.enums.EOrderStatus;
+import com.duck.utils.enums.EOrderTrackingStatus;
+import com.duck.utils.enums.EPaymentType;
+import com.duck.validator.OrderValidator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,7 +39,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -51,10 +51,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
+    private final ProductSkuRepository productSkuRepository;
     AppUtils appUtils;
     ModelMapper modelMapper;
     MessageSource messageSource;
-    CartRepository cartRepository;
     OrderRepository orderRepository;
     ReviewRepository reviewRepository;
     ProductRepository productRepository;
@@ -67,8 +67,20 @@ public class OrderServiceImpl implements OrderService {
     ProductService productService;
     CartItemService cartItemService;
     OrderTrackingService trackingService;
+    OrderValidator validator;
     RedisService<Order> redisService;
     static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
+
+    @Override
+    public void saveChangedSkusQuantity(Order order) {
+        order.getOrderItems().forEach(this::updateSkuQuantity);
+    }
+
+    void updateSkuQuantity(OrderItem item) {
+        ProductSku sku = skuService.findById(item.getSku().getSkuId());
+        sku.setQuantityAvailable(sku.getQuantityAvailable() - item.getQuantity());
+        skuService.save(sku);
+    }
 
     @Override
     @Transactional
@@ -94,20 +106,23 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order findByOrderCode(String orderCode) {
         return orderRepository.findByOrderCode(orderCode).orElseThrow(() ->
-                new ResourceNotFoundException("%s=%s".formatted(getMessage("order-not-found-with-code"), orderCode))
+                new ResourceNotFoundException("%s=%s".formatted(message("order-not-found-with-code"), orderCode))
         );
     }
 
     @Override
     public Order findByVnpTxnRef(String vnp_TxnRef) {
         return orderRepository.findByVnpTxnRef(vnp_TxnRef).orElseThrow(
-                () -> new ResourceNotFoundException(getMessage("order-not-found"))
+                () -> new ResourceNotFoundException(message("order-not-found"))
         );
     }
 
     @Override
     @Transactional
     public OrderResponse createV2(OrderDTO orderDTO, Principal principal) {
+        // validate input data
+        validator.validateCreate(orderDTO);
+
         // retrive data from request
         User user = getUser(principal.getName());
         Address address = getAddress(orderDTO.getAddressId());
@@ -135,6 +150,9 @@ public class OrderServiceImpl implements OrderService {
 
         // save the order
         Order newOrder = orderRepository.save(order);
+
+        // update skus quantity
+        saveChangedSkusQuantity(newOrder);
 
         return mapEntityToResponse(newOrder);
     }
@@ -176,15 +194,19 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse createOrder(OrderDTO orderDto, Principal principal) throws JsonProcessingException {
         OrderResponse response = createV2(orderDto, principal); // create order data to duckshop service
         trackingService.afterCreatedOrder(response.getId()); // create tracking order data
+
         Order order = findById(response.getId());
+
+        // build and create GHN order
         if (order.getPaymentType().equals(EPaymentType.COD)) {
-            // build and create GHN order
             GhnOrder shippingOrder = ghnService.buildGhnOrder(order);
             String orderCode = ghnService.createGhnOrder(shippingOrder);
             order.setOrderCode(orderCode); // update order code
             orderRepository.save(order);
         }
+
         cleanUpCartItems(order);
+
         return mapEntityToResponse(order);
     }
 
@@ -228,7 +250,7 @@ public class OrderServiceImpl implements OrderService {
 
         // retrieve data
         User user = getUser(username);
-        Cart cart = getCartByUsername(username);
+        Cart cart = cartService.findByUsername(username);
         Address address = getAddress(orderDTO.getAddressId());
 
         // check items exist in cart
@@ -267,7 +289,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse createWithVNPay(OrderDTO orderDTO, String username, String vnp_TxnRef) {
         // retrieve data
         User user = getUser(username);
-        Cart cart = getCartByUsername(username);
+        Cart cart = cartService.findByUsername(username);
         Address address = getAddress(orderDTO.getAddressId());
 
         // check items exist in cart
@@ -304,10 +326,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public String isDeletedById(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(message("order-not-found")));
         order.setIsDeleted(true);
         orderRepository.save(order);
-        return getMessage("deleted-successfully");
+        return message("deleted-successfully");
     }
 
     /**
@@ -319,9 +341,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public String deleteById(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException(getMessage("order-not-found")));
+                .orElseThrow(() -> new ResourceNotFoundException(message("order-not-found")));
         orderRepository.delete(order);
-        return getMessage("deleted-successfully");
+        return message("deleted-successfully");
     }
 
     /**
@@ -341,14 +363,14 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order findById(Long orderId) {
         return orderRepository.findById(orderId).orElseThrow(
-                () -> new ResourceNotFoundException(getMessage("order-not-found"))
+                () -> new ResourceNotFoundException(message("order-not-found"))
         );
     }
 
     @Override
     public Order findByItemId(Long itemId) {
         return orderRepository.findByItemId(itemId).orElseThrow(() ->
-                new ResourceNotFoundException(getMessage("order-not-found"))
+                new ResourceNotFoundException(message("order-not-found"))
         );
     }
 
@@ -445,14 +467,13 @@ public class OrderServiceImpl implements OrderService {
 
         // retrieve the data from username
         User currentUser = getUser(username);
-        Cart userCart = getCartByUsername(username);
-
-        BigDecimal cartTotal = userCart.getTotalPrice();
+        Cart userCart = cartService.findByUsername(username);
 
         // set values
-        CheckOutDTO data = new CheckOutDTO();
-
+        BigDecimal cartTotal = userCart.getTotalPrice();
         List<AddressDTO> addresses = convertAddressesToAddressesDTO(currentUser.getAddresses());
+
+        CheckOutDTO data = new CheckOutDTO();
         data.setSubtotal(cartTotal);
         data.setAddresses(addresses);
 
@@ -530,7 +551,7 @@ public class OrderServiceImpl implements OrderService {
             redisService.saveAll(redisKey, pageResponse); //👈 save caching data
             return pageResponse;
         } catch (Exception e) {
-            throw new InvalidException(getMessage("list-order-is-empty"));
+            throw new InvalidException(message("list-order-is-empty"));
         }
     }
 
@@ -572,7 +593,7 @@ public class OrderServiceImpl implements OrderService {
             redisService.saveAll(redisKey, pageResponse); //👈 save caching data
             return pageResponse;
         } catch (Exception e) {
-            throw new InvalidException(getMessage("list-order-is-empty"));
+            throw new InvalidException(message("list-order-is-empty"));
         }
     }
 
@@ -650,12 +671,6 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private Cart getCartByUsername(String username) {
-        return cartRepository.findByUser_Username(username).orElseThrow(() ->
-                new ResourceNotFoundException(getMessage("cart-not-found"))
-        );
-    }
-
     private Address getAddress(Long addressId) {
         return addressService.findById(addressId);
     }
@@ -705,7 +720,7 @@ public class OrderServiceImpl implements OrderService {
 
     private void checkCartItems(Cart cart) {
         if (cart.getCartItems().isEmpty()) {
-            throw new APIException(getMessage("cart-is-empty"));
+            throw new APIException(message("cart-is-empty"));
         }
     }
 
@@ -743,12 +758,6 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
-    private OrderDTO mapEntityToDTO(Order order) {
-        OrderDTO dto = modelMapper.map(order, OrderDTO.class);
-        dto.setStatus(order.getStatus().getValue());
-        return dto;
-    }
-
     private OrderResponse mapEntityToResponse(Order order) {
         OrderResponse response = modelMapper.map(order, OrderResponse.class);
         response.setStatus(order.getStatus().getValue());
@@ -771,7 +780,7 @@ public class OrderServiceImpl implements OrderService {
         return response;
     }
 
-    private String getMessage(String code) {
+    private String message(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }
 }

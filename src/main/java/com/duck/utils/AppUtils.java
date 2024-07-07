@@ -1,6 +1,8 @@
 package com.duck.utils;
 
 import com.duck.exception.InvalidException;
+import com.duck.utils.enums.EOrderStatus;
+import com.duck.utils.enums.EPaymentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -31,21 +33,15 @@ public class AppUtils {
     }
 
     public EOrderStatus getOrderStatus(String value) {
-        if ("Chờ thanh toán".equals(value)) {
-            return EOrderStatus.WAIT_FOR_PAY;
-        } else if ("Đã đặt hàng".equals(value)) {
-            return EOrderStatus.ORDERED;
-        } else if ("Đang xử lý".equals(value)) {
-            return EOrderStatus.PROCESSING;
-        } else if ("Đang giao".equals(value)) {
-            return EOrderStatus.SHIPPING;
-        } else if ("Đã giao".equals(value)) {
-            return EOrderStatus.DELIVERED;
-        }else if ("Đã hủy".equals(value)) {
-            return EOrderStatus.CANCELED;
-        } else {
-            throw new InvalidException(getMessage("error-fetching-order-status-information"));
-        }
+        return switch (value) {
+            case "Chờ thanh toán" -> EOrderStatus.WAIT_FOR_PAY;
+            case "Đã đặt hàng" -> EOrderStatus.ORDERED;
+            case "Đang xử lý" -> EOrderStatus.PROCESSING;
+            case "Đang giao" -> EOrderStatus.SHIPPING;
+            case "Đã giao" -> EOrderStatus.DELIVERED;
+            case "Đã hủy" -> EOrderStatus.CANCELED;
+            default -> throw new InvalidException(getMessage("error-fetching-order-status-information"));
+        };
     }
 
     public static boolean isValidRating(Integer stars) {
@@ -57,9 +53,16 @@ public class AppUtils {
         if (input.contains("%")) {
             return URLDecoder.decode(input, StandardCharsets.UTF_8);
         }
-
         return input;
     }
+
+    public static String replaceVietnameseCharacters(String input) {
+        String replacedString = input
+                .replaceAll("đ", "d")
+                .replaceAll("Đ", "D");
+        return replacedString;
+    }
+
     private String getMessage(String code) {
         return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
     }

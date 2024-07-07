@@ -9,7 +9,7 @@ import com.duck.exception.ResourceNotFoundException;
 import com.duck.repository.OrderRepository;
 import com.duck.repository.OrderTrackingRepository;
 import com.duck.service.order.OrderTrackingService;
-import com.duck.utils.EOrderTrackingStatus;
+import com.duck.utils.enums.EOrderTrackingStatus;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
             logger.info("order_tracking created, order_id=", dto.getOrderId());
         } catch (Exception e) {
             logger.error("fail to create order_tracking, order_id=", dto.getOrderId());
-            throw new APIException(String.format("%s, detail: %s", getMessage("create_order_tracking_failed"), e.getStackTrace()));
+            throw new APIException(String.format("%s, detail: %s", getMessage("create-order_tracking-failed"), e.getStackTrace()));
         }
     }
 
@@ -61,7 +61,7 @@ public class OrderTrackingServiceImpl implements OrderTrackingService {
             logger.info("order_tracking created, order_id=", orderId);
         } catch (Exception e) {
             logger.error("fail to create order_tracking, order_id=", orderId);
-            throw new APIException(String.format("%s, detail: %s", getMessage("create_order_tracking_failed"), e.getStackTrace()));
+            throw new APIException(String.format("%s, detail: %s", getMessage("create-order_tracking-failed"), e.getStackTrace()));
         }
     }
 
