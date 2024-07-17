@@ -22,6 +22,7 @@ public class OrderTracking {
 
     @Temporal(TemporalType.TIMESTAMP)
     private ZonedDateTime time;
+
     private String status;
     private String description;
 

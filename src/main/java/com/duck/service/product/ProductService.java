@@ -162,4 +162,6 @@ public interface ProductService {
             int pageSize,
             String username
     ) throws JsonProcessingException;
+
+    void save(final Product product);
 }

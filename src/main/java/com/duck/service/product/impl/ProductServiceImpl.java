@@ -414,6 +414,11 @@ public class ProductServiceImpl implements ProductService {
         return response;
     }
 
+    @Override
+    public void save(Product product) {
+        productRepository.save(product);
+    }
+
     private void retrieveUserFollowProduct(String username, List<ProductDTO> products) {
         products.forEach(item -> item.setLiked(followService.isFollowed(username, item.getId())));
     }

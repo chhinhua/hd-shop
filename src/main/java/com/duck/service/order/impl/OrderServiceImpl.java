@@ -78,8 +78,14 @@ public class OrderServiceImpl implements OrderService {
 
     void updateSkuQuantity(OrderItem item) {
         ProductSku sku = skuService.findById(item.getSku().getSkuId());
+        sku.setSold(sku.getSold() + item.getQuantity());
         sku.setQuantityAvailable(sku.getQuantityAvailable() - item.getQuantity());
         skuService.save(sku);
+
+        Product product = productService.findById(item.getProduct().getProductId());
+        product.setQuantityAvailable(sku.getQuantityAvailable() - item.getQuantity());
+        product.setSold(product.getSold() + item.getQuantity());
+        productService.save(product);
     }
 
     @Override
