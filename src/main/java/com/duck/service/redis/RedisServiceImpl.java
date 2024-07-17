@@ -48,6 +48,18 @@ public class RedisServiceImpl<T> implements RedisService<T> {
     }
 
     @Override
+    public void clearCache(String keyPrefix) {
+        logger.info("run clear method");
+        logger.info("keyPrefix: " + keyPrefix);
+        Set<String> keys = redisTemplate.keys(keyPrefix + "*");
+
+        if (keys != null && !keys.isEmpty()) {
+            logger.info("set keys" + keys);
+            logger.info(String.valueOf(redisTemplate.delete(keys)));
+        }
+    }
+
+    @Override
     public void clearCache(T entity) {
         logger.info("run clear method");
         String keyPrefix = getKeyPrefixFromEntityClass(entity);

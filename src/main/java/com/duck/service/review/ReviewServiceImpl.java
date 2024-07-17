@@ -10,18 +10,22 @@ import com.duck.repository.ReviewRepository;
 import com.duck.service.order.OrderItemService;
 import com.duck.service.order.OrderService;
 import com.duck.service.product.ProductService;
+import com.duck.service.redis.RedisService;
 import com.duck.service.user.UserService;
 import com.duck.utils.AppUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.util.List;
@@ -39,8 +43,11 @@ public class ReviewServiceImpl implements ReviewService {
     MessageSource messageSource;
     ModelMapper modelMapper;
     ProductRepository productRepository;
+    RedisService<Order> redisService;
+    private static final Logger logger = LoggerFactory.getLogger(ReviewServiceImpl.class);
 
     @Override
+    @Transactional
     public ReviewDTO create(ReviewDTO dto, Principal principal) {
         // validate the review request
         validateReview(dto);
@@ -66,8 +73,15 @@ public class ReviewServiceImpl implements ReviewService {
 
         // update product rating
         updateRating(product);
+        clearHistoryOrder(username);
 
         return mapEntityToDTO(newReview);
+    }
+
+    private void clearHistoryOrder(String username) {
+        String keyPrefix = username != null ? (AppUtils.KEY_PREFIX_GET_ALL_ORDER + ":" + username) : (AppUtils.KEY_PREFIX_GET_ALL_ORDER);
+        logger.info("keyfix: ", keyPrefix);
+        redisService.clearCache(keyPrefix);
     }
 
     @Override

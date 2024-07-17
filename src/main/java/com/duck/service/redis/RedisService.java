@@ -3,6 +3,14 @@ package com.duck.service.redis;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 public interface RedisService<T> {
+
+    /**
+     * Clears the cache for the given entity.
+     * Specific implementations should handle cache clearing logic for their entity types.
+     * @param keyPrefix the String for which to clear the cache
+     */
+    void clearCache(final String keyPrefix);
+
     /**
      * Clears the cache for the given entity.
      * Specific implementations should handle cache clearing logic for their entity types.
