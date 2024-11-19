@@ -88,7 +88,7 @@ To run the tests, navigate to the project directory and execute the following co
 
 ## Authors
 
-- Chau Chhin Hua - [Linkedin](https://www.linkedin.com/in/chhin-hua/)
+- Chau Chhin Hua - [Linkedin](https://www.linkedin.com/in/chhinhua/)
 
 ## Project management
 
